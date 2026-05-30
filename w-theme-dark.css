@@ -1,0 +1,125 @@
+/* =========================================================================
+   w-theme-dark.css — ServiceFlow · W Taipei  (VARIANTE SOMBRE PREMIUM)
+   Ambiance "W Taipei la nuit" : noir profond, bleu électrique + magenta,
+   verre dépoli, halos lumineux, filets champagne, typo éditoriale.
+   Pousse la finition pour un rendu 5 étoiles (vs look SaaS générique).
+
+   USAGE (au lieu de w-theme.css) :
+   Dans index.html, juste APRÈS </style>, mettre UNE seule ligne :
+       <link rel="stylesheet" href="w-theme-dark.css">
+   (si la ligne w-theme.css est là, remplace-la par celle-ci).
+   Aucune autre modif. Structure + JS inchangés.
+
+   Pour comparer clair vs sombre : il suffit de changer ce nom de fichier.
+   Réglages : baisse les opacités des halos (#phone) ou du grain si trop fort.
+   ========================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+
+/* ---- Palette sombre premium -------------------------------------------- */
+:root{
+  --bg:#0A0A0F; --bg2:#0E0E15;
+  --card:rgba(255,255,255,.045); --card2:rgba(255,255,255,.03);
+  --ink:#F3F2EF; --muted:#A6A4AE; --faint:#6B6973;
+  --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.055);
+  --blue:#3CB6F2; --blue-bright:#16A6EC; --blue-bg:rgba(22,166,236,.15);
+  --mag:#F23DA0; --mag-bg:rgba(224,30,140,.16);
+  --gold:#CBAd6E;            /* champagne — filets luxe, très parcimonieux */
+  --green:#3FD6A4; --green-bg:rgba(31,155,114,.18); --amber:#E8A33D; --amber-bg:rgba(185,119,15,.18); --red:#FF5B7A;
+  --shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 20px 44px rgba(0,0,0,.5);
+}
+
+/* ---- Typographie éditoriale (substitut W Supreme) ---------------------- */
+body{ font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:var(--ink); }
+h1,h2,.eyebrow,.statusbar .w,.tile .v,.grade .v,.gate .nm,.rolecard .t,.badge,.btn,.toggle button{ font-family:'Archivo','Inter',sans-serif; }
+h1{ font-size:30px; font-weight:800; letter-spacing:-1px; line-height:1.05; }
+h2{ font-weight:800; letter-spacing:-.4px; }
+.eyebrow{ letter-spacing:2.4px; font-weight:700; color:var(--faint); }
+.statusbar .w{ letter-spacing:2px; }
+.sub{ color:var(--muted); }
+
+/* ---- Fond : noir + halos bleu/magenta + grain + filigrane W ------------ */
+#phone{
+  position:relative;
+  background:
+    radial-gradient(120% 80% at 82% 6%, rgba(22,166,236,.16), transparent 46%),
+    radial-gradient(120% 90% at 8% 100%, rgba(224,30,140,.14), transparent 50%),
+    linear-gradient(180deg,var(--bg),var(--bg2));
+  border-color:#1b1b22;
+}
+#phone::before{   /* grain tactile */
+  content:""; position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.06; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+#phone::after{   /* monogramme W en filigrane */
+  content:"W"; position:absolute; top:-40px; right:-14px; z-index:0; pointer-events:none;
+  font-family:'Archivo',sans-serif; font-weight:900; font-size:230px; line-height:1; color:#fff; opacity:.03;
+}
+#screen{ position:relative; z-index:1; }
+.statusbar{ position:relative; z-index:2; color:var(--ink); }
+#nav{ z-index:3; }
+
+/* ---- Cartes : verre dépoli + lueur douce ------------------------------- */
+.card{
+  background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.025));
+  border:1px solid var(--line); border-radius:22px;
+  box-shadow:var(--shadow); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+}
+.card.flat{ background:rgba(255,255,255,.025); box-shadow:none; }
+/* cartes "hero" (repérées par leur bordure inline) : lueur colorée + filet champagne */
+.card[style*="--blue"]{ border-color:rgba(22,166,236,.5)!important; box-shadow:0 0 0 1px rgba(22,166,236,.15), 0 22px 50px rgba(22,166,236,.10), var(--shadow); }
+.card[style*="--mag"]{ position:relative; border-color:rgba(224,30,140,.5)!important; box-shadow:0 0 0 1px rgba(224,30,140,.15), 0 22px 50px rgba(224,30,140,.12), var(--shadow); }
+.card[style*="--mag"]::before{ content:""; position:absolute; left:18px; right:18px; top:0; height:2px; background:linear-gradient(90deg,var(--gold),transparent); border-radius:2px; }
+
+/* ---- Tiles : moins "boîte", chiffres éditoriaux ------------------------ */
+.tile{
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow);
+}
+.tile .k{ color:var(--faint); letter-spacing:.8px; }
+.tile .v{ letter-spacing:-1px; }
+.tile .v small{ color:var(--muted); }
+
+/* ---- Eyebrow / accents ------------------------------------------------- */
+.eyebrow .sq{ background:var(--blue-bright); box-shadow:0 0 10px rgba(22,166,236,.6); border-radius:3px; }
+.chip{ background:rgba(255,255,255,.05); border:1px solid var(--line); color:var(--ink); }
+.badge{ background:var(--green-bg); color:var(--green); }
+
+/* ---- Boutons ----------------------------------------------------------- */
+.btn{ background:linear-gradient(180deg,#27b0f0,#0f93d6); color:#04121c; font-weight:800; box-shadow:0 10px 26px rgba(22,166,236,.32); }
+.btn.mag{ background:linear-gradient(180deg,#f23da0,#cf1a7e); color:#fff; box-shadow:0 10px 26px rgba(224,30,140,.32); }
+.btn.ghost{ background:rgba(255,255,255,.04); border:1px solid var(--line); color:var(--ink); box-shadow:none; }
+
+/* ---- Grades / deltas / barres ----------------------------------------- */
+.grade .v.green{color:var(--green)} .grade .v.blue{color:var(--blue)} .grade .v.amber{color:var(--amber)}
+.delta.up{color:var(--green);background:var(--green-bg)} .delta.down{color:var(--mag);background:var(--mag-bg)} .delta.flat{color:var(--muted);background:rgba(255,255,255,.06)}
+.prow{border-bottom:1px solid var(--line2)} .action{border-bottom:1px solid var(--line2)}
+.action .n{ background:var(--blue-bg); color:var(--blue); }
+.bar{ background:rgba(255,255,255,.08); }
+
+/* ---- Toggle ------------------------------------------------------------ */
+.toggle{ background:rgba(255,255,255,.05); border:1px solid var(--line); }
+.toggle button{ color:var(--muted); }
+.toggle button.on{ background:rgba(255,255,255,.12); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.4); }
+
+/* ---- Rolecards (écran d'accueil = moment promotionnel) ----------------- */
+.rolecard{
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  border:1px solid var(--line); box-shadow:var(--shadow);
+}
+.rolecard .ico{ background:var(--blue-bg); } .rolecard .ico svg{ stroke:var(--blue); }
+.rolecard.mag .ico{ background:var(--mag-bg); } .rolecard.mag .ico svg{ stroke:var(--mag); }
+
+/* ---- Nav : verre dépoli + actif lumineux ------------------------------- */
+#nav{ background:rgba(10,10,15,.72); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border-top:1px solid var(--line); }
+.nav-item{ color:var(--faint); }
+.nav-item.active{ color:var(--blue); }
+.nav-item.active svg{ filter:drop-shadow(0 0 6px rgba(22,166,236,.6)); }
+
+/* ---- Bouton flottant + bottom sheet ----------------------------------- */
+#fab{ background:linear-gradient(180deg,#f23da0,#cf1a7e); box-shadow:0 12px 28px rgba(224,30,140,.45); }
+.sheet{ background:linear-gradient(180deg,#15151c,#0e0e14); border:1px solid var(--line); border-bottom:none; }
+.sheet .grab{ background:rgba(255,255,255,.18); }
+.opt{ background:rgba(255,255,255,.04); border:1px solid var(--line); color:var(--ink); }
+.opt.on{ background:var(--blue-bg); border-color:var(--blue); color:var(--blue); }
+.mic{ background:var(--mag-bg); border:1px dashed rgba(224,30,140,.6); }
