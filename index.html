@@ -2,125 +2,293 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
 <title>ServiceFlow · W Taipei</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#F4F4F1; --card:#FFFFFF; --ink:#191920; --muted:#6E6E78; --faint:#9A9AA2;
-    --line:#EAEAE4; --line2:#F0F0EC;
-    --blue:#1488CC; --blue-bright:#16A6EC; --blue-bg:#E9F4FB;
-    --mag:#CE1A7E; --mag-bg:#FBE9F3;
-    --green:#1C9B72; --green-bg:#E7F5EF; --amber:#B9770F; --amber-bg:#FBF1E2; --red:#CF2E54;
-    --shadow:0 1px 2px rgba(20,20,30,.05), 0 10px 26px rgba(20,20,30,.05);
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0;background:#E7E7E2;color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-  body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-  #phone{width:392px;height:850px;max-height:96vh;background:var(--bg);border-radius:44px;
-    border:1px solid #d8d8d2;box-shadow:0 40px 90px rgba(0,0,0,.28);overflow:hidden;position:relative;display:flex;flex-direction:column}
-  @media(max-width:440px){body{padding:0}#phone{width:100vw;height:100vh;max-height:none;border-radius:0;border:none;box-shadow:none}}
-  .statusbar{height:46px;flex:0 0 46px;display:flex;align-items:center;justify-content:space-between;
-    padding:0 24px;font-size:13px;font-weight:600;color:var(--ink)}
-  .statusbar .w{font-weight:800;letter-spacing:1px;font-size:14px}
-  #screen{flex:1;overflow-y:auto;overflow-x:hidden;padding:4px 18px 110px}
-  #screen::-webkit-scrollbar{width:0}
-  h1{font-size:26px;font-weight:800;letter-spacing:-.6px;margin:10px 0 3px;line-height:1.1}
-  h2{font-size:18px;font-weight:800;letter-spacing:-.3px;margin:0}
-  .eyebrow{display:flex;align-items:center;gap:8px;font-size:10.5px;font-weight:800;letter-spacing:1.6px;
-    color:var(--faint);text-transform:uppercase;margin:8px 0}
-  .eyebrow .sq{width:10px;height:10px;background:var(--blue-bright);border-radius:2px}
-  .sub{color:var(--muted);font-size:13.5px;line-height:1.5;margin:0 0 16px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:13px;box-shadow:var(--shadow)}
-  .card.flat{box-shadow:none;background:#FBFBF9}
-  .row{display:flex;gap:11px}
-  .muted{color:var(--muted)} .faint{color:var(--faint)}
-  .blue{color:var(--blue)} .mag{color:var(--mag)} .green{color:var(--green)}
-  .chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);
-    border-radius:999px;padding:7px 12px;font-size:12px;font-weight:600;color:var(--ink)}
-  .btn{display:block;width:100%;text-align:center;background:var(--blue-bright);color:#fff;font-weight:700;
-    border:none;border-radius:14px;padding:15px;font-size:14.5px;cursor:pointer;letter-spacing:.2px;box-shadow:0 6px 16px rgba(22,166,236,.25)}
-  .btn.mag{background:var(--mag);box-shadow:0 6px 16px rgba(206,26,126,.22)}
-  .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--ink);box-shadow:none}
-  .btn.sm{padding:11px;font-size:13px;border-radius:11px}
-  .grade{flex:1;text-align:center}
-  .grade .v{font-size:22px;font-weight:800;line-height:1}
-  .grade .k{font-size:9.5px;font-weight:700;letter-spacing:.6px;color:var(--faint);text-transform:uppercase;margin-top:6px}
-  .delta{font-weight:700;font-size:12px;padding:3px 9px;border-radius:8px;white-space:nowrap}
-  .delta.up{color:var(--green);background:var(--green-bg)}
-  .delta.down{color:var(--mag);background:var(--mag-bg)}
-  .delta.flat{color:var(--muted);background:var(--line2)}
-  .prow{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line2)}
-  .prow:last-child{border-bottom:none}
-  .prow .nm{font-weight:700;font-size:14px}
-  .prow .rs{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.35;max-width:180px}
-  .prow .pr{text-align:right}
-  .prow .pr b{font-size:19px;font-weight:800}
-  .prow .pr small{font-size:11px;color:var(--faint);display:block;margin-top:2px}
-  .toggle{display:flex;background:#EDEDE8;border-radius:13px;padding:4px;gap:4px;margin-bottom:15px}
-  .toggle button{flex:1;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:13px;
-    padding:11px;border-radius:10px;cursor:pointer}
-  .toggle button.on{background:#fff;color:var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.08)}
-  .tile{flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 15px;box-shadow:var(--shadow)}
-  .tile .k{font-size:10px;font-weight:700;letter-spacing:.6px;color:var(--faint);text-transform:uppercase}
-  .tile .v{font-size:24px;font-weight:800;margin-top:6px;letter-spacing:-.6px}
-  .tile .v small{font-size:12.5px;font-weight:700;color:var(--muted)}
-  .action{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line2)}
-  .action:last-child{border-bottom:none}
-  .action .n{width:24px;height:24px;border-radius:8px;background:var(--blue-bg);flex:0 0 24px;display:flex;
-    align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--blue);margin-top:1px}
-  .action .tx{font-size:13.5px;line-height:1.4;font-weight:600}
-  .action .meta{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.35}
-  .rolecard{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:13px;cursor:pointer;
-    display:flex;align-items:center;gap:15px;box-shadow:var(--shadow);transition:transform .1s}
-  .rolecard:active{transform:scale(.985)}
-  .rolecard .ico{width:46px;height:46px;border-radius:13px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;flex:0 0 46px}
-  .rolecard .ico svg{width:23px;height:23px;stroke:var(--blue);fill:none;stroke-width:1.9}
-  .rolecard.mag .ico{background:var(--mag-bg)} .rolecard.mag .ico svg{stroke:var(--mag)}
-  .rolecard .t{font-weight:800;font-size:15.5px}
-  .rolecard .d{font-size:12px;color:var(--muted);margin-top:3px}
-  .badge{font-size:9px;font-weight:800;letter-spacing:.8px;padding:3px 8px;border-radius:6px;background:var(--green-bg);color:var(--green);vertical-align:middle}
-  .bar{height:8px;border-radius:6px;background:var(--line2);overflow:hidden}
-  .bar > span{display:block;height:100%;border-radius:6px}
-  .gate{display:flex;gap:14px}
-  .gate .line{display:flex;flex-direction:column;align-items:center;flex:0 0 16px}
-  .gate .node{width:15px;height:15px;border-radius:50%;border:3px solid var(--card);box-shadow:0 0 0 1px var(--line);flex:0 0 15px}
-  .gate .stem{width:2px;flex:1;background:var(--line);min-height:34px}
-  .gate .body{padding-bottom:20px}
-  .gate .hz{font-size:10px;font-weight:800;letter-spacing:.8px;color:var(--faint)}
-  .gate .nm{font-weight:800;font-size:14.5px;margin:2px 0 4px}
-  .gate .ds{font-size:12.5px;color:var(--muted);line-height:1.4}
-  #nav{position:absolute;left:0;right:0;bottom:0;height:80px;background:rgba(255,255,255,.94);
-    backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;padding-bottom:10px}
-  .nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;color:var(--faint);cursor:pointer;flex:1;font-weight:700}
-  .nav-item svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9}
-  .nav-item.active{color:var(--blue)}
-  #fab{position:absolute;right:20px;bottom:96px;width:56px;height:56px;border-radius:50%;background:var(--mag);
-    box-shadow:0 10px 24px rgba(206,26,126,.4);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:6}
-  #fab svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:2.2}
-  .sheet-bg{position:absolute;inset:0;background:rgba(20,20,25,.4);z-index:8;display:flex;align-items:flex-end}
-  .sheet{background:var(--card);width:100%;border-radius:26px 26px 0 0;padding:22px 20px 30px;box-shadow:0 -10px 40px rgba(0,0,0,.2)}
-  .sheet .grab{width:40px;height:4px;border-radius:3px;background:var(--line);margin:0 auto 16px}
-  .field{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--faint);text-transform:uppercase;margin:14px 0 7px}
-  .opts{display:flex;gap:7px;flex-wrap:wrap}
-  .opt{padding:9px 13px;border-radius:11px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:600;cursor:pointer}
-  .opt.on{background:var(--blue-bg);border-color:var(--blue);color:var(--blue)}
-  .mic{display:flex;align-items:center;gap:12px;background:var(--mag-bg);border:1px dashed var(--mag);border-radius:14px;padding:14px;margin-bottom:6px}
-  .mic .d{width:38px;height:38px;border-radius:50%;background:var(--mag);display:flex;align-items:center;justify-content:center;flex:0 0 38px}
-  .mic svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+:root{
+  --champagne:#A0784A; --champagne-light:#C9A97A; --champagne-dark:#7A5A32; --champagne-pale:#F0E8DA;
+  --bronze:#A0784A; --bronze-light:#C9A97A; --bronze-dark:#7A5A32; --bronze-pale:#F0E8DA;
+  --ivory:#F5F0E8; --warm-white:#FAF8F4; --marble:#EDE9E0; --marble-dark:#DDD8CE;
+  --charcoal:#2A2520; --mid-grey:#6B6560; --light-grey:#C5BFB5;
+  --blue:#16A6EC; --blue-dark:#0E78AB; --blue-pale:#E4F2FB;
+  --w-blue:#16A6EC; --w-blue-dark:#0E78AB; --w-blue-pale:#E4F2FB;
+  --mag:#E01E8C; --w-mag:#E01E8C; --w-mag-dark:#A8175F; --w-mag-pale:#FBE4F0;
+  --esg:#4A8F5E; --esg-pale:#E6F1E9; --amber:#B9770F; --amber-pale:#FBF1E2; --red-alert:#8B3A3A;
+  --green:#4A6741; --green-pale:#EAF0E6;
+  --shadow:0 8px 32px rgba(42,37,32,0.10); --shadow-sm:0 2px 10px rgba(20,20,30,0.07);
+}
+*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{
+  background:#1a1a1a;font-family:'Jost',-apple-system,BlinkMacSystemFont,sans-serif;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  background-image:radial-gradient(ellipse at 20% 80%,rgba(160,120,74,.15) 0%,transparent 50%),
+                   radial-gradient(ellipse at 80% 20%,rgba(22,166,236,.10) 0%,transparent 45%);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;color:var(--charcoal);
+}
+.phone{
+  width:390px;height:844px;background:var(--warm-white);border-radius:48px;overflow:hidden;
+  position:relative;flex-shrink:0;font-size:14px;display:flex;flex-direction:column;
+  box-shadow:0 48px 120px rgba(0,0,0,.6),0 0 0 1px rgba(160,120,74,.2);
+}
+@media(max-width:440px){body{padding:0}.phone{width:100vw;height:100vh;border-radius:0;box-shadow:none}}
+
+#loader{position:absolute;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,var(--charcoal) 0%,#1E1A16 60%,#142a3a 100%);transition:opacity .9s ease;overflow:hidden}
+#loader.hide{opacity:0;pointer-events:none}
+.ld-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(201,169,122,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(201,169,122,.04) 1px,transparent 1px);background-size:44px 44px}
+.ld-glow{position:absolute;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(22,166,236,.10) 0%,transparent 70%);animation:glowPulse 3s ease-in-out infinite}
+@keyframes glowPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.15);opacity:1}}
+.ld-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;width:100%;text-align:center;padding:0 30px}
+.ld-mark{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:500;letter-spacing:.26em;text-transform:uppercase;color:var(--ivory)}
+.ld-rule{width:0;height:1px;background:linear-gradient(90deg,transparent,var(--champagne-light),transparent);margin:14px auto 10px;animation:ruleIn .7s ease .4s forwards}
+@keyframes ruleIn{to{width:110px}}
+.ld-sub{font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(201,169,122,.55)}
+.ld-bar-wrap{width:220px;height:2px;background:rgba(201,169,122,.12);border-radius:2px;overflow:hidden;margin-top:44px}
+.ld-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--champagne-dark),var(--champagne-light),#E8D090);background-size:200% 100%;animation:shimmer 1.8s linear infinite;box-shadow:0 0 10px rgba(201,169,122,.4);transition:width .25s ease;width:0}
+@keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
+.ld-pct{margin-top:12px;font-size:13px;color:var(--champagne-light);font-family:monospace;letter-spacing:.14em}
+.ld-foot{position:absolute;bottom:28px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(245,240,232,.22);text-align:center;width:100%;padding:0 20px}
+
+.sbar{height:44px;padding:0 12px 0 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:5;color:var(--ivory)}
+.sbar.dk{background:var(--charcoal)}
+.sbar.bl{background:var(--w-blue-dark)}
+.sbar.mg{background:var(--w-mag-dark)}
+.sbar.gn{background:#1B3725}
+.sbar.br{background:var(--champagne-dark)}
+.stime{font-weight:600;font-size:14px;letter-spacing:.02em}
+.sicons{display:flex;align-items:center;gap:8px;opacity:.85}
+.sicons .sig{display:flex;gap:2px;align-items:flex-end}
+.sicons .sig span{width:3px;height:3px;border-radius:50%;background:currentColor}
+.sicons .sig span:nth-child(2){height:4px}.sicons .sig span:nth-child(3){height:5px}
+.sicons .bat svg{display:block}
+.back-role{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--champagne-light);background:none;border:none;cursor:pointer;font-family:'Jost',sans-serif;font-weight:600;display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:8px;transition:background .15s}
+.back-role:hover{background:rgba(245,240,232,.06)}
+
+#screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:120px}
+#screen::-webkit-scrollbar{display:none}
+
+.hero{padding:16px 20px 22px;position:relative;overflow:hidden;color:var(--ivory);margin-bottom:18px}
+.hero.dk{background:linear-gradient(170deg,var(--charcoal) 0%,#1E1A16 100%)}
+.hero.bl{background:linear-gradient(170deg,var(--w-blue-dark) 0%,var(--w-blue) 100%)}
+.hero.mg{background:linear-gradient(170deg,var(--w-mag-dark) 0%,var(--w-mag) 100%)}
+.hero.gn{background:linear-gradient(170deg,#1B3725 0%,var(--esg) 100%)}
+.hero.br{background:linear-gradient(170deg,var(--champagne-dark) 0%,var(--champagne) 100%)}
+.hero::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(108deg,transparent 0,transparent 44px,rgba(201,169,122,.05) 44px,rgba(201,169,122,.05) 45px);pointer-events:none}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--champagne),var(--champagne-light),var(--champagne),transparent);opacity:.55}
+
+.brand-row{position:relative;z-index:1;display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.w-mono{width:30px;height:30px;border:1px solid var(--champagne);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:var(--champagne-light);flex-shrink:0}
+.brand-name{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(245,240,232,.88);font-weight:600;flex:1}
+.live-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(22,166,236,.12);border:1px solid rgba(22,166,236,.32);padding:4px 9px;border-radius:18px;font-size:11px;color:var(--w-blue);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.live-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--w-blue);animation:pulse 2s infinite;box-shadow:0 0 6px rgba(22,166,236,.6)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+.hero h1{position:relative;z-index:1;font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:500;line-height:1.05;margin:8px 0 8px;letter-spacing:-.005em;color:var(--ivory)}
+.hero h1 em{font-style:italic;color:var(--champagne-light);font-weight:400}
+.hero-sub{position:relative;z-index:1;font-size:12.5px;line-height:1.55;color:rgba(245,240,232,.7);max-width:94%}
+
+.meta-line{position:relative;z-index:1;display:flex;gap:7px;align-items:center;font-size:13px;color:rgba(245,240,232,.5);font-weight:400;margin-top:10px;font-family:'Jost',sans-serif;flex-wrap:wrap}
+.meta-line .sep{width:3px;height:3px;border-radius:50%;background:rgba(245,240,232,.4);flex-shrink:0}
+
+.body{padding:0 20px}
+.sec-h{display:flex;justify-content:space-between;align-items:center;margin:22px 0 10px}
+.sec-h h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:var(--charcoal);letter-spacing:-.005em}
+.sec-h .sa{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--champagne);background:none;border:none;font-weight:600;cursor:pointer;font-family:'Jost',sans-serif}
+.divider{height:1px;margin:4px 0 12px;background:linear-gradient(90deg,transparent,var(--marble-dark),transparent)}
+.eyebrow{display:flex;align-items:center;gap:9px;font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--mid-grey);font-weight:600;margin-bottom:10px}
+.eyebrow::before{content:'';display:inline-block;width:6px;height:6px;background:var(--champagne)}
+
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.kpi{background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:14px;padding:13px;box-shadow:0 2px 10px rgba(20,20,30,.07)}
+.kpi .k{font-size:9.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--mid-grey)}
+.kpi .v{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;color:var(--charcoal);line-height:1.05;margin-top:5px;letter-spacing:-.01em}
+.kpi .v small{font-family:'Jost',sans-serif;font-size:12px;font-weight:500;color:var(--mid-grey);letter-spacing:.02em;margin:0 2px}
+.kpi .v.blue{color:var(--w-blue-dark)}.kpi .v.mag{color:var(--w-mag-dark)}.kpi .v.gn{color:var(--esg)}.kpi .v.br{color:var(--champagne-dark)}
+.kpi .d{font-size:11px;color:var(--mid-grey);margin-top:4px;line-height:1.3}
+
+.score{display:flex;gap:7px}
+.score .g{flex:1;text-align:center;background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:13px;padding:11px 5px;box-shadow:var(--shadow-sm)}
+.score .v{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:500;line-height:1;letter-spacing:-.01em;color:var(--charcoal)}
+.score .g[data-kind="Demand"] .v{color:var(--blue)}
+.score .g[data-kind="Waste"]  .v{color:var(--esg)}
+.score .g[data-kind="Labour"] .v{color:var(--champagne)}
+.score .g[data-kind="ESG"]    .v{color:var(--mag)}
+.score .k{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--mid-grey);margin-top:5px}
+
+.ab-box{background:var(--charcoal);border-radius:18px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;color:var(--ivory);box-shadow:var(--shadow)}
+.ab-box::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(108deg,transparent 0,transparent 44px,rgba(201,169,122,.04) 44px,rgba(201,169,122,.04) 45px);pointer-events:none}
+.ab-eb{position:relative;z-index:1;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--champagne-light);font-weight:600;display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.ab-eb::before{content:'';display:inline-block;width:6px;height:6px;background:var(--champagne-light)}
+.ab-h{position:relative;z-index:1;font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:var(--ivory);line-height:1.2;margin-bottom:14px;letter-spacing:-.005em}
+.ab-h em{font-style:italic;color:var(--champagne-light);font-weight:400}
+.ab-item{position:relative;z-index:1;display:flex;gap:13px;padding:11px 0;border-bottom:1px solid rgba(201,169,122,.08);align-items:flex-start}
+.ab-item:last-of-type{border-bottom:none}
+.ab-ring{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--champagne);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:500;color:var(--champagne-light);flex-shrink:0;margin-top:1px}
+.ab-body{flex:1}
+.ab-tx{font-size:13.5px;line-height:1.45;color:var(--ivory);font-weight:500}
+.ab-meta{font-size:11.5px;color:rgba(245,240,232,.55);margin-top:4px;line-height:1.4}
+.ab-save{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:#7AB67A;text-align:right;flex-shrink:0;align-self:center;letter-spacing:-.005em;min-width:78px}
+.ab-save.zero{color:rgba(245,240,232,.35);font-size:14px}
+.ab-recap{position:relative;z-index:1;margin-top:14px;padding-top:14px;border-top:1px solid rgba(201,169,122,.2);display:flex;justify-content:space-between;align-items:baseline}
+.ab-recap-l{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(245,240,232,.6);font-weight:600}
+.ab-recap-v{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:var(--champagne-light);letter-spacing:-.005em}
+
+.st-row{background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:14px;padding:13px 14px;margin-bottom:9px;display:flex;gap:12px;align-items:flex-start;box-shadow:var(--shadow-sm)}
+.st-badge{width:3px;align-self:stretch;border-radius:2px;flex-shrink:0;min-height:60px}
+.st-body{flex:1;min-width:0}
+.st-name{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:var(--charcoal);letter-spacing:-.005em;line-height:1.1}
+.st-prep{font-size:12.5px;color:var(--charcoal);margin-top:5px;line-height:1.4;font-weight:500}
+.st-prep b{color:var(--w-blue-dark);font-weight:600;font-family:'Cormorant Garamond',serif;font-size:14px}
+.st-cause{font-size:11.5px;color:var(--mid-grey);margin-top:4px;line-height:1.4}
+.st-waste{font-size:10.5px;color:var(--light-grey);margin-top:6px;letter-spacing:.04em}
+.st-pct{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:var(--charcoal);letter-spacing:-.01em;flex-shrink:0;align-self:center;min-width:54px;text-align:right}
+.st-pct.up{color:var(--esg)}.st-pct.down{color:var(--w-mag-dark)}.st-pct.flat{color:var(--mid-grey)}
+
+.esg-card{background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:16px;padding:14px 16px;margin-bottom:13px;display:flex;align-items:center;gap:13px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.esg-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(180deg,var(--esg),var(--champagne));border-radius:16px 0 0 16px}
+.esg-card .ico{width:38px;height:38px;border-radius:11px;background:rgba(74,143,94,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.esg-card .ico svg{width:19px;height:19px;stroke:var(--esg);fill:none;stroke-width:1.9}
+.esg-card .esg-body{flex:1}
+.esg-card .esg-h{font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--champagne-dark);font-weight:700}
+.esg-card .esg-t{font-size:13px;font-weight:600;color:var(--charcoal);margin-top:3px;line-height:1.35}
+.esg-card .esg-m{font-size:11.5px;color:var(--mid-grey);margin-top:3px;line-height:1.4}
+
+.day-toggle{display:flex;background:var(--marble);border-radius:22px;padding:3px;gap:0;margin-bottom:16px}
+.day-toggle button{flex:1;padding:9px 14px;border:none;background:none;border-radius:18px;font-family:'Jost',sans-serif;font-size:13px;letter-spacing:.06em;color:var(--mid-grey);cursor:pointer;font-weight:500;transition:all .18s}
+.day-toggle button.on{background:var(--w-blue);color:#fff;box-shadow:0 2px 8px rgba(22,166,236,.3);font-weight:600}
+
+.card{background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:18px;padding:16px 18px;margin-bottom:13px;box-shadow:var(--shadow-sm)}
+.card.flat{box-shadow:none;background:var(--marble);border-color:var(--marble-dark)}
+
+.rolecard{background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:18px;padding:18px;margin-bottom:11px;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow-sm);transition:transform .12s;position:relative;overflow:hidden}
+.rolecard::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(108deg,transparent 0,transparent 44px,rgba(160,120,74,.04) 44px,rgba(160,120,74,.04) 45px);pointer-events:none}
+.rolecard:active{transform:scale(.985)}
+.rolecard .ico{width:48px;height:48px;border-radius:13px;background:var(--w-blue-pale);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;z-index:1}
+.rolecard .ico svg{width:24px;height:24px;stroke:var(--w-blue-dark);fill:none;stroke-width:1.9}
+.rolecard.mg .ico{background:var(--w-mag-pale)}.rolecard.mg .ico svg{stroke:var(--w-mag-dark)}
+.rolecard.br .ico{background:var(--champagne-pale)}.rolecard.br .ico svg{stroke:var(--champagne-dark)}
+.rolecard .t{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:18px;color:var(--charcoal);position:relative;z-index:1;letter-spacing:-.005em;line-height:1.15}
+.rolecard .d{font-size:11.5px;color:var(--mid-grey);margin-top:3px;position:relative;z-index:1}
+.badge{display:inline-block;font-size:8.5px;font-weight:700;letter-spacing:.18em;padding:3px 8px;border-radius:6px;background:var(--esg-pale);color:var(--esg);vertical-align:middle;text-transform:uppercase;margin-left:6px}
+
+.dash-tile{background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:16px;padding:14px 15px;margin-bottom:10px;display:flex;align-items:center;gap:13px;cursor:pointer;box-shadow:var(--shadow-sm);transition:transform .12s}
+.dash-tile:active{transform:scale(.985)}
+.dash-i{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dash-i svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.9}
+.dash-b{flex:1;min-width:0}
+.dash-t{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:var(--charcoal);letter-spacing:-.005em;line-height:1.12}
+.dash-d{font-size:11.5px;color:var(--mid-grey);margin-top:4px;line-height:1.4}
+.dash-arrow{font-size:22px;color:var(--champagne);flex-shrink:0;font-family:'Cormorant Garamond',serif;font-weight:400}
+
+.otabs{display:flex;background:var(--warm-white);border-bottom:1px solid var(--marble);overflow-x:auto;scrollbar-width:none;margin:0 -20px 14px;padding:0 16px}
+.otabs::-webkit-scrollbar{display:none}
+.otab{padding:11px 13px;font-size:11.5px;letter-spacing:.04em;font-family:'Jost',sans-serif;font-weight:500;cursor:pointer;border:none;background:none;color:var(--mid-grey);border-bottom:2px solid transparent;white-space:nowrap;flex-shrink:0;transition:all .2s}
+.otab.on{color:var(--w-mag-dark);border-bottom-color:var(--w-mag)}
+
+.strike{background:linear-gradient(170deg,#1E1A16 0%,var(--charcoal) 100%);color:var(--ivory);border-radius:20px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;border:1px solid rgba(224,30,140,.25)}
+.strike::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(108deg,transparent 0,transparent 44px,rgba(201,169,122,.04) 44px,rgba(201,169,122,.04) 45px);pointer-events:none}
+.strike::after{content:'';position:absolute;top:-80px;right:-80px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(224,30,140,.2) 0%,transparent 70%);pointer-events:none}
+.strike .st-eb{position:relative;z-index:1;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--w-mag);font-weight:600;display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.strike .st-eb::before{content:'';display:inline-block;width:6px;height:6px;background:var(--w-mag)}
+.strike .st-tt{position:relative;z-index:1;font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;line-height:1.2;color:var(--ivory);margin-bottom:12px;letter-spacing:-.005em}
+.strike .st-tt em{font-style:italic;color:var(--champagne-light);font-weight:400}
+.strike .st-grid{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0}
+.strike .st-tile{background:rgba(255,255,255,.04);border:1px solid rgba(245,240,232,.08);border-radius:11px;padding:10px 8px;text-align:center}
+.strike .st-tile .v{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--champagne-light);line-height:1;letter-spacing:-.005em}
+.strike .st-tile .k{font-size:8.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,240,232,.5);margin-top:5px}
+
+.prow{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--marble);gap:10px}
+.prow:last-child{border-bottom:none}
+.prow .nm{font-weight:600;font-size:13.5px;color:var(--charcoal)}
+.prow .rs{font-size:11.5px;color:var(--mid-grey);margin-top:3px;line-height:1.4;max-width:200px}
+.prow .pr{text-align:right;flex-shrink:0}
+.prow .pr b{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:var(--charcoal);letter-spacing:-.01em}
+.prow .pr small{font-size:10px;color:var(--mid-grey);display:block;margin-top:1px;letter-spacing:.04em}
+
+.delta{font-weight:600;font-size:10.5px;padding:3px 8px;border-radius:6px;white-space:nowrap;letter-spacing:.04em}
+.delta.up{color:var(--esg);background:var(--esg-pale)}
+.delta.down{color:var(--w-mag-dark);background:var(--w-mag-pale)}
+.delta.flat{color:var(--mid-grey);background:var(--marble)}
+
+.gate{display:flex;gap:14px}
+.gate .line{display:flex;flex-direction:column;align-items:center;flex:0 0 15px}
+.gate .node{width:14px;height:14px;border-radius:50%;border:3px solid var(--warm-white);box-shadow:0 0 0 1px var(--marble-dark);flex-shrink:0}
+.gate .stem{width:2px;flex:1;background:var(--marble-dark);min-height:34px;margin-top:1px}
+.gate .body{padding-bottom:20px;flex:1}
+.gate .hz{font-size:9.5px;font-weight:700;letter-spacing:.18em;color:var(--champagne);text-transform:uppercase}
+.gate .nm{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:19px;margin:3px 0 4px;letter-spacing:-.005em;color:var(--charcoal)}
+.gate .ds{font-size:12px;color:var(--mid-grey);line-height:1.45}
+
+.btn{display:block;width:100%;text-align:center;background:var(--w-blue);color:var(--ivory);font-family:'Jost',sans-serif;font-weight:600;border:none;border-radius:14px;padding:14px;font-size:13.5px;cursor:pointer;letter-spacing:.04em;box-shadow:0 6px 16px rgba(22,166,236,.25);text-transform:uppercase}
+.btn.mg{background:var(--w-mag);box-shadow:0 6px 16px rgba(224,30,140,.25)}
+.btn.br{background:var(--champagne);box-shadow:0 6px 16px rgba(160,120,74,.25)}
+.btn.ghost{background:var(--warm-white);border:1px solid var(--marble-dark);color:var(--charcoal);box-shadow:none}
+.btn.sm{padding:10px;font-size:11.5px;border-radius:11px}
+
+.voice-btn{display:inline-flex;align-items:center;gap:8px;background:var(--warm-white);border:1px solid var(--marble-dark);color:var(--charcoal);padding:9px 14px;border-radius:11px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:'Jost',sans-serif;transition:all .15s;letter-spacing:.02em}
+.voice-btn:hover{border-color:var(--champagne);background:var(--champagne-pale)}
+.voice-btn svg{width:15px;height:15px;stroke:var(--champagne);fill:none;stroke-width:2;flex-shrink:0}
+
+#nav{position:absolute;left:0;right:0;bottom:0;height:78px;background:rgba(250,248,244,.96);backdrop-filter:blur(14px);border-top:1px solid var(--marble);display:flex;align-items:center;justify-content:space-around;padding:0 6px 14px;z-index:10}
+.nb{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:7px 5px;border:none;background:none;color:var(--light-grey);font-family:'Jost',sans-serif;flex:1;transition:color .2s}
+.nb svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9}
+.nb span{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.nb.on[data-tab="dashboard"]{color:var(--charcoal)}
+.nb.on[data-tab="brief"]{color:var(--w-blue-dark)}
+.nb.on[data-tab="fb"]{color:var(--w-mag-dark)}
+.nb.on[data-tab="esg"]{color:var(--esg)}
+.nb.on[data-tab="portfolio"]{color:var(--champagne-dark)}
+
+.sheet-bg{position:absolute;inset:0;background:rgba(20,20,25,.45);z-index:15;display:flex;align-items:flex-end}
+.sheet{background:var(--warm-white);width:100%;border-radius:26px 26px 0 0;padding:22px 20px 30px;box-shadow:0 -10px 40px rgba(0,0,0,.2)}
+.sheet .grab{width:40px;height:4px;border-radius:3px;background:var(--marble-dark);margin:0 auto 16px}
+.sheet h2{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:500;letter-spacing:-.005em;color:var(--charcoal)}
+.field{font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--mid-grey);text-transform:uppercase;margin:14px 0 7px}
+.opts{display:flex;gap:6px;flex-wrap:wrap}
+.opt{padding:9px 12px;border-radius:11px;border:1px solid var(--marble-dark);background:var(--warm-white);font-size:12px;font-weight:500;cursor:pointer;font-family:'Jost',sans-serif;color:var(--charcoal)}
+.opt.on{background:var(--w-mag-pale);border-color:var(--w-mag);color:var(--w-mag-dark)}
+
+.sub{color:var(--mid-grey);font-size:12.5px;line-height:1.55;margin:0 0 14px}
+.row{display:flex;gap:11px}
+.muted{color:var(--mid-grey)}.faint{color:var(--light-grey)}
+.blue{color:var(--w-blue-dark)}.mag{color:var(--w-mag-dark)}.gn{color:var(--esg)}.br{color:var(--champagne-dark)}
+
+.silhouette{position:absolute;right:-20px;bottom:-10px;width:140px;height:120px;opacity:.18;pointer-events:none;z-index:0}
+.silhouette svg{width:100%;height:100%;fill:var(--champagne-light)}
 </style>
 <link rel="stylesheet" href="w-theme-dark.css">
 </head>
 <body>
-<div id="phone">
-  <div class="statusbar"><span id="clock">06:42</span><span class="w">W&nbsp;TAIPEI</span><span>100%</span></div>
+<div class="phone">
+  <div id="loader">
+    <div class="ld-grid"></div>
+    <div class="ld-glow"></div>
+    <div class="ld-content">
+      <div class="ld-mark">W&nbsp;TAIPEI</div>
+      <div class="ld-rule"></div>
+      <div class="ld-sub">ServiceFlow · Operating Layer</div>
+      <div class="ld-bar-wrap"><div class="ld-bar-fill" id="ldFill"></div></div>
+      <div class="ld-pct" id="ldPct">0%</div>
+    </div>
+    <div class="ld-foot">Forecasting · Operating · Validating</div>
+  </div>
+
+  <div class="sbar dk" id="sbar">
+    <span class="stime" id="clock">06:42</span>
+    <span class="sicons">
+      <span class="sig"><span></span><span></span><span></span></span>
+      <span class="bat"><svg width="22" height="11" viewBox="0 0 22 11"><rect x=".5" y=".5" width="18" height="10" rx="2" fill="none" stroke="currentColor"/><rect x="19.5" y="3.5" width="2" height="4" fill="currentColor"/><rect x="2" y="2" width="13" height="7" fill="currentColor"/></svg></span>
+    </span>
+    <button class="back-role" id="backRoleBtn" onclick="state.role=null;render()" style="display:none">‹ ROLE</button>
+  </div>
   <div id="screen"></div>
-  <div id="fab" onclick="openLog()" style="display:none"></div>
-  <div id="nav"></div>
+  <div id="nav" style="display:none"></div>
 </div>
+
 <script>
-/* ===================== BRAIN (v2 logic) ===================== */
 const STATIONS=[
  {key:'congee_noodle',label:'Congee & Noodle'},{key:'dim_sum',label:'Dim Sum'},
  {key:'japanese',label:'Japanese'},{key:'korean',label:'Korean'},
@@ -128,19 +296,20 @@ const STATIONS=[
  {key:'fruit_cold',label:'Fruit & Cold'},{key:'taiwanese_local',label:'Taiwanese Local'},
  {key:'coffee_bar',label:'Coffee Bar'}];
 const BASE_PARS={congee_noodle:60,dim_sum:40,japanese:45,korean:25,western_hot:70,bakery_pastry:55,fruit_cold:80,taiwanese_local:35,coffee_bar:300};
+const STATION_BADGE={congee_noodle:'#4A6741',dim_sum:'#A8175F',japanese:'#C9A97A',korean:'#E01E8C',western_hot:'#7A5A32',bakery_pastry:'#B9770F',fruit_cold:'#16A6EC',taiwanese_local:'#A0784A',coffee_bar:'#2A2520'};
 const NAT_PRIORS={greaterChina:{congee_noodle:1.5,dim_sum:1.5,taiwanese_local:1.3,western_hot:.8},japan:{japanese:1.8,fruit_cold:1.2,western_hot:.8},korea:{korean:1.8,congee_noodle:1.1},western:{western_hot:1.6,bakery_pastry:1.4,coffee_bar:1.3,congee_noodle:.7},seasia:{congee_noodle:1.2,fruit_cold:1.3},other:{}};
 const P={leisure:.70,business:.50,group:.60}, CPP=45, CO2=0.35;
 const SCEN={
- sat:{label:'Saturday',isWeekend:true,weather:{tempC:24,condition:'sunny',icon:'\u2600'},occupancyPct:78,roomsSold:304,guestsPerRoom:1.6,adrNTD:9800,nps:71,seg:{leisure:.7,business:.2,group:.1},mix:{greaterChina:.41,japan:.22,western:.18,korea:.07,seasia:.07,other:.05}},
- tue:{label:'Tuesday',isWeekend:false,weather:{tempC:17,condition:'rain',icon:'\u2614'},occupancyPct:72,roomsSold:281,guestsPerRoom:1.35,adrNTD:8600,nps:69,seg:{leisure:.25,business:.65,group:.1},mix:{greaterChina:.30,japan:.12,western:.42,korea:.05,seasia:.05,other:.06}}};
+ sat:{label:'Saturday',date:'Sat 14 Mar 2026',isWeekend:true,weather:{tempC:24,condition:'sunny',icon:'☀'},occupancyPct:78,roomsSold:316,guestsPerRoom:1.6,adrNTD:9800,nps:71,seg:{leisure:.7,business:.2,group:.1},mix:{greaterChina:.41,japan:.22,western:.18,korea:.07,seasia:.07,other:.05}},
+ tue:{label:'Tuesday',date:'Tue 17 Mar 2026',isWeekend:false,weather:{tempC:17,condition:'rain',icon:'☔'},occupancyPct:72,roomsSold:292,guestsPerRoom:1.35,adrNTD:8600,nps:69,seg:{leisure:.25,business:.65,group:.1},mix:{greaterChina:.30,japan:.12,western:.42,korea:.05,seasia:.05,other:.06}}};
 
 function mixLead(s){return s.mix.western>0.35?'Western':(s.mix.greaterChina>0.35?'Greater-China':'Asian');}
 function reasonText(nM,wM,dM,s){
-  const cands=[[nM-1,nM>1?'more '+mixLead(s)+' guests':'fewer '+mixLead(s)+' guests'],
-    [wM-1,wM>1?(s.weather.tempC<18?'cool morning':'warm morning'):'warm \u2192 lighter'],
+  const c=[[nM-1,nM>1?'more '+mixLead(s)+' guests':'fewer '+mixLead(s)+' guests'],
+    [wM-1,wM>1?(s.weather.tempC<18?'cool morning':'warm morning'):'warm → lighter'],
     [dM-1,dM>1?(s.isWeekend?'weekend indulgence':'weekday coffee rush'):(s.isWeekend?'weekend, less coffee':'weekday, less pastry')]];
-  cands.sort((a,b)=>Math.abs(b[0])-Math.abs(a[0]));
-  return Math.abs(cands[0][0])<0.04?'on baseline':cands[0][1];
+  c.sort((a,b)=>Math.abs(b[0])-Math.abs(a[0]));
+  return Math.abs(c[0][0])<0.04?'on baseline':c[0][1];
 }
 function computeBriefing(s){
   const entitled=s.roomsSold*s.guestsPerRoom;
@@ -154,235 +323,364 @@ function computeBriefing(s){
   const stations=STATIONS.map(st=>{
     const base=BASE_PARS[st.key]*scale, nM=nmf(st.key), wM=wm(st.key), dM=dm(st.key);
     const demand=base*nM*wM*dM, delta=(demand-base)/base, total=Math.round(demand), opening=Math.round(demand*of);
-    const measuredY=Math.round(base*0.12);
+    const measuredY=Math.round(base*0.12*10)/10;
     if(st.key!=='coffee_bar'){const rec=base*0.15;save+=rec*CPP;co2+=rec*CO2}
     return {...st,total,opening,replenish:Math.max(0,total-opening),delta,reason:reasonText(nM,wM,dM,s),measuredY};
   });
   const ranked=[...stations].filter(x=>Math.abs(x.delta)>0.08).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
   const actions=[];
   ranked.slice(0,3).forEach(x=>{const pct=Math.round(Math.abs(x.delta)*100);
-    if(x.delta<0)actions.push({tx:`Trim ${x.label} \u2212${pct}% \u00b7 ${x.reason}`,meta:`open ${x.opening} \u00b7 est. NT$${(Math.round(BASE_PARS[x.key]*scale-x.total)*CPP).toLocaleString()} saved \u00b7 Serve 360 auto-logged`});
-    else actions.push({tx:`Boost ${x.label} +${pct}% \u00b7 ${x.reason}`,meta:`open ${x.opening}, then ${x.replenish} replenished in waves`});});
-  actions.push(s.isWeekend?{tx:'Defer pastry 2nd bake to 08:00',meta:'later weekend peak (08:30\u201310:00)'}:{tx:'Open coffee-led at 06:30',meta:'weekday business rush, grab-and-go up'});
-  if(s.weather.condition==='rain')actions.push({tx:'Hold opening volumes ~10 min',meta:'rain delays arrivals; watch live covers'});
+    if(x.delta<0){
+      const sv=Math.round((BASE_PARS[x.key]*scale-x.total)*CPP);
+      actions.push({tx:'Trim '+x.label+' −'+pct+'% — '+x.reason,meta:'Open '+x.opening+' · auto-logged Serve 360',saving:sv});
+    } else {
+      actions.push({tx:'Boost '+x.label+' +'+pct+'% — '+x.reason,meta:'Open '+x.opening+', then '+x.replenish+' replenished in waves',saving:0});
+    }
+  });
+  if(actions.length<3)actions.push(s.isWeekend?{tx:'Defer pastry 2nd bake to 08:00',meta:'Later weekend peak 08:30–10:00',saving:0}:{tx:'Open coffee-led at 06:30',meta:'Weekday business rush — grab-and-go up',saving:0});
+  if(s.weather.condition==='rain'&&actions.length<4)actions.push({tx:'Hold opening volumes 10 min',meta:'Rain delays arrivals — watch live covers',saving:0});
   save=Math.round(save); co2=Math.round(co2*10)/10;
   const grades={Demand:s.isWeekend?'B+':'A-',Waste:save>4000?'A':save>2500?'B+':'B',Labour:'A-',ESG:'A'};
   return {covers,scale,stations,actions,grades,save,co2,
     cooks:Math.max(2,Math.round(covers/50)),servers:Math.max(2,Math.round(covers/(s.isWeekend?16:20))),
-    openTime:s.isWeekend?'06:30 \u00b7 peak 08:30\u201310:00':'06:30 \u00b7 peak 07:00\u201308:30'};
+    openTime:s.isWeekend?'06:30 · peak 08:30–10:00':'06:30 · peak 07:00–08:30',
+    waveTime:s.isWeekend?'08:00':'07:45'};
 }
 
-/* ===================== STATE + ICONS ===================== */
-let state={role:null,scenario:'sat',tab:'home'};
+let state={role:null,scenario:'sat',tab:'dashboard',outlet:'kitchen'};
 const g=id=>document.getElementById(id);
 const I={
  owner:'<svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>',
  gm:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0116 0v1"/></svg>',
  chef:'<svg viewBox="0 0 24 24"><path d="M7 21h10M6 12a4 4 0 010-8 4 4 0 017-2 4 4 0 014 6 4 4 0 01-2 4z"/><path d="M7 12v9M17 12v9"/></svg>',
  pin:'<svg viewBox="0 0 24 24"><path d="M12 22s7-7 7-12a7 7 0 10-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>',
- home:'<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>',
+ dash:'<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>',
  brief:'<svg viewBox="0 0 24 24"><path d="M5 3h14v18l-7-4-7 4z"/></svg>',
- bfast:'<svg viewBox="0 0 24 24"><path d="M4 8h13a4 4 0 010 8h-1M4 8v8a4 4 0 004 4h5a4 4 0 004-4M6 4v2M9 4v2M12 4v2"/></svg>',
- waste:'<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2M6 7l1 13h10l1-13"/></svg>',
+ fb:'<svg viewBox="0 0 24 24"><path d="M4 8h13a4 4 0 010 8h-1M4 8v8a4 4 0 004 4h5a4 4 0 004-4M6 4v2M9 4v2M12 4v2"/></svg>',
  esg:'<svg viewBox="0 0 24 24"><path d="M12 22c5-3 8-7 8-12V5l-8-3-8 3v5c0 5 3 9 8 12z"/><path d="M9 12l2 2 4-4"/></svg>',
- mic:'<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>',
- plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'};
+ portfolio:'<svg viewBox="0 0 24 24"><path d="M4 7h16v13H4zM8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
+ mic:'<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>'};
 
-/* ===================== SCREENS ===================== */
+const TPE101='<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><g><rect x="92" y="50" width="16" height="140"/><polygon points="92,50 100,30 108,50"/><rect x="88" y="65" width="24" height="3"/><rect x="88" y="85" width="24" height="3"/><rect x="88" y="105" width="24" height="3"/><rect x="88" y="125" width="24" height="3"/><rect x="88" y="145" width="24" height="3"/><rect x="88" y="165" width="24" height="3"/><rect x="40" y="120" width="14" height="70"/><rect x="60" y="140" width="12" height="50"/><rect x="76" y="155" width="10" height="35"/><rect x="115" y="150" width="10" height="40"/><rect x="130" y="135" width="14" height="55"/><rect x="150" y="160" width="10" height="30"/><rect x="165" y="145" width="12" height="45"/></g></svg>';
+
+function brandRow(){return '<div class="brand-row"><div class="w-mono">W</div><div class="brand-name">W TAIPEI · XINYI</div><div class="live-pill"><span class="dot"></span>LIVE</div></div>';}
+function metaLine(s){return '<div class="meta-line"><span>'+s.weather.icon+' '+s.weather.tempC+'°</span><span class="sep"></span><span>'+s.occupancyPct+'% Occ.</span><span class="sep"></span><span>'+(s.isWeekend?'Weekend':'Weekday')+'</span><span class="sep"></span><span>'+s.date+'</span></div>';}
+
 function screenRole(){return `
-  <div class="eyebrow" style="margin-top:20px"><span class="sq"></span> SERVICEFLOW \u00b7 OPERATING LAYER</div>
-  <h1>The Breakfast Brain.</h1>
-  <p class="sub">An operating layer for W Taipei \u2014 choose a vantage point.</p>
-  <div class="rolecard" onclick="pick('owner')"><div class="ico">${I.owner}</div><div><div class="t">Owner / VP Regional</div><div class="d">Portfolio \u00b7 asset value \u00b7 ESG</div></div></div>
-  <div class="rolecard" onclick="pick('gm')"><div class="ico">${I.gm}</div><div><div class="t">General Manager \u2014 W Taipei <span class="badge">LIVE</span></div><div class="d">All modules \u00b7 the Breakfast Brain</div></div></div>
-  <div class="rolecard mag" onclick="pick('gm')"><div class="ico">${I.chef}</div><div><div class="t">Chef / F&amp;B \u2014 the kitchen table</div><div class="d">Breakfast operations</div></div></div>
-  <div class="rolecard" style="opacity:.6" onclick="pick('gm')"><div class="ico">${I.pin}</div><div><div class="t">Future W / Marriott property</div><div class="d">Regional expansion \u00b7 coming</div></div></div>
-  <p class="sub" style="text-align:center;font-size:11px;margin-top:18px">Concept prototype \u00b7 SparkEdge Digital \u00b7 figures illustrative</p>`;}
+  <div class="hero dk" style="margin-bottom:0">
+    <div class="silhouette">${TPE101}</div>
+    <div class="brand-row"><div class="w-mono">W</div><div class="brand-name">W TAIPEI · XINYI</div></div>
+    <h1>The Breakfast <em>Brain.</em></h1>
+    <p class="hero-sub">An operating layer for <em style="color:var(--champagne-light);font-style:italic">W Taipei</em> — Xinyi District, 10 Zhongxiao East Rd Sec 5. Choose a vantage point.</p>
+  </div>
+  <div class="body" style="padding-top:18px">
+    <div class="rolecard" onclick="pick('owner')"><div class="ico">${I.owner}</div><div><div class="t">Owner / VP Regional</div><div class="d">Portfolio · asset value · ESG</div></div></div>
+    <div class="rolecard" onclick="pick('gm')"><div class="ico">${I.gm}</div><div><div class="t">General Manager <span class="badge">LIVE</span></div><div class="d">All modules · the Breakfast Brain</div></div></div>
+    <div class="rolecard mg" onclick="pick('gm')"><div class="ico">${I.chef}</div><div><div class="t">Chef / F&amp;B — The Kitchen Table</div><div class="d">Breakfast operations · station-level</div></div></div>
+    <div class="rolecard br" style="opacity:.55" onclick="pick('gm')"><div class="ico">${I.pin}</div><div><div class="t">Future W / Marriott property</div><div class="d">Regional expansion · coming</div></div></div>
+    <p class="sub" style="text-align:center;font-size:11px;margin-top:18px">Concept prototype · SparkEdge Digital · figures illustrative until calibrated</p>
+  </div>`;}
 
-function kpis(s,b){return `
-  <div class="row" style="margin-bottom:11px">
-    <div class="tile"><div class="k">Occupancy</div><div class="v">${s.occupancyPct}<small>%</small></div></div>
-    <div class="tile"><div class="k">Covers fcst</div><div class="v">${b.covers}</div></div></div>
-  <div class="row" style="margin-bottom:14px">
-    <div class="tile"><div class="k">ADR</div><div class="v"><small>NT$</small>${(s.adrNTD/1000).toFixed(1)}k</div></div>
-    <div class="tile"><div class="k">NPS</div><div class="v">${s.nps}</div></div></div>`;}
-
-function screenHome(){const s=SCEN[state.scenario],b=computeBriefing(s);const served=Math.round(b.covers*0.42);
-  return `
-  <div class="eyebrow" style="margin-top:14px"><span class="sq"></span> GOOD MORNING \u00b7 W TAIPEI</div>
-  <h1>${s.label} outlook</h1>
-  <p class="sub">${s.occupancyPct}% occupancy \u00b7 ${b.covers} breakfast covers forecast \u00b7 ${s.weather.icon} ${s.weather.tempC}\u00b0</p>
-  ${kpis(s,b)}
-  <div class="card" style="border-color:var(--blue);cursor:pointer" onclick="go('brief')">
-    <div class="eyebrow"><span class="sq"></span> READY \u00b7 TAP TO OPEN</div>
-    <h2>Nightly Breakfast Briefing</h2>
-    <p class="sub" style="margin:6px 0 0">9 stations \u00b7 ${b.actions.length} priority actions \u00b7 ${b.cooks} cooks / ${b.servers} servers</p></div>
-  <div class="card">
-    <div class="eyebrow"><span class="sq"></span> LIVE \u00b7 ACTUAL vs FORECAST</div>
-    <div class="row" style="justify-content:space-between;align-items:baseline"><h2 style="font-size:16px">${served} served</h2><span class="muted" style="font-size:12px">of ${b.covers} forecast \u00b7 08:10</span></div>
-    <div class="bar" style="margin-top:10px"><span style="width:42%;background:var(--blue-bright)"></span></div>
-    <p class="sub" style="margin:9px 0 0;font-size:12px">Tracking +3% to plan \u2014 congee replenishing on schedule.</p></div>
-  <div class="row" style="margin-bottom:13px">
-    <div class="tile" style="cursor:pointer" onclick="go('bfast')"><div class="k">the kitchen table</div><div class="v" style="font-size:15px;margin-top:8px">Prep \u2192</div></div>
-    <div class="tile" style="cursor:pointer" onclick="go('waste')"><div class="k">Waste loop</div><div class="v green" style="font-size:15px;margin-top:8px">\u221228% \u2192</div></div></div>
-  <div class="row">
-    <div class="tile" style="cursor:pointer" onclick="go('cadence')"><div class="k">Rolling forecast</div><div class="v" style="font-size:15px;margin-top:8px">5 gates \u2192</div></div>
-    <div class="tile" style="cursor:pointer" onclick="go('esg')"><div class="k">ESG</div><div class="v" style="font-size:15px;margin-top:8px">Serve 360 \u2192</div></div></div>`;}
-
-function chips(s){return `<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:15px">
-  <span class="chip">${s.weather.icon} ${s.weather.tempC}\u00b0</span>
-  <span class="chip">${s.occupancyPct}% occ</span>
-  <span class="chip">${Math.round((s.mix.greaterChina+s.mix.japan)*100)}% CN/JP \u00b7 ${Math.round(s.mix.western*100)}% West</span>
-  <span class="chip">${s.isWeekend?'Weekend \u00b7 leisure':'Weekday \u00b7 business'}</span></div>`;}
+function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
+  <div class="hero dk">
+    ${brandRow()}
+    <h1>Good morning, <em>${s.isWeekend?'leisure day':'business day'}.</em></h1>
+    <p class="hero-sub">${b.covers} breakfast covers forecast at The Kitchen Table — ${b.actions.length} priority actions ready for you.</p>
+    ${metaLine(s)}
+  </div>
+  <div class="body">
+    <div class="day-toggle">
+      <button class="${state.scenario==='sat'?'on':''}" onclick="setSc('sat')">Saturday · leisure</button>
+      <button class="${state.scenario==='tue'?'on':''}" onclick="setSc('tue')">Tuesday · business</button>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="k">Covers fcst</div><div class="v blue">${b.covers}</div><div class="d">75% breakfast attach rate</div></div>
+      <div class="kpi"><div class="k">Over-prep saved</div><div class="v gn">NT$${b.save.toLocaleString()}</div><div class="d">vs. flat baseline</div></div>
+      <div class="kpi"><div class="k">Occupancy</div><div class="v">${s.occupancyPct}<small>%</small></div><div class="d">${s.roomsSold} of 405 keys</div></div>
+      <div class="kpi"><div class="k">CO₂e ↓ tonight</div><div class="v br">${b.co2}<small>kg</small></div><div class="d">Auto-captured Serve 360</div></div>
+    </div>
+    <div class="eyebrow">Modules</div>
+    <div class="dash-tile" onclick="go('brief')">
+      <div class="dash-i" style="background:rgba(22,166,236,.12);color:var(--w-blue-dark)">${I.brief}</div>
+      <div class="dash-b"><div class="dash-t">Nightly briefing</div><div class="dash-d">9 stations · ${b.actions.length} priority actions · ${b.cooks} cooks / ${b.servers} servers</div></div>
+      <div class="dash-arrow">›</div>
+    </div>
+    <div class="dash-tile" onclick="go('fb')">
+      <div class="dash-i" style="background:rgba(224,30,140,.12);color:var(--w-mag-dark)">${I.fb}</div>
+      <div class="dash-b"><div class="dash-t">F&amp;B Hub</div><div class="dash-d">The Kitchen Table · YEN · WOOBAR · WET DECK · W&amp;W</div></div>
+      <div class="dash-arrow">›</div>
+    </div>
+    <div class="dash-tile" onclick="go('esg')">
+      <div class="dash-i" style="background:rgba(74,143,94,.12);color:var(--esg)">${I.esg}</div>
+      <div class="dash-b"><div class="dash-t">ESG · Serve 360</div><div class="dash-d">${b.co2} kg CO₂e ↓ tonight · 52 kg this month · Taiwan FSC mapped</div></div>
+      <div class="dash-arrow">›</div>
+    </div>
+    <div class="dash-tile" onclick="go('portfolio')">
+      <div class="dash-i" style="background:rgba(160,120,74,.14);color:var(--champagne-dark)">${I.portfolio}</div>
+      <div class="dash-b"><div class="dash-t">Owner portfolio</div><div class="dash-d">Yr-1 EBITDA uplift NT$1.9M · regional template · cross-brand roadmap</div></div>
+      <div class="dash-arrow">›</div>
+    </div>
+  </div>`;}
 
 function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
-  const grades=Object.entries(b.grades).map(([k,v])=>{const c=v[0]==='A'?'green':v[0]==='B'?'blue':'amber';
-    return `<div class="grade"><div class="v ${c}">${v}</div><div class="k">${k}</div></div>`;}).join('');
-  const acts=b.actions.map((a,i)=>`<div class="action"><div class="n">${i+1}</div><div><div class="tx">${a.tx}</div><div class="meta">${a.meta}</div></div></div>`).join('');
-  const rows=b.stations.map(st=>{const cls=st.delta>0.05?'up':st.delta<-0.05?'down':'flat';const sg=st.delta>0?'+':'';
-    return `<div class="prow"><div><div class="nm">${st.label}</div><div class="rs">${st.reason} \u00b7 ${st.measuredY}kg wasted yest.</div></div>
-      <div style="display:flex;align-items:center;gap:11px"><span class="delta ${cls}">${sg}${Math.round(st.delta*100)}%</span>
-      <div class="pr"><b>${st.opening}</b><small>+${st.replenish} waves</small></div></div></div>`;}).join('');
+  const grades=Object.entries(b.grades).map(([k,v])=>'<div class="g" data-kind="'+k+'"><div class="v">'+v+'</div><div class="k">'+k+'</div></div>').join('');
+  const top=b.actions.slice(0,3);
+  const actionItems=top.map((a,i)=>'<div class="ab-item"><div class="ab-ring">'+(i+1)+'</div><div class="ab-body"><div class="ab-tx">'+a.tx+'</div><div class="ab-meta">'+a.meta+'</div></div>'+(a.saving>0?'<div class="ab-save">NT$'+a.saving.toLocaleString()+'</div>':'<div class="ab-save zero">—</div>')+'</div>').join('');
+  const stationRows=b.stations.map(st=>{
+    const sg=st.delta>0?'+':'';
+    const cls=st.delta>0.04?'up':st.delta<-0.04?'down':'flat';
+    const isCoffee=st.key==='coffee_bar';
+    const prep='<b>'+st.opening+'</b> portions at 06:30'+(isCoffee?'':' · <b>+'+st.replenish+'</b> at '+b.waveTime);
+    return '<div class="st-row"><div class="st-badge" style="background:'+STATION_BADGE[st.key]+'"></div><div class="st-body"><div class="st-name">'+st.label+'</div><div class="st-prep">'+prep+'</div><div class="st-cause">'+st.reason+'</div><div class="st-waste">Yest. waste: '+st.measuredY+' kg</div></div><div class="st-pct '+cls+'">'+sg+Math.round(st.delta*100)+'%</div></div>';
+  }).join('');
   return `
-  <div class="eyebrow" style="margin-top:14px"><span class="sq"></span> NIGHTLY BREAKFAST BRIEFING</div>
-  <h1>${s.label} \u00b7 ${b.covers} covers</h1>
-  <p class="sub">A base cover forecast (occupancy \u00b7 segment \u00b7 inclusion), refined by four live signals.</p>
-  <div class="toggle"><button class="${state.scenario==='sat'?'on':''}" onclick="setSc('sat')">Saturday \u00b7 leisure</button><button class="${state.scenario==='tue'?'on':''}" onclick="setSc('tue')">Tuesday \u00b7 business</button></div>
-  ${chips(s)}
-  <div class="card"><div class="row">${grades}</div></div>
-  <div class="card"><div class="eyebrow"><span class="sq"></span> PRIORITY ACTIONS</div>${acts}</div>
-  <div class="card"><div class="eyebrow"><span class="sq"></span> PREP SHEET \u00b7 OPENING PAR + REPLENISHMENT</div>${rows}
-    <button class="btn ghost sm" style="margin-top:14px" onclick="shareToast()">\u2913  Share / print prep sheet</button></div>
-  <div class="card flat"><div class="row" style="justify-content:space-between">
-    <div><div class="eyebrow" style="margin:0"><span class="sq"></span> OPEN TIMES</div><div style="font-weight:700;font-size:13px;margin-top:7px">${b.openTime}</div></div>
-    <div style="text-align:right"><div class="faint" style="font-size:10px;font-weight:700;letter-spacing:.6px">STAFFING</div><div style="font-weight:700;font-size:13px;margin-top:7px">${b.cooks} cooks \u00b7 ${b.servers} servers</div></div></div></div>
-  <div class="card" style="border-color:var(--mag)"><div style="font-size:13.5px;line-height:1.5"><b class="mag">ESG captured \u2014</b> est. <b>NT$${b.save.toLocaleString()}</b> over-prep avoided \u00b7 <b>${b.co2}kg CO\u2082e</b> \u2193 \u00b7 auto-logged to Marriott Serve 360 + Taiwan FSC.</div></div>`;}
+  <div class="hero bl">
+    ${brandRow()}
+    <h1>${s.label}, <em>${b.covers} covers</em></h1>
+    <p class="hero-sub">A base cover forecast — occupancy × segment × 75% breakfast attach rate — refined by four live signals.</p>
+    ${metaLine(s)}
+  </div>
+  <div class="body">
+    <div class="day-toggle">
+      <button class="${state.scenario==='sat'?'on':''}" onclick="setSc('sat')">Saturday · leisure</button>
+      <button class="${state.scenario==='tue'?'on':''}" onclick="setSc('tue')">Tuesday · business</button>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="k">Occupancy</div><div class="v">${s.occupancyPct}<small>%</small></div><div class="d">${s.roomsSold} of 405 keys</div></div>
+      <div class="kpi"><div class="k">Covers fcst</div><div class="v blue">${b.covers}</div><div class="d">75% breakfast attach rate</div></div>
+      <div class="kpi"><div class="k">ADR</div><div class="v br"><small>NT$</small>${s.adrNTD.toLocaleString()}</div><div class="d">Tonight’s rate</div></div>
+      <div class="kpi"><div class="k">NPS · 7d</div><div class="v gn">${s.nps}</div><div class="d">Breakfast contribution +6</div></div>
+    </div>
+    <div class="eyebrow">Triple-threat scorecard</div>
+    <div class="card"><div class="score">${grades}</div></div>
 
-function screenBfast(){const s=SCEN[state.scenario],b=computeBriefing(s);
-  const strike=[...b.stations].sort((a,c)=>a.delta-c.delta)[0];const pct=Math.round(Math.abs(strike.delta)*100);
-  const cards=b.stations.slice(0,6).map(st=>{const cls=st.delta>0.05?'up':st.delta<-0.05?'down':'flat';const sg=st.delta>0?'+':'';
-    return `<div class="card" style="margin-bottom:11px;padding:15px 18px"><div class="row" style="justify-content:space-between;align-items:center">
-      <div><div class="nm" style="font-weight:800;font-size:14.5px">${st.label}</div><div class="rs" style="margin-top:3px">${st.reason}</div></div>
-      <div style="text-align:right"><div style="font-weight:800;font-size:20px">${st.total}</div><span class="delta ${cls}">${sg}${Math.round(st.delta*100)}%</span></div></div></div>`;}).join('');
-  return `
-  <div class="eyebrow" style="margin-top:14px"><span class="sq"></span> THE KITCHEN TABLE \u00b7 BREAKFAST</div>
-  <h1>Station prep</h1>
-  <p class="sub">${s.label} \u00b7 ${b.covers} covers \u00b7 opening pars, replenished in waves.</p>
-  <div class="card" style="border-color:var(--mag);background:linear-gradient(180deg,#fff,#fdf4f9)">
-    <div class="eyebrow"><span class="sq" style="background:var(--mag)"></span> PRE-EMPTIVE STRIKE</div>
-    <div style="font-size:15px;font-weight:800;line-height:1.35;margin-bottom:10px">Trim ${strike.label} \u2212${pct}% &amp; hold a fast-replenish buffer</div>
-    ${chips(s)}
-    <button class="btn mag" onclick="confirmToast()">Confirm &amp; log</button></div>
-  ${cards}`;}
+    <div class="ab-box">
+      <div class="ab-eb">${s.label.toUpperCase()} — 3 PRIORITY ACTIONS</div>
+      <div class="ab-h">Trim, <em>boost,</em> hold.</div>
+      ${actionItems}
+      <div class="ab-recap">
+        <div class="ab-recap-l">Tonight’s estimated value</div>
+        <div class="ab-recap-v">NT$${b.save.toLocaleString()}</div>
+      </div>
+    </div>
 
-function screenWaste(){const s=SCEN[state.scenario],b=computeBriefing(s);
-  const sorted=[...b.stations].filter(x=>x.key!=='coffee_bar').sort((a,c)=>c.measuredY-a.measuredY);
-  const max=sorted[0].measuredY, reasons=['Over-prep','Expiry','Over-portion'];
-  const rows=sorted.slice(0,6).map((st,i)=>`<div style="margin-bottom:14px">
-    <div class="row" style="justify-content:space-between;font-size:13px"><span class="nm">${st.label}</span><span class="muted"><b style="color:var(--ink)">${st.measuredY}kg</b> \u00b7 ${reasons[i%3]}</span></div>
-    <div class="bar" style="margin-top:7px"><span style="width:${Math.round(st.measuredY/max*100)}%;background:${i===0?'var(--mag)':'var(--blue-bright)'}"></span></div></div>`).join('');
-  return `
-  <div class="eyebrow" style="margin-top:14px"><span class="sq"></span> WASTE LOOP \u00b7 MEASURED</div>
-  <h1>What actually got wasted</h1>
-  <p class="sub">Touchless measurement by station feeds straight back into tomorrow's forecast.</p>
-  <div class="row" style="margin-bottom:13px">
-    <div class="tile"><div class="k">Yesterday</div><div class="v">${sorted.reduce((a,x)=>a+x.measuredY,0)}<small> kg</small></div></div>
-    <div class="tile"><div class="k">vs 30-day goal</div><div class="v green">\u221228<small>%</small></div></div></div>
-  <div class="card"><div class="eyebrow"><span class="sq"></span> BY STATION \u00b7 BY REASON</div>${rows}</div>
-  <div class="card flat"><div style="font-size:13px;line-height:1.5"><b class="blue">\u21bb Closing the loop \u2014</b> top waste was <b>${sorted[0].label}</b> (over-prep). Tomorrow's opening par auto-trimmed; reads from your Winnow/Leanpath meter where installed.</div></div>`;}
+    <div class="sec-h"><h3>Stations · ${s.label} breakfast</h3><span class="sa">9 stations</span></div>
+    <div class="divider"></div>
+    ${stationRows}
+
+    <div class="esg-card">
+      <div class="ico">${I.esg}</div>
+      <div class="esg-body">
+        <div class="esg-h">SERVE 360 · TAIWAN FSC · AUTO-CAPTURÉ</div>
+        <div class="esg-t">${b.co2} kg CO₂e évité ce soir · NT$${b.save.toLocaleString()} over-prep avoided</div>
+        <div class="esg-m">52 kg CO₂e cumulé ce mois · GRI 306 mapped</div>
+      </div>
+    </div>
+
+    <div class="card flat"><div class="row" style="justify-content:space-between">
+      <div><div class="eyebrow" style="margin:0">OPEN TIMES</div><div style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:18px;margin-top:6px">${b.openTime}</div></div>
+      <div style="text-align:right"><div class="eyebrow" style="margin:0;justify-content:flex-end">STAFFING</div><div style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:18px;margin-top:6px">${b.cooks} cooks · ${b.servers} servers</div></div>
+    </div></div>
+
+    <div class="sec-h"><h3>When it runs</h3><button class="sa" onclick="go('cadence')">5 gates ›</button></div>
+  </div>`;}
 
 function screenCadence(){const gates=[
-  {hz:'T-10\u201314 DAYS',nm:'PLAN',ds:'Provisional rota + weekly dry/frozen order',c:'#16A6EC'},
-  {hz:'T-3\u20135 DAYS',nm:'PROCURE',ds:'Perishable orders; confirm staffing',c:'#3E8FD0'},
-  {hz:'T-1\u20132 DAYS',nm:'FIRM',ds:'Daily-fresh orders; station mix; weather',c:'#8A63C8'},
-  {hz:'T-0 EVENING',nm:'PRESCRIBE',ds:'The nightly briefing \u2014 highest confidence',c:'#CE1A7E'},
-  {hz:'T-0 INTRADAY',nm:'FLEX',ds:'Throttle replenishment; capture measured waste',c:'#CE1A7E'}];
-  const rows=gates.map((gt,i)=>`<div class="gate"><div class="line"><div class="node" style="background:${gt.c}"></div>${i<gates.length-1?'<div class="stem"></div>':''}</div>
-    <div class="body"><div class="hz">${gt.hz}</div><div class="nm">${gt.nm}</div><div class="ds">${gt.ds}</div></div></div>`).join('');
+  {hz:'T-10–14 DAYS',nm:'PLAN',ds:'Provisional rota + weekly dry/frozen order',c:'var(--w-blue)'},
+  {hz:'T-3–5 DAYS',nm:'PROCURE',ds:'Perishable orders; confirm staffing',c:'#3E8FD0'},
+  {hz:'T-1–2 DAYS',nm:'FIRM',ds:'Daily-fresh orders; station mix; weather',c:'#8A63C8'},
+  {hz:'T-0 EVENING',nm:'PRESCRIBE',ds:'The nightly briefing — highest confidence',c:'var(--w-mag)'},
+  {hz:'T-0 INTRADAY',nm:'FLEX',ds:'Throttle replenishment; capture measured waste',c:'var(--champagne)'}];
+  const rows=gates.map((gt,i)=>'<div class="gate"><div class="line"><div class="node" style="background:'+gt.c+'"></div>'+(i<gates.length-1?'<div class="stem"></div>':'')+'</div><div class="body"><div class="hz">'+gt.hz+'</div><div class="nm">'+gt.nm+'</div><div class="ds">'+gt.ds+'</div></div></div>').join('');
   return `
-  <div class="eyebrow" style="margin-top:14px"><span class="sq"></span> WHEN IT RUNS</div>
-  <h1>A rolling forecast</h1>
-  <p class="sub">Re-forecast daily; commit each resource at its last responsible moment. Labour locks early &amp; coarse; food locks late &amp; fine.</p>
-  <div class="card">${rows}</div>
-  <div class="card flat"><div style="font-size:13px;line-height:1.5"><b class="blue">\u21bb Continuous learn \u2014</b> yesterday's measured covers + waste retrain tomorrow's forecast; the evening briefing is the last, highest-confidence gate.</div></div>`;}
+  <div class="hero dk">
+    ${brandRow()}
+    <h1>A rolling <em>forecast.</em></h1>
+    <p class="hero-sub">Re-forecast daily; commit each resource at its <em style="color:var(--champagne-light);font-style:italic">last responsible moment</em>. Labour locks early & coarse; food locks late & fine.</p>
+  </div>
+  <div class="body">
+    <div class="card">${rows}</div>
+    <div class="card flat"><div style="font-size:12.5px;line-height:1.55"><b class="br">↻ Continuous learn —</b> yesterday’s measured covers + waste retrain tomorrow’s forecast; the evening briefing is the last, highest-confidence gate.</div></div>
+    <button class="btn ghost" onclick="go('brief')">← Back to briefing</button>
+  </div>`;}
+
+const OUTLETS={
+  kitchen:{label:'The Kitchen Table',sub:'All-day · Breakfast hero',kind:'breakfast'},
+  yen:{label:'YEN',sub:'Cantonese fine dining · L31',kind:'restaurant'},
+  woobar:{label:'WOOBAR',sub:'Lounge & cocktails',kind:'bar'},
+  wetdeck:{label:'WET DECK',sub:'Rooftop pool bar · seasonal',kind:'bar'},
+  ww:{label:'Whatever/Whenever',sub:'In-room dining · 24h',kind:'service'}
+};
+function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
+  const tabs=Object.entries(OUTLETS).map(([k,o])=>'<button class="otab '+(state.outlet===k?'on':'')+'" onclick="setOutlet(\''+k+'\')">'+o.label+'</button>').join('');
+  let body;
+  if(state.outlet==='kitchen'){
+    const strike=[...b.stations].sort((a,c)=>a.delta-c.delta)[0];
+    const pct=Math.round(Math.abs(strike.delta)*100);
+    const saving=Math.round((BASE_PARS[strike.key]*b.scale-strike.total)*CPP);
+    const cards=b.stations.slice(0,6).map(st=>{const cls=st.delta>0.05?'up':st.delta<-0.05?'down':'flat';const sg=st.delta>0?'+':'';
+      return '<div class="card" style="padding:14px 16px"><div class="row" style="justify-content:space-between;align-items:center"><div style="flex:1"><div class="st-name">'+st.label+'</div><div class="st-cause" style="margin-top:3px">'+st.reason+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:\'Cormorant Garamond\',serif;font-size:24px;font-weight:500;letter-spacing:-.01em;color:var(--charcoal);line-height:1">'+st.total+'</div><span class="delta '+cls+'" style="margin-top:4px;display:inline-block">'+sg+Math.round(st.delta*100)+'%</span></div></div></div>';}).join('');
+    body=`
+    <div class="strike">
+      <div class="st-eb">PRE-EMPTIVE STRIKE</div>
+      <div class="st-tt">Trim ${strike.label} <em>−${pct}%</em> & hold a fast-replenish buffer.</div>
+      <div style="position:relative;z-index:1;font-size:12px;color:rgba(245,240,232,.7);line-height:1.5">${strike.reason} · save est. NT$${saving.toLocaleString()} · auto-log Serve 360.</div>
+      <div class="st-grid">
+        <div class="st-tile"><div class="v">${strike.opening}</div><div class="k">Opening par</div></div>
+        <div class="st-tile"><div class="v">+${strike.replenish}</div><div class="k">${b.waveTime} wave</div></div>
+        <div class="st-tile"><div class="v">${strike.measuredY}<small style="font-size:10px;letter-spacing:.05em"> kg</small></div><div class="k">Yest. waste</div></div>
+      </div>
+      <button class="btn mg" onclick="openLog()">Confirm &amp; log</button>
+      <div style="position:relative;z-index:1;margin-top:10px;text-align:center">
+        <button class="voice-btn" onclick="openLog()" style="background:transparent;border:1px dashed rgba(245,240,232,.25);color:rgba(245,240,232,.7)">${I.mic}<span>Voice log — hold to dictate</span></button>
+      </div>
+    </div>
+    <div class="sec-h"><h3>Station prep</h3><span class="sa">${s.label} · ${b.covers} covers</span></div>
+    ${cards}`;
+  } else {
+    const o=OUTLETS[state.outlet];
+    body=`<div class="ab-box">
+      <div class="ab-eb">${o.kind.toUpperCase()} · LIVE STREAM</div>
+      <div class="ab-h">${o.label}.</div>
+      <p style="position:relative;z-index:1;font-size:12.5px;line-height:1.55;color:rgba(245,240,232,.65)">${o.sub}. Live ops dashboard wires into PMS, POS and Winnow waste meter — module coming online with the rollout.</p>
+      <div class="ab-recap"><div class="ab-recap-l">Covers tonight</div><div class="ab-recap-v">—</div></div>
+    </div>
+    <div class="card"><div class="eyebrow">Roadmap</div>
+      <p class="sub" style="margin:0">Phase 1 scope is <b>The Kitchen Table</b>. Other outlets onboard sequentially once breakfast logic is validated against 4 weeks of measured data.</p>
+    </div>`;
+  }
+  return `
+  <div class="hero mg">
+    ${brandRow()}
+    <h1>${OUTLETS[state.outlet].label}.</h1>
+    <p class="hero-sub">${OUTLETS[state.outlet].sub} <span style="color:var(--champagne-light)">· ${s.label} · ${b.covers} covers</span></p>
+    ${metaLine(s)}
+  </div>
+  <div class="body">
+    <div class="otabs">${tabs}</div>
+    ${body}
+  </div>`;}
 
 function screenEsg(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
-  <div class="eyebrow" style="margin-top:14px"><span class="sq"></span> ESG INTELLIGENCE</div>
-  <h1>Serve 360 ready</h1>
-  <p class="sub">Every logged action becomes a defensible, auditable data point \u2014 no separate project.</p>
-  <div class="row" style="margin-bottom:13px">
-    <div class="tile"><div class="k">CO\u2082e / guest</div><div class="v green">0.34<small> kg \u2193</small></div></div>
-    <div class="tile"><div class="k">Waste cut</div><div class="v">28<small>%</small></div></div></div>
-  <div class="card"><div class="eyebrow"><span class="sq"></span> FRAMEWORKS</div>
-    <div class="prow"><span class="nm">Marriott Serve 360</span><span class="delta up">auto-captured</span></div>
-    <div class="prow"><span class="nm">Taiwan FSC / TWSE</span><span class="delta flat">draft ready</span></div>
-    <div class="prow"><span class="nm">GRI</span><span class="delta flat">mapped</span></div></div>
-  <div class="card"><div class="eyebrow"><span class="sq"></span> THIS MORNING</div>
-    <div class="prow"><span class="nm">Over-prep avoided</span><b>NT$${b.save.toLocaleString()}</b></div>
-    <div class="prow"><span class="nm">CO\u2082e reduced</span><b>${b.co2} kg</b></div>
-    <div class="prow"><span class="nm">Single-use bottles avoided \u00b7 MTD</span><b>3,140</b></div></div>
-  <p class="sub" style="font-size:11px">Illustrative; waste\u2192CO\u2082e measured via the waste meter, not modelled.</p>`;}
+  <div class="hero gn">
+    ${brandRow()}
+    <h1>Serve 360 <em>ready.</em></h1>
+    <p class="hero-sub">Every logged action becomes a defensible, auditable data point — <em style="color:var(--champagne-light);font-style:italic">no separate project</em>.</p>
+    ${metaLine(s)}
+  </div>
+  <div class="body">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="k">CO₂e / guest</div><div class="v gn">0.34<small>kg ↓</small></div><div class="d">vs. industry mean 0.48</div></div>
+      <div class="kpi"><div class="k">Waste cut</div><div class="v">28<small>%</small></div><div class="d">30-day rolling</div></div>
+    </div>
+    <div class="eyebrow">Frameworks</div>
+    <div class="card">
+      <div class="prow"><div><div class="nm">Marriott Serve 360</div><div class="rs">Native auto-capture</div></div><span class="delta up">live</span></div>
+      <div class="prow"><div><div class="nm">Taiwan FSC / TWSE</div><div class="rs">Draft report ready</div></div><span class="delta flat">monthly</span></div>
+      <div class="prow"><div><div class="nm">GRI 306 mapping</div><div class="rs">Waste, water, energy</div></div><span class="delta flat">mapped</span></div>
+    </div>
+    <div class="eyebrow">This morning</div>
+    <div class="card">
+      <div class="prow"><span class="nm">Over-prep avoided</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500">NT$${b.save.toLocaleString()}</b></div>
+      <div class="prow"><span class="nm">CO₂e reduced</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500">${b.co2} kg</b></div>
+      <div class="prow"><span class="nm">Single-use bottles avoided · MTD</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500">3,140</b></div>
+    </div>
+    <div class="card flat"><div style="font-size:12px;line-height:1.55"><b class="gn">Measured, not modelled —</b> waste → CO₂e read from the bin meter (Winnow / Leanpath compatible). The model only forecasts; the meter audits.</div></div>
+  </div>`;}
 
-function screenOwner(){return `
-  <div class="eyebrow" style="margin-top:18px"><span class="sq"></span> OWNER \u00b7 VP REGIONAL</div>
-  <h1>Portfolio</h1>
-  <p class="sub">Breakfast as the proof point \u2014 one validated template across the region.</p>
-  <div class="row" style="margin-bottom:13px">
-    <div class="tile"><div class="k">Yr-1 EBITDA uplift</div><div class="v"><small>NT$</small>1.9<small>M*</small></div></div>
-    <div class="tile"><div class="k">Asset value</div><div class="v">20\u201330<small>\u00d7</small></div></div></div>
-  <div class="card"><div class="eyebrow"><span class="sq"></span> PROPERTIES</div>
-    <div class="prow"><div><div class="nm">W Taipei \u00b7 Xinyi <span class="badge">LIVE</span></div><div class="rs">390 rooms \u00b7 the kitchen table</div></div><div class="pr"><b class="green">\u221228%</b><small>waste</small></div></div>
-    <div class="prow"><div><div class="nm">W \u2014 regional #2</div><div class="rs">pipeline \u00b7 template ready</div></div><div class="pr"><b class="faint">\u2014</b><small>Q3</small></div></div>
-    <div class="prow"><div><div class="nm">Marriott portfolio</div><div class="rs">cross-brand rollout</div></div><div class="pr"><b class="faint">\u2014</b><small>2027</small></div></div></div>
-  <div class="card"><div class="eyebrow"><span class="sq"></span> CROSS-SITE ESG (Serve 360)</div>
-    <div class="prow"><span class="nm">W Taipei</span><span class="delta up">A</span></div>
-    <div class="prow"><span class="nm">Portfolio avg</span><span class="delta flat">benchmarking\u2026</span></div></div>
-  <div class="card flat"><div class="eyebrow"><span class="sq"></span> ROADMAP</div>
-    <div style="font-size:13px;line-height:1.8"><b>1 \u00b7 Pilot</b> \u2014 the kitchen table (prototype, ROI + ESG)<br><b>2 \u00b7 Property</b> \u2014 all W Taipei outlets<br><b>3 \u00b7 Regional</b> \u2014 next W / Marriott<br><b>4 \u00b7 Portfolio AI</b> \u2014 cross-property brain</div></div>
-  <p class="sub" style="font-size:11px">*Illustrative; calibrated on W Taipei's Week-1 baseline.</p>
-  <button class="btn ghost" onclick="state.role=null;render()">\u2190 Switch role</button>`;}
+function screenPortfolio(){return `
+  <div class="hero br">
+    <div class="silhouette">${TPE101}</div>
+    ${brandRow()}
+    <h1>Portfolio <em>view.</em></h1>
+    <p class="hero-sub">Breakfast as the proof point — <em style="color:var(--champagne-light);font-style:italic">one validated template</em> across the region.</p>
+  </div>
+  <div class="body">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="k">Yr-1 EBITDA uplift</div><div class="v br"><small>NT$</small>1.9<small>M*</small></div><div class="d">Per property pilot</div></div>
+      <div class="kpi"><div class="k">Multiple</div><div class="v">20–30<small>×</small></div><div class="d">Cap-rate translation</div></div>
+    </div>
+    <div class="eyebrow">Properties</div>
+    <div class="card">
+      <div class="prow"><div><div class="nm">W Taipei · Xinyi <span class="badge">LIVE</span></div><div class="rs">405 keys · The Kitchen Table</div></div><div class="pr"><b class="gn">−28%</b><small>waste</small></div></div>
+      <div class="prow"><div><div class="nm">W — regional #2</div><div class="rs">Pipeline · template ready</div></div><div class="pr"><b class="faint">—</b><small>Q3</small></div></div>
+      <div class="prow"><div><div class="nm">Marriott portfolio</div><div class="rs">Cross-brand rollout</div></div><div class="pr"><b class="faint">—</b><small>2027</small></div></div>
+    </div>
+    <div class="eyebrow">Cross-site ESG · Serve 360</div>
+    <div class="card">
+      <div class="prow"><span class="nm">W Taipei</span><span class="delta up">A</span></div>
+      <div class="prow"><span class="nm">Portfolio avg</span><span class="delta flat">benchmarking…</span></div>
+    </div>
+    <div class="card flat"><div class="eyebrow">Roadmap</div>
+      <div style="font-size:12.5px;line-height:1.85">
+        <b style="font-family:'Cormorant Garamond',serif;font-size:15px">1 · Pilot</b> — The Kitchen Table (prototype → ROI + ESG)<br>
+        <b style="font-family:'Cormorant Garamond',serif;font-size:15px">2 · Property</b> — all W Taipei outlets<br>
+        <b style="font-family:'Cormorant Garamond',serif;font-size:15px">3 · Regional</b> — next W / Marriott<br>
+        <b style="font-family:'Cormorant Garamond',serif;font-size:15px">4 · Portfolio AI</b> — cross-property brain
+      </div>
+    </div>
+    <p class="sub" style="font-size:11px;text-align:center">*Illustrative; calibrated on W Taipei’s Week-1 baseline.</p>
+  </div>`;}
 
-/* ===================== LOG SHEET ===================== */
 let logSel={type:'Over-prep',station:'Congee & Noodle'};
 function openLog(){
   const types=['Over-prep','Spoilage','Cover count','Incident'];
   const ex=g('sheetbg');if(ex)ex.remove();
   const sheet=document.createElement('div');sheet.className='sheet-bg';sheet.id='sheetbg';
   sheet.onclick=e=>{if(e.target===sheet)closeLog()};
-  sheet.innerHTML=`<div class="sheet"><div class="grab"></div>
-    <h2>Log \u2014 voice first</h2><p class="sub" style="margin:5px 0 14px">Tap to dictate, English or \u4e2d\u6587 \u00b7 auto-fills the form \u00b7 ~22s.</p>
-    <div class="mic"><div class="d">${I.mic}</div><div style="font-size:13px;font-weight:600">"Tossed about three kilos of pastry from the buffet\u2026"</div></div>
-    <div class="field">Type</div><div class="opts">${types.map(t=>`<div class="opt ${logSel.type===t?'on':''}" onclick="logSel.type='${t}';openLog()">${t}</div>`).join('')}</div>
-    <div class="field">Station</div><div class="opts">${STATIONS.slice(0,6).map(st=>`<div class="opt ${logSel.station===st.label?'on':''}" onclick="logSel.station='${st.label}';openLog()">${st.label}</div>`).join('')}</div>
-    <button class="btn" style="margin-top:20px" onclick="closeLog();confirmToast()">Submit \u2014 auto-capture Serve 360 + Taiwan FSC</button>
-    <button class="btn ghost sm" style="margin-top:9px" onclick="closeLog()">Cancel</button></div>`;
-  g('phone').appendChild(sheet);
+  sheet.innerHTML='<div class="sheet"><div class="grab"></div>'+
+    '<h2>Log — <em style="color:var(--champagne-dark);font-style:italic">voice first</em></h2>'+
+    '<p class="sub" style="margin:5px 0 14px">Hold the voice button to dictate (English or 中文). Auto-fills the form · ~22s.</p>'+
+    '<button class="voice-btn" onclick="confirmToast()" style="width:100%;justify-content:center;padding:13px;font-size:13px">'+I.mic+'<span>Hold to dictate</span></button>'+
+    '<div class="field">Type</div><div class="opts">'+types.map(t=>'<div class="opt '+(logSel.type===t?'on':'')+'" onclick="logSel.type=\''+t+'\';openLog()">'+t+'</div>').join('')+'</div>'+
+    '<div class="field">Station</div><div class="opts">'+STATIONS.slice(0,6).map(st=>'<div class="opt '+(logSel.station===st.label?'on':'')+'" onclick="logSel.station=\''+st.label+'\';openLog()">'+st.label+'</div>').join('')+'</div>'+
+    '<button class="btn mg" style="margin-top:20px" onclick="closeLog();confirmToast()">Submit — auto-capture Serve 360 + Taiwan FSC</button>'+
+    '<button class="btn ghost sm" style="margin-top:9px" onclick="closeLog()">Cancel</button></div>';
+  document.querySelector('.phone').appendChild(sheet);
 }
 function closeLog(){const e=g('sheetbg');if(e)e.remove();}
 
-/* ===================== NAV + RENDER ===================== */
-const TABS=[['home','Home','home'],['brief','Brief','brief'],['bfast','Prep','bfast'],['waste','Waste','waste'],['esg','ESG','esg']];
+const TABS=[
+  ['dashboard','Home','dash'],
+  ['brief','Brief','brief'],
+  ['fb','F&B','fb'],
+  ['esg','ESG','esg'],
+  ['portfolio','Owner','portfolio']
+];
+const SCREEN_BAR={dashboard:'dk',brief:'bl',fb:'mg',esg:'gn',portfolio:'br',cadence:'dk'};
 function renderNav(){
-  if(!state.role||state.role==='owner'){g('nav').style.display='none';g('fab').style.display='none';return;}
-  g('nav').style.display='flex';g('fab').style.display='flex';g('fab').innerHTML=I.plus;
-  g('nav').innerHTML=TABS.map(([id,lb,ic])=>`<div class="nav-item ${state.tab===id?'active':''}" onclick="go('${id}')">${I[ic]}${lb}</div>`).join('');
+  const navEl=g('nav');
+  if(!state.role||state.role==='owner'){navEl.style.display='none';return;}
+  navEl.style.display='flex';
+  navEl.innerHTML=TABS.map(([id,lb,ic])=>'<button class="nb '+(state.tab===id?'on':'')+'" data-tab="'+id+'" onclick="go(\''+id+'\')">'+I[ic]+'<span>'+lb+'</span></button>').join('');
+}
+function setSbar(){
+  const s=g('sbar');if(!s)return;
+  const cls=!state.role?'dk':(state.role==='owner'?'br':(SCREEN_BAR[state.tab]||'dk'));
+  s.className='sbar '+cls;
+  g('backRoleBtn').style.display=state.role?'':'none';
 }
 function render(){
   let html;
   if(!state.role)html=screenRole();
-  else if(state.role==='owner')html=screenOwner();
-  else html=({home:screenHome,brief:screenBrief,bfast:screenBfast,waste:screenWaste,cadence:screenCadence,esg:screenEsg}[state.tab]||screenHome)();
-  g('screen').innerHTML=html;g('screen').scrollTop=0;renderNav();
+  else if(state.role==='owner')html=screenPortfolio();
+  else html=({dashboard:screenDashboard,brief:screenBrief,fb:screenFB,esg:screenEsg,portfolio:screenPortfolio,cadence:screenCadence}[state.tab]||screenDashboard)();
+  g('screen').innerHTML=html;g('screen').scrollTop=0;
+  renderNav();setSbar();
 }
-function pick(r){state.role=r;state.tab='home';closeLog();render();}
+function pick(r){state.role=r;state.tab=r==='owner'?'portfolio':'dashboard';closeLog();render();}
 function go(t){state.tab=t;render();}
 function setSc(sc){state.scenario=sc;render();}
+function setOutlet(o){state.outlet=o;render();}
 function toast(msg,color){const t=document.createElement('div');t.textContent=msg;
-  t.style.cssText=`position:absolute;left:50%;bottom:100px;transform:translateX(-50%);background:${color};color:#fff;font-weight:700;padding:12px 18px;border-radius:13px;font-size:13px;z-index:20;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:88%;text-align:center`;
-  g('phone').appendChild(t);setTimeout(()=>t.remove(),2000);}
-function confirmToast(){toast('\u2713 Logged \u00b7 Serve 360 & Taiwan FSC auto-captured','#1C9B72');}
-function shareToast(){toast('\u2913 Prep sheet sent to kitchen + GM','#1488CC');}
-render();
+  t.style.cssText='position:absolute;left:50%;bottom:110px;transform:translateX(-50%);background:'+color+';color:#fff;font-weight:600;padding:13px 19px;border-radius:13px;font-size:12.5px;letter-spacing:.04em;z-index:30;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:88%;text-align:center;font-family:Jost,sans-serif';
+  document.querySelector('.phone').appendChild(t);setTimeout(()=>t.remove(),2200);}
+function confirmToast(){toast('✓ Logged · Serve 360 & Taiwan FSC auto-captured','#4A8F5E');}
+function shareToast(){toast('⤓ Prep sheet sent to kitchen + GM','#16A6EC');}
+
+(function tick(){const d=new Date(),pad=n=>(''+n).padStart(2,'0');const el=g('clock');if(el)el.textContent=pad(d.getHours())+':'+pad(d.getMinutes());setTimeout(tick,15000);})();
+
+(function bootLoader(){const fill=g('ldFill'),pct=g('ldPct');let p=0;const t=setInterval(()=>{p+=Math.random()*9+6;if(p>=100){p=100;clearInterval(t);setTimeout(()=>{g('loader').classList.add('hide');render();setTimeout(()=>{const l=g('loader');if(l)l.remove();},900);},250);}fill.style.width=p+'%';pct.textContent=Math.round(p)+'%';},140);})();
 </script>
 </body>
 </html>
