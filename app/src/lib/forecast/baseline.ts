@@ -91,6 +91,108 @@ export const CO2E_PER_KG_FOOD = 0.35; // generic fallback; use station-specific 
 // Reference cover count used as normalisation baseline
 const REFERENCE_COVERS = 312;
 
+// ─── Inside-out attach rate constants (CLAUDE.md §5) ─────────────────────────
+// Replaces flat 0.65 with rate-code + loyalty-tier + LOS segmentation.
+
+/** Breakfast attach rate by PMS rate code. */
+export const ATTACH_BY_RATE_CODE: Record<string, number> = {
+  breakfast_inclusive: 0.92,
+  half_board:          0.88,
+  package_leisure:     0.75,
+  default:             0.60,
+  room_only:           0.27,
+  redemption_points:   0.50,
+};
+
+/** Loyalty tiers that divert to the executive lounge (not the buffet). */
+export const LOUNGE_DIVERT_TIERS: ReadonlySet<string> = new Set([
+  "ambassador",
+  "titanium",
+]);
+
+/** Lounge attach rate (Titanium/Ambassador bypass the buffet at this fraction). */
+const LOUNGE_DETACH = 0.85;
+
+/** LOS fatigue multiplier: long-stay guests eat less; departure day = boost. */
+export const LOS_FATIGUE: Record<string | number, number> = {
+  1:           1.00,
+  2:           0.97,
+  3:           0.94,
+  4:           0.91,
+  "5+":        0.85,
+  departure:   1.05,
+};
+
+/**
+ * Per-travel-source wave-split priors (wave1, wave2, wave3 fractions).
+ * Used when travel_source_mix is provided in PmsDaily.
+ */
+export const WAVE_PROFILES: Record<string, readonly [number, number, number]> = {
+  tour_group:  [0.75, 0.20, 0.05],
+  fit:         [0.20, 0.55, 0.25],
+  mice:        [0.45, 0.40, 0.15],
+  departure:   [0.80, 0.18, 0.02],
+  other:       [0.35, 0.45, 0.20],
+};
+
+/**
+ * Compute attach rate for a single guest cohort.
+ * This is the inside-out core: guests who already booked breakfast show up.
+ */
+export function computeAttach(params: {
+  rateCode: string;
+  loyaltyTier?: string;
+  losDay?: number;
+  departingToday?: boolean;
+  arrivalHour?: number;
+}): number {
+  const { rateCode, loyaltyTier, losDay, departingToday, arrivalHour } = params;
+
+  let base = ATTACH_BY_RATE_CODE[rateCode] ?? ATTACH_BY_RATE_CODE.default;
+
+  if (loyaltyTier && LOUNGE_DIVERT_TIERS.has(loyaltyTier)) {
+    base = Math.max(0.05, base - LOUNGE_DETACH);
+  }
+
+  const losKey: string | number = departingToday
+    ? "departure"
+    : (losDay != null && losDay <= 4 ? losDay : "5+");
+  const fatigue = LOS_FATIGUE[losKey] ?? 1.0;
+
+  const late = (arrivalHour ?? 0) >= 23 ? 0.40 : 1.0;
+
+  return base * fatigue * late;
+}
+
+/**
+ * Compute effective attach rate from a full rate_code_mix object.
+ * Each key is a rate-code string, value is the fraction of rooms on that code.
+ */
+export function computeAttachFromMix(rateCodeMix: Record<string, number>): number {
+  return Object.entries(rateCodeMix).reduce((sum, [code, weight]) => {
+    return sum + weight * (ATTACH_BY_RATE_CODE[code] ?? ATTACH_BY_RATE_CODE.default);
+  }, 0);
+}
+
+/**
+ * Compute blended wave fractions from a travel_source_mix dict.
+ * Returns [wave1Frac, wave2Frac, wave3Frac] normalised to sum = 1.
+ */
+export function computeWaveFracsFromSource(
+  travelSourceMix: Record<string, number>
+): readonly [number, number, number] {
+  let w1 = 0, w2 = 0, w3 = 0;
+  for (const [source, weight] of Object.entries(travelSourceMix)) {
+    const profile = WAVE_PROFILES[source] ?? WAVE_PROFILES.other;
+    w1 += weight * profile[0];
+    w2 += weight * profile[1];
+    w3 += weight * profile[2];
+  }
+  const total = w1 + w2 + w3;
+  if (total === 0) return [0.35, 0.45, 0.20]; // fallback
+  return [w1 / total, w2 / total, w3 / total] as const;
+}
+
 // ─── Input types ──────────────────────────────────────────────────────────────
 
 export interface PmsDaily {
@@ -100,6 +202,23 @@ export interface PmsDaily {
   earlyCheckIns: number;
   totalCheckIns: number;
   occupancyPct: number;
+  // ── Inside-out signals (optional; fall back to segmentMix when absent) ──
+  /** Rate-code fractions: {"breakfast_inclusive":0.55,"room_only":0.30,...} */
+  rateCodeMix?: Record<string, number>;
+  /** Loyalty-tier fractions: {"titanium":0.08,"platinum_elite":0.12,...} */
+  loyaltyTierMix?: Record<string, number>;
+  /** Travel-source fractions: {"fit":0.45,"tour_group":0.30,...} */
+  travelSourceMix?: Record<string, number>;
+  /** Rooms checking out this service date */
+  departureCount?: number;
+  /** Check-outs before 11:00 */
+  departureAmCount?: number;
+  /** Titanium+ guest count (lounge diversion) */
+  loungeEligible?: number;
+  /** Arrivals after 23:00 the prior night (reduced attach) */
+  lateArrivalsPrev?: number;
+  /** LOS distribution: {"day1":0.20,"day2_4":0.50,"day5plus":0.30} */
+  losDistribution?: Record<string, number>;
 }
 
 export interface SegmentMix {
@@ -373,7 +492,14 @@ export interface ComputeCoversInput {
 
 /**
  * Compute probabilistic covers (p10 / p50 / p90) from PMS + segment + event + weather inputs.
- * The p50 is the point estimate; p10/p90 are derived via confidence-based uncertainty band.
+ *
+ * Inside-out path (preferred, CLAUDE.md §5):
+ *   If pmsDaily.rateCodeMix is provided, use ATTACH_BY_RATE_CODE with lounge diversion
+ *   and LOS fatigue. Produces a more accurate attach than the flat SEGMENT_ATTACH.
+ *
+ * Legacy path (fallback):
+ *   If rateCodeMix is absent, falls back to segmentMix + SEGMENT_ATTACH as before.
+ *   All existing tests and callers continue to work without change.
  */
 export function computeCovers(input: ComputeCoversInput): CoversBand {
   const { pmsDaily, segmentMix, eventLift, weather } = input;
@@ -384,10 +510,47 @@ export function computeCovers(input: ComputeCoversInput): CoversBand {
     pmsDaily.guestsPerRoom *
     (1 + (pmsDaily.suiteRatio ?? 0.12) * 0.3);
 
-  // Segment attach rate: weighted average of booking-segment attach rates
-  const segAttach = Object.entries(segmentMix).reduce((sum, [segment, weight]) => {
-    return sum + weight * (SEGMENT_ATTACH[segment] ?? 0.6);
-  }, 0);
+  // ── Attach rate: inside-out (preferred) vs legacy segment mix ──────────────
+  let effectiveAttach: number;
+
+  if (pmsDaily.rateCodeMix && Object.keys(pmsDaily.rateCodeMix).length > 0) {
+    // Inside-out: rate-code × LOS-fatigue × lounge diversion
+    let rateAttach = computeAttachFromMix(pmsDaily.rateCodeMix);
+
+    // Lounge diversion: Titanium+/Ambassador guests bypass the buffet
+    const loungeEligible = pmsDaily.loungeEligible ?? 0;
+    const totalGuests = pmsDaily.roomsSold * pmsDaily.guestsPerRoom;
+    if (loungeEligible > 0 && totalGuests > 0) {
+      const loungeFrac = Math.min(1, loungeEligible / totalGuests);
+      rateAttach = rateAttach * (1 - loungeFrac) + Math.max(0.05, rateAttach - LOUNGE_DETACH) * loungeFrac;
+    }
+
+    // LOS fatigue blend from los_distribution when available
+    if (pmsDaily.losDistribution) {
+      const { day1 = 0, day2_4 = 0, day5plus = 0, departure = 0 } = pmsDaily.losDistribution as Record<string, number>;
+      const losFatigue =
+        day1 * LOS_FATIGUE[1] +
+        day2_4 * (LOS_FATIGUE[2] + LOS_FATIGUE[3] + LOS_FATIGUE[4]) / 3 +
+        day5plus * (LOS_FATIGUE["5+"] as number) +
+        departure * (LOS_FATIGUE.departure as number);
+      const fatigueTotalWeight = day1 + day2_4 + day5plus + departure;
+      if (fatigueTotalWeight > 0) rateAttach *= losFatigue / fatigueTotalWeight;
+    }
+
+    // Late arrivals penalty: previous night arrivals ≥ 23:00 → 40% attach
+    const lateArrPrev = pmsDaily.lateArrivalsPrev ?? 0;
+    if (lateArrPrev > 0 && totalGuests > 0) {
+      const lateFrac = Math.min(0.3, lateArrPrev / totalGuests); // cap at 30% late
+      rateAttach = rateAttach * (1 - lateFrac) + 0.40 * rateAttach * lateFrac;
+    }
+
+    effectiveAttach = Math.max(0.05, Math.min(0.98, rateAttach));
+  } else {
+    // Legacy path: weighted segment attach (keeps all existing tests passing)
+    effectiveAttach = Object.entries(segmentMix).reduce((sum, [segment, weight]) => {
+      return sum + weight * (SEGMENT_ATTACH[segment] ?? 0.6);
+    }, 0);
+  }
 
   // Early arrival lift
   const earlyLift = earlyArrivalLift(pmsDaily.earlyCheckIns, pmsDaily.totalCheckIns);
@@ -395,7 +558,7 @@ export function computeCovers(input: ComputeCoversInput): CoversBand {
   // Weather adjustment
   const weatherAdj = weather.condition === "rain" || weather.condition === "heavy_rain" || weather.condition === "thunderstorm" ? 0.97 : 1.0;
 
-  const p50 = Math.round(entitled * segAttach * earlyLift * eventLift * weatherAdj);
+  const p50 = Math.round(entitled * effectiveAttach * earlyLift * eventLift * weatherAdj);
 
   // Uncertainty band: tighter when segment data is clear, wider for unusual conditions
   const baseUncertainty = 0.12;

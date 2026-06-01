@@ -2,8 +2,13 @@ import { describe, it, expect } from "vitest";
 import {
   computeCovers,
   computeStationPars,
+  computeAttach,
+  computeAttachFromMix,
+  computeWaveFracsFromSource,
   waveSchedule,
   WINNOW_CORRECTION,
+  ATTACH_BY_RATE_CODE,
+  LOS_FATIGUE,
   type ComputeCoversInput,
   type ComputeStationParsInput,
   type WeatherInput,
@@ -434,5 +439,124 @@ describe("waveSchedule — pace history blend", () => {
     const result = waveSchedule("coffee_bar", false, 50);
     expect(result.paceWeight).toBe(0);
     expect(Object.keys(result.schedule).length).toBe(3);
+  });
+});
+
+// ─── Inside-out attach rate (CLAUDE.md §5) ───────────────────────────────────
+
+describe("computeAttach — inside-out", () => {
+  it("test_breakfast_inclusive_high_attach: day-1 guest ≥ 0.90", () => {
+    // LOS day 1: no fatigue → attach = 0.92 × 1.00 = 0.92
+    const a = computeAttach({ rateCode: "breakfast_inclusive", losDay: 1 });
+    expect(a).toBeGreaterThanOrEqual(0.90);
+  });
+
+  it("test_titanium_lounge_diversion: < 0.15", () => {
+    const a = computeAttach({
+      rateCode: "breakfast_inclusive",
+      loyaltyTier: "titanium",
+      losDay: 2,
+    });
+    expect(a).toBeLessThan(0.15);
+  });
+
+  it("test_room_only_low_attach: ≤ 0.30", () => {
+    const a = computeAttach({ rateCode: "room_only", losDay: 1 });
+    expect(a).toBeLessThanOrEqual(0.30);
+  });
+
+  it("test_departure_day_boost: departure > mid-stay LOS day 3", () => {
+    const departure = computeAttach({ rateCode: "breakfast_inclusive", departingToday: true });
+    const midStay   = computeAttach({ rateCode: "breakfast_inclusive", losDay: 3 });
+    expect(departure).toBeGreaterThan(midStay);
+  });
+
+  it("test_late_arrival_penalty: late arrival gives < 50% of normal attach", () => {
+    const normal = computeAttach({ rateCode: "breakfast_inclusive", losDay: 1 });
+    const late   = computeAttach({ rateCode: "breakfast_inclusive", losDay: 1, arrivalHour: 23 });
+    expect(late).toBeLessThan(normal * 0.50);
+  });
+
+  it("unknown rate code falls back to default (0.60)", () => {
+    const a = computeAttach({ rateCode: "mystery_package", losDay: 1 });
+    expect(a).toBeCloseTo(ATTACH_BY_RATE_CODE.default * LOS_FATIGUE[1], 3);
+  });
+});
+
+describe("computeAttachFromMix", () => {
+  it("pure breakfast_inclusive mix → attach ≈ 0.92", () => {
+    const a = computeAttachFromMix({ breakfast_inclusive: 1.0 });
+    expect(a).toBeCloseTo(0.92, 2);
+  });
+
+  it("50/50 inclusive + room_only → ~0.595", () => {
+    const a = computeAttachFromMix({ breakfast_inclusive: 0.5, room_only: 0.5 });
+    expect(a).toBeCloseTo((0.92 + 0.27) / 2, 2);
+  });
+});
+
+describe("computeWaveFracsFromSource", () => {
+  it("test_tour_group_wave1_heavy: wave1 > 0.60", () => {
+    const [w1] = computeWaveFracsFromSource({ tour_group: 1.0 });
+    expect(w1).toBeGreaterThan(0.60);
+  });
+
+  it("fit-heavy mix: wave2 is the largest wave", () => {
+    const [w1, w2, w3] = computeWaveFracsFromSource({ fit: 1.0 });
+    expect(w2).toBeGreaterThan(w1);
+    expect(w2).toBeGreaterThan(w3);
+  });
+
+  it("wave fracs always sum to ~1", () => {
+    const fracs = computeWaveFracsFromSource({ tour_group: 0.4, fit: 0.4, mice: 0.2 });
+    const sum = fracs.reduce((a, b) => a + b, 0);
+    expect(sum).toBeCloseTo(1.0, 4);
+  });
+});
+
+describe("computeCovers — inside-out path", () => {
+  const BASE_PMS = {
+    roomsSold: 316, guestsPerRoom: 1.6, suiteRatio: 0.14,
+    earlyCheckIns: 28, totalCheckIns: 94, occupancyPct: 0.78,
+  };
+  const SUNNY: WeatherInput = { tempC: 24, condition: "sunny", humidity: 65 };
+  const SEGMENT_MIX = { leisure_direct: 0.35, leisure_ota: 0.35, business_corp: 0.10,
+    group_inclusive: 0.08, group_exclusive: 0.02, long_stay: 0.10 };
+
+  it("inside-out with breakfast_inclusive mix gives higher covers than room_only mix", () => {
+    const inclusive = computeCovers({
+      pmsDaily: { ...BASE_PMS, rateCodeMix: { breakfast_inclusive: 0.90, room_only: 0.10 } },
+      segmentMix: SEGMENT_MIX, eventLift: 1.0, weather: SUNNY,
+    });
+    const roomOnly = computeCovers({
+      pmsDaily: { ...BASE_PMS, rateCodeMix: { room_only: 0.80, breakfast_inclusive: 0.20 } },
+      segmentMix: SEGMENT_MIX, eventLift: 1.0, weather: SUNNY,
+    });
+    expect(inclusive.p50).toBeGreaterThan(roomOnly.p50);
+  });
+
+  it("lounge diversion (high Titanium) reduces covers vs no diversion", () => {
+    const noLounge = computeCovers({
+      pmsDaily: { ...BASE_PMS, rateCodeMix: { breakfast_inclusive: 0.80, room_only: 0.20 },
+                  loungeEligible: 0 },
+      segmentMix: SEGMENT_MIX, eventLift: 1.0, weather: SUNNY,
+    });
+    const highLounge = computeCovers({
+      pmsDaily: { ...BASE_PMS, rateCodeMix: { breakfast_inclusive: 0.80, room_only: 0.20 },
+                  loungeEligible: 80 },
+      segmentMix: SEGMENT_MIX, eventLift: 1.0, weather: SUNNY,
+    });
+    expect(highLounge.p50).toBeLessThan(noLounge.p50);
+  });
+
+  it("legacy path (no rateCodeMix) still produces valid P10 < P50 < P90", () => {
+    const result = computeCovers({
+      pmsDaily: BASE_PMS,
+      segmentMix: SEGMENT_MIX,
+      eventLift: 1.0,
+      weather: SUNNY,
+    });
+    expect(result.p10).toBeLessThan(result.p50);
+    expect(result.p50).toBeLessThan(result.p90);
   });
 });

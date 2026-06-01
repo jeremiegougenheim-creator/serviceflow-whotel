@@ -935,6 +935,61 @@ export type Database = {
           }
         ];
       };
+      property_themes: {
+        Row: {
+          property_id:    string;
+          theme_name:     string;
+          bg_primary:     string;
+          bg_card:        string;
+          text_primary:   string;
+          text_secondary: string;
+          text_muted:     string;
+          accent_action:  string;
+          accent_savings: string;
+          accent_alert:   string;
+          divider:        string;
+          font_heading:   string;
+          updated_at:     string;
+        };
+        Insert: {
+          property_id:     string;
+          theme_name?:     string;
+          bg_primary?:     string;
+          bg_card?:        string;
+          text_primary?:   string;
+          text_secondary?: string;
+          text_muted?:     string;
+          accent_action?:  string;
+          accent_savings?: string;
+          accent_alert?:   string;
+          divider?:        string;
+          font_heading?:   string;
+          updated_at?:     string;
+        };
+        Update: {
+          property_id?:    string;
+          theme_name?:     string;
+          bg_primary?:     string;
+          bg_card?:        string;
+          text_primary?:   string;
+          text_secondary?: string;
+          text_muted?:     string;
+          accent_action?:  string;
+          accent_savings?: string;
+          accent_alert?:   string;
+          divider?:        string;
+          font_heading?:   string;
+          updated_at?:     string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "property_themes_property_id_fkey";
+            columns: ["property_id"];
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
     };
 
     Views: {
