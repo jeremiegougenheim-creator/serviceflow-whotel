@@ -516,3 +516,172 @@ test_no_hardcoded_colors_in_jsx()   # grep 'background.*#' dans src/ → 0 résu
 
 Pour Bastien : *"Le cockpit cuisine s'habille dans votre palette in-property W Hotels. Vos chefs ne voient pas une app externe — ils voient quelque chose qui ressemble à W."*
 Pour Jaravee : même produit, couleurs différentes, NT$0 de surcoût.
+
+---
+
+## 17. App architecture · roles · bidirectional notification flow
+
+### Principe central
+L'app n'est pas un dashboard que le chef consulte. C'est un **système de coordination opérationnel** où chaque rôle reçoit l'information dont il a besoin pour agir, et peut remonter du signal au reste de l'équipe.
+
+### Les 4 vues de l'app (tout le monde y a accès, profondeur selon rôle)
+
+```
+TODAY     — brief, 3 actions, NT$/ESG (vue GM/F&B Mgr par défaut)
+TEAM      — daily roster, station assignments (vue chef au matin)
+STATIONS  — grille live, tick-off, alertes (vue principale en service)
+HISTORY   — debrief, ESG exports, audit trail (vue auditeur)
+```
+
+### Les 6 rôles
+
+| Rôle | Vue par défaut | Peut faire | Ne voit PAS |
+|---|---|---|---|
+| GM | TODAY (summary) | Lire brief, voir NT$/ESG | Détails tactiques |
+| F&B Manager | TODAY (full) | Lire, approuver, override | Activité prep individuelle |
+| Chef | STATIONS (live) | Tout (admin) | Rien |
+| Sous-chef | STATIONS (les siennes) | Tick-off ses stations, flag | Autres stations en grisé |
+| Prep cook | TODAY → ma station | Voir liste prep, marquer ready | Stratégique, NT$, ESG |
+| Auditeur | HISTORY (read-only) | Voir ESG, exports | Live data |
+
+### Tables Supabase additionnelles
+
+```sql
+-- Membres persistants par propriété
+team_members (
+  id            uuid PK,
+  property_id   uuid → properties,
+  name          text,
+  role          text,            -- 'chef'|'sous_chef'|'prep_cook'|'fnb_mgr'|'gm'|'auditor'
+  phone         text,            -- pour WhatsApp routing
+  email         text,
+  active        bool DEFAULT true,
+  created_at    timestamptz
+)
+
+-- Roster confirmé du jour (résout le "pas la même équipe tous les jours")
+daily_assignments (
+  id               uuid PK,
+  outlet_id        uuid → outlets,
+  service_date     date,
+  team_member_id   uuid → team_members,
+  station_id       uuid → stations,  -- NULL pour chef/GM/F&B (pas de station)
+  wave             text,             -- 'all' pour sous-chef, 'wave1'|'wave2'|'wave3' pour prep
+  confirmed_at     timestamptz,      -- NULL si pas encore confirmé par chef
+  acknowledged_at  timestamptz       -- NULL si membre n'a pas accusé réception
+)
+-- UNIQUE(outlet_id, service_date, team_member_id)
+
+-- Tick-off live (le flux qui REMONTE)
+station_status (
+  id               uuid PK,
+  station_id       uuid → stations,
+  service_date     date,
+  wave             text,
+  status           text,             -- 'prepped'|'running_low'|'closed'
+  updated_by       uuid → team_members,
+  updated_at       timestamptz,
+  photo_url        text              -- optionnel
+)
+
+-- Issues remontées (one-tap depuis n'importe quel team member)
+flags (
+  id               uuid PK,
+  outlet_id        uuid → outlets,
+  service_date     date,
+  station_id       uuid → stations,  -- NULL si flag général
+  kind             text,             -- 'running_low'|'quality_issue'|'equipment'|'safety'
+  raised_by        uuid → team_members,
+  raised_at        timestamptz,
+  resolved_at      timestamptz,
+  notes            text
+)
+
+-- Saisie manuelle gaspillage (fallback si pas de Winnow)
+manual_waste_entry (
+  id               uuid PK,
+  station_id       uuid → stations,
+  service_date     date,
+  kg               numeric,
+  entered_by       uuid → team_members,
+  entered_at       timestamptz
+)
+-- Alimente waste_measured.source = 'manual_fallback'
+```
+
+### Matrice de notifications (qui reçoit quoi, par quel canal)
+
+```
+                        GM        F&B Mgr      Chef          Sous-chef         Prep cook
+                        (top)     (full)       (admin)       (their station)   (their station)
+─────────────────────────────────────────────────────────────────────────────────────────
+18:00 J-1 brief         WhatsApp  Email+push   Push tablet    —                 —
+05:30 check-in          —         —            CONFIRMS       Acknowledge      Acknowledge
+05:45 pre-service       —         Full brief   All stations  Their pars       Their prep list
+LIVE (06:00-10:30)
+  - pace alert          —         —            Push           Their station    —
+  - running low         —         —            Push approve  Push urgent      Action push
+  - waste prevention    —         Notif        Push approve  Their station    —
+  - group arrival       —         Notif        Push approve  Affected station —
+11:00 close             —         —            Confirms      Enters waste kg  —
+12:30 debrief           NT$+ESG   Full         Learning      Their station    —
+─────────────────────────────────────────────────────────────────────────────────────────
+EVENT-DRIVEN (groupe last-minute, météo flip, capteur anormal, etc.)
+                        → routing dynamique selon le scope (cf. notification_rules.py)
+```
+
+### Notification routing — code
+
+```python
+# services/notifications.py
+
+def notify(event_kind: str, payload: dict, service_date: date, outlet_id: uuid):
+    """
+    Route une notification vers les bonnes personnes selon
+    leur rôle ET leur assignation du jour (daily_assignments).
+    """
+    rules = NOTIFICATION_RULES[event_kind]  # cf. matrice ci-dessus
+    
+    # Récupère le roster confirmé du jour
+    assignments = db.query(
+        "SELECT * FROM daily_assignments "
+        "WHERE outlet_id = ? AND service_date = ? AND confirmed_at IS NOT NULL",
+        (outlet_id, service_date)
+    )
+    
+    for assignment in assignments:
+        member = get_member(assignment.team_member_id)
+        
+        # La personne reçoit-elle cet événement ?
+        if member.role not in rules['recipients']:
+            continue
+        
+        # Si l'événement est station-specific, ne notifier que les
+        # team members assignés à cette station
+        if payload.get('station_id') and assignment.station_id != payload['station_id']:
+            continue
+        
+        # Construit le payload personnalisé selon le rôle
+        message = build_payload(rules['template'], payload, member.role)
+        
+        # Envoie sur le bon canal
+        for channel in rules['channels'][member.role]:
+            send(member, channel, message)
+```
+
+### Tests obligatoires
+
+```python
+test_notification_routing_by_role()           # GM ≠ chef ≠ sous-chef
+test_station_specific_only_to_assigned()      # sous-chef ne reçoit pas les autres stations
+test_unconfirmed_roster_no_notifications()    # pas de notif sans confirm chef
+test_flag_creates_notification_to_chef()      # le UP-flow fonctionne
+test_manual_waste_writes_to_waste_measured()  # fallback Winnow correct
+test_acknowledged_at_set_on_notif_open()      # confirmation de lecture
+```
+
+### Argument commercial
+
+Pour Bastien : *"Vos sous-chefs ne reçoivent pas tout le brief — ils reçoivent leur station. Vos prep cooks reçoivent leur liste, pas la stratégie. Personne n'est noyé sous l'info. Et n'importe qui peut remonter un problème en un tap."*
+
+Comparé à ce qui existe : zéro autre outil F&B ne fait du routing par rôle ET par assignation du jour. La plupart envoient à "le chef" — un seul email — qui doit transmettre. Lauds parle directement à la bonne personne.
