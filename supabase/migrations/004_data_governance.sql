@@ -490,8 +490,8 @@ CREATE TABLE IF NOT EXISTS data_deletion_requests (
   org_id            UUID        NOT NULL REFERENCES orgs(id) ON DELETE CASCADE,
   requested_by      UUID        NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   requested_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  -- 30-day SLA is a GENERATED column — cannot be extended by application code.
-  deadline_at       TIMESTAMPTZ GENERATED ALWAYS AS (requested_at + INTERVAL '30 days') STORED,
+  -- 30-day SLA — set by trigger on insert, cannot be overridden.
+  deadline_at       TIMESTAMPTZ,
   -- scope: 'full' | 'property:<uuid>' | 'outlet:<uuid>'
   scope             TEXT        NOT NULL,
   status            TEXT        NOT NULL DEFAULT 'pending'
@@ -507,7 +507,7 @@ COMMENT ON TABLE data_deletion_requests IS
   'via trigger. Lauds ops verify the deletion via verified_by + verification_note.';
 
 COMMENT ON COLUMN data_deletion_requests.deadline_at IS
-  'Hard deadline: 30 days from requested_at. GENERATED ALWAYS — immutable. '
+  'Hard deadline: 30 days from requested_at. Set by trigger on insert — immutable after creation. '
   'Contractual guarantee to client.';
 
 COMMENT ON COLUMN data_deletion_requests.scope IS
@@ -517,6 +517,19 @@ COMMENT ON COLUMN data_deletion_requests.scope IS
 CREATE INDEX idx_ddr_org_id    ON data_deletion_requests(org_id);
 CREATE INDEX idx_ddr_status    ON data_deletion_requests(status);
 CREATE INDEX idx_ddr_deadline  ON data_deletion_requests(deadline_at);
+
+-- Trigger: set deadline_at = requested_at + 30 days on insert (immutable after creation)
+CREATE OR REPLACE FUNCTION set_deletion_deadline()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.deadline_at := NEW.requested_at + INTERVAL '30 days';
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_set_deletion_deadline
+  BEFORE INSERT ON data_deletion_requests
+  FOR EACH ROW EXECUTE FUNCTION set_deletion_deadline();
 
 ALTER TABLE data_deletion_requests ENABLE ROW LEVEL SECURITY;
 
