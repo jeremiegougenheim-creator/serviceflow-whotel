@@ -1,0 +1,7 @@
+aiohttp>=3.9.0
+apscheduler>=3.10.4
+
+# Tests
+pytest>=8.0
+pytest-asyncio>=0.23
+aioresponses>=0.7.6

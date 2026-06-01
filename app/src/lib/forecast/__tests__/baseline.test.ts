@@ -2,10 +2,12 @@ import { describe, it, expect } from "vitest";
 import {
   computeCovers,
   computeStationPars,
+  waveSchedule,
   WINNOW_CORRECTION,
   type ComputeCoversInput,
   type ComputeStationParsInput,
   type WeatherInput,
+  type PaceEntry,
 } from "../baseline";
 
 // ─── Shared station configs ───────────────────────────────────────────────────
@@ -363,5 +365,74 @@ describe("computeStationPars", () => {
 
     expect(cnCongee).toBeGreaterThan(wCongee);
     expect(cnDimSum).toBeGreaterThan(wDimSum);
+  });
+});
+
+// ─── waveSchedule (Tâche 4 — pace history blend) ─────────────────────────────
+
+function buildPaceHistory(nDays: number, fracs: [number, number, number]): PaceEntry[] {
+  const entries: PaceEntry[] = [];
+  const totalDelta = 200;
+  for (let d = 0; d < nDays; d++) {
+    const dateStr = `2026-01-${String(d + 1).padStart(2, "0")}`;
+    entries.push(
+      { wave_label: "wave1", covers_delta: Math.round(totalDelta * fracs[0]), service_date: dateStr },
+      { wave_label: "wave2", covers_delta: Math.round(totalDelta * fracs[1]), service_date: dateStr },
+      { wave_label: "wave3", covers_delta: Math.round(totalDelta * fracs[2]), service_date: dateStr }
+    );
+  }
+  return entries;
+}
+
+describe("waveSchedule — pace history blend", () => {
+  it("cold start (< 14 services): uses priors only, paceWeight = 0", () => {
+    const history = buildPaceHistory(5, [0.1, 0.5, 0.4]);
+    const result = waveSchedule("western_hot", false, 100, history);
+    expect(result.paceWeight).toBe(0);
+
+    // With no pace weight, fractions should match weekday-hot priors [0.35, 0.40, 0.25]
+    const { schedule } = result;
+    const vals = Object.values(schedule) as number[];
+    expect(vals[0]).toBeCloseTo(35, 0); // 0.35 × 100
+    expect(vals[1]).toBeCloseTo(40, 0); // 0.40 × 100
+  });
+
+  it("J14: paceWeight > 0 and schedule shifts toward historical fractions", () => {
+    // Historical: wave1 gets 50% instead of the 35% prior
+    const history = buildPaceHistory(14, [0.50, 0.30, 0.20]);
+    const result = waveSchedule("western_hot", false, 100, history);
+
+    expect(result.paceWeight).toBeGreaterThan(0);
+    expect(result.paceWeight).toBeLessThanOrEqual(0.9);
+
+    // wave1 prior = 35%; historical = 50% → blended > 35%
+    const wave1 = Object.values(result.schedule)[0] as number;
+    expect(wave1).toBeGreaterThan(35);
+  });
+
+  it("J30+: paceWeight clamps at 0.90 and schedule is 90% historical", () => {
+    const history = buildPaceHistory(35, [0.10, 0.50, 0.40]);
+    const result = waveSchedule("congee_noodle", true, 100, history);
+
+    expect(result.paceWeight).toBe(0.9);
+
+    // Blended wave1 = 0.9 × 0.10 + 0.1 × prior(0.30) = 0.09 + 0.03 = 0.12 → ~12 kg
+    const wave1 = Object.values(result.schedule)[0] as number;
+    expect(wave1).toBeGreaterThanOrEqual(10);
+    expect(wave1).toBeLessThan(20);
+  });
+
+  it("schedule values sum approximately to totalKg (±1 from rounding)", () => {
+    const history = buildPaceHistory(20, [0.40, 0.40, 0.20]);
+    const result = waveSchedule("bakery_pastry", false, 80, history);
+    const total = (Object.values(result.schedule) as number[]).reduce((a, b) => a + b, 0);
+    expect(total).toBeGreaterThanOrEqual(78);
+    expect(total).toBeLessThanOrEqual(82);
+  });
+
+  it("no history → cold start, paceWeight = 0", () => {
+    const result = waveSchedule("coffee_bar", false, 50);
+    expect(result.paceWeight).toBe(0);
+    expect(Object.keys(result.schedule).length).toBe(3);
   });
 });

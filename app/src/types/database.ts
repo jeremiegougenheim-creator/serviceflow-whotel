@@ -892,6 +892,49 @@ export type Database = {
           }
         ];
       };
+      pace_log: {
+        Row: {
+          id: string;
+          outlet_id: string;
+          service_date: string;
+          logged_at: string;
+          covers_cumul: number;
+          covers_delta: number;
+          wave_label: "wave1" | "wave2" | "wave3" | null;
+          source: "pos_simphony" | "manual_fallback";
+          raw_payload: Json | null;
+        };
+        Insert: {
+          id?: string;
+          outlet_id: string;
+          service_date: string;
+          logged_at?: string;
+          covers_cumul: number;
+          covers_delta?: number;
+          wave_label?: "wave1" | "wave2" | "wave3" | null;
+          source: "pos_simphony" | "manual_fallback";
+          raw_payload?: Json | null;
+        };
+        Update: {
+          id?: string;
+          outlet_id?: string;
+          service_date?: string;
+          logged_at?: string;
+          covers_cumul?: number;
+          covers_delta?: number;
+          wave_label?: "wave1" | "wave2" | "wave3" | null;
+          source?: "pos_simphony" | "manual_fallback";
+          raw_payload?: Json | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pace_log_outlet_id_fkey";
+            columns: ["outlet_id"];
+            referencedRelation: "outlets";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
     };
 
     Views: {

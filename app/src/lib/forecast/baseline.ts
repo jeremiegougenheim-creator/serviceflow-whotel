@@ -219,26 +219,122 @@ export function learningCorrection(
 
 export type WaveSchedule = Partial<Record<WaveLabel, number>>;
 
+/** One row from pace_log, used for learning the wave split from actuals. */
+export interface PaceEntry {
+  wave_label: "wave1" | "wave2" | "wave3";
+  covers_delta: number;
+  service_date: string; // ISO "YYYY-MM-DD"
+}
+
+export interface WaveSplitResult {
+  schedule: WaveSchedule;
+  /**
+   * 0.0 – 0.90 — how much of the split comes from measured history vs priors.
+   * Exposed in the UI so the chef can see when the model is calibrated.
+   *   <14 services → 0.0 (priors only)
+   *   14–30        → linear ramp 0–0.90
+   *   30+          → 0.90 (90 % historical, 10 % priors)
+   */
+  paceWeight: number;
+}
+
+// wave1/2/3 → position index in the ordered 3-wave schedule
+const WAVE_LABEL_INDEX: Record<string, number> = { wave1: 0, wave2: 1, wave3: 2 };
+
+/**
+ * Compute the 3-wave production schedule, blending station-type priors with
+ * measured pace history once ≥ 14 services have been observed.
+ *
+ * paceHistory is optional; when absent (cold start) priors are used exclusively.
+ */
 export function waveSchedule(
   stationSlug: string,
   isWeekend: boolean,
-  totalKg: number
-): WaveSchedule {
+  totalKg: number,
+  paceHistory?: PaceEntry[]
+): WaveSplitResult {
   const isHot = ["congee_noodle", "japanese", "western_hot", "korean"].includes(stationSlug);
   const isBev = stationSlug === "coffee_bar";
 
-  if (isWeekend) {
+  // ── Prior fractions (position 0/1/2 = wave1/2/3) ──────────────────────────
+  const priorFractions: [number, number, number] = isWeekend
+    ? isHot ? [0.30, 0.40, 0.30] : [0.25, 0.35, 0.40]
+    : isBev  ? [0.40, 0.40, 0.20] : [0.35, 0.40, 0.25];
+
+  // ── Wave keys in the output schedule ─────────────────────────────────────
+  const waveKeys: [WaveLabel, WaveLabel, WaveLabel] = isWeekend
+    ? ["open_0630", "wave_0800", "wave_0930"]
+    : ["open_0630", "wave_0745", "wave_0915"];
+
+  // ── Cold start: no history, use priors ───────────────────────────────────
+  const history = paceHistory ?? [];
+  const uniqueDates = new Set(history.map((e) => e.service_date));
+  const nServices = uniqueDates.size;
+
+  // weight = 0 until J14; linear ramp 0→0.90 from J14→J30; cap at 0.90
+  const paceWeight = nServices < 14 ? 0 : Math.min(0.90, nServices / 30);
+
+  if (paceWeight === 0 || history.length === 0) {
     return {
-      open_0630: Math.round(totalKg * (isHot ? 0.3 : 0.25)),
-      wave_0800: Math.round(totalKg * (isHot ? 0.4 : 0.35)),
-      wave_0930: Math.round(totalKg * (isHot ? 0.3 : 0.4)),
+      schedule: {
+        [waveKeys[0]]: Math.round(totalKg * priorFractions[0]),
+        [waveKeys[1]]: Math.round(totalKg * priorFractions[1]),
+        [waveKeys[2]]: Math.round(totalKg * priorFractions[2]),
+      },
+      paceWeight: 0,
     };
   }
 
+  // ── Historical fractions: average per-service wave fractions ─────────────
+  const perServiceFractions: number[][] = [];
+
+  for (const d of uniqueDates) {
+    const dayEntries = history.filter((e) => e.service_date === d);
+    const totDelta = dayEntries.reduce((s, e) => s + e.covers_delta, 0);
+    if (totDelta === 0) continue;
+
+    const fracs = [0, 0, 0];
+    for (const e of dayEntries) {
+      const idx = WAVE_LABEL_INDEX[e.wave_label] ?? -1;
+      if (idx >= 0) fracs[idx] += e.covers_delta / totDelta;
+    }
+    perServiceFractions.push(fracs);
+  }
+
+  if (perServiceFractions.length === 0) {
+    return {
+      schedule: {
+        [waveKeys[0]]: Math.round(totalKg * priorFractions[0]),
+        [waveKeys[1]]: Math.round(totalKg * priorFractions[1]),
+        [waveKeys[2]]: Math.round(totalKg * priorFractions[2]),
+      },
+      paceWeight: 0,
+    };
+  }
+
+  const histFracs = perServiceFractions.reduce(
+    (acc, cur) => [acc[0] + cur[0], acc[1] + cur[1], acc[2] + cur[2]],
+    [0, 0, 0]
+  ).map((s) => s / perServiceFractions.length) as [number, number, number];
+
+  // ── Blend ─────────────────────────────────────────────────────────────────
+  const blended: [number, number, number] = [
+    paceWeight * histFracs[0] + (1 - paceWeight) * priorFractions[0],
+    paceWeight * histFracs[1] + (1 - paceWeight) * priorFractions[1],
+    paceWeight * histFracs[2] + (1 - paceWeight) * priorFractions[2],
+  ];
+
+  // Normalise to avoid floating-point drift
+  const total = blended[0] + blended[1] + blended[2];
+  const norm = total > 0 ? blended.map((f) => f / total) as [number, number, number] : priorFractions;
+
   return {
-    open_0630: Math.round(totalKg * (isBev ? 0.4 : 0.35)),
-    wave_0745: Math.round(totalKg * 0.4),
-    wave_0915: Math.round(totalKg * (isBev ? 0.2 : 0.25)),
+    schedule: {
+      [waveKeys[0]]: Math.round(totalKg * norm[0]),
+      [waveKeys[1]]: Math.round(totalKg * norm[1]),
+      [waveKeys[2]]: Math.round(totalKg * norm[2]),
+    },
+    paceWeight,
   };
 }
 
@@ -376,7 +472,7 @@ export function computeStationPars(input: ComputeStationParsInput): StationPar[]
     const co2eRiskKg = Math.round(wasteRiskKg * station.co2eFactorKgPerKg * 100) / 100;
 
     // Wave schedule: distribute total par across service waves
-    const waves = waveSchedule(slug, isWeekend, parKg);
+    const { schedule: waves } = waveSchedule(slug, isWeekend, parKg);
     const waveEntries = Object.entries(waves) as [WaveLabel, number][];
 
     // Return one StationPar per wave that has a non-zero allocation
@@ -428,7 +524,7 @@ export function computeStationParsAllWaves(input: ComputeStationParsInput): Stat
     const confidence = Math.min(0.95, natConf * 0.4 + learning.conf * 0.4 + 0.2);
     const bandWidth = 1 - confidence;
 
-    const waves = waveSchedule(slug, isWeekend, totalParKg);
+    const { schedule: waves } = waveSchedule(slug, isWeekend, totalParKg);
 
     for (const [waveLabel, waveKg] of Object.entries(waves) as [WaveLabel, number][]) {
       if (waveKg <= 0) continue;
