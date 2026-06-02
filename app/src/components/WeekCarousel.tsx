@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { getDay } from "date-fns";
 
-// TODO: replace with useForecast(outletId, weekStartDate)
+// TODO: replace with useForecast(outletId, serviceDate)
 export const WEEK_DATA = [
   { covers: 188, savings: 1640 },  // Mon
   { covers: 221, savings: 2180 },  // Tue
@@ -58,15 +58,15 @@ export default function WeekCarousel({
                       border: "1px solid var(--lauds-accent-action)",
                     }
                   : {
-                      background: "#FFFFFF",
-                      border: "1px solid #E4DDD2",
+                      background: "var(--lauds-bg-card)",
+                      border: "1px solid var(--lauds-divider)",
                     }
               }
             >
               {/* Day name — 9px, stone or white */}
               <span
                 className="text-[9px] font-bold tracking-[0.12em] uppercase leading-none mb-2.5"
-                style={{ color: isSelected ? "rgba(255,255,255,0.60)" : "#8A7E72" }}
+                style={{ color: isSelected ? "rgba(255,255,255,0.60)" : "var(--lauds-text-muted)" }}
               >
                 {DAYS[i]}
               </span>
@@ -77,7 +77,7 @@ export default function WeekCarousel({
                 style={{
                   fontSize: isSelected ? "22px" : "20px",
                   fontWeight: 500,
-                  color: isSelected ? "#FFFFFF" : "#2A2520",
+                  color: isSelected ? "var(--lauds-bg-card)" : "var(--lauds-text-primary)",
                   letterSpacing: "-0.01em",
                 }}
               >
@@ -88,7 +88,7 @@ export default function WeekCarousel({
               <span
                 className="text-[9px] font-semibold leading-none mb-2.5"
                 style={{
-                  color: isSelected ? "rgba(255,255,255,0.65)" : "#4A8F5E",
+                  color: isSelected ? "rgba(255,255,255,0.65)" : "var(--lauds-accent-savings)",
                 }}
               >
                 {(day.savings / 1000).toFixed(1)}k
@@ -105,8 +105,8 @@ export default function WeekCarousel({
                     : isToday
                     ? "var(--lauds-accent-action)"
                     : isWeekend
-                    ? "#C9A97A"
-                    : "#8A7E72",
+                    ? "var(--lauds-champagne-light)"
+                    : "var(--lauds-text-muted)",
                 }}
               />
             </button>

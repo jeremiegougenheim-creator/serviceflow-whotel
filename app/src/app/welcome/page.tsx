@@ -19,7 +19,7 @@ export default function WelcomePage() {
         className="absolute inset-0 pointer-events-none"
         style={{
           backgroundImage:
-            "repeating-linear-gradient(108deg, transparent 0, transparent 44px, rgba(201,169,122,0.03) 44px, rgba(201,169,122,0.03) 45px)",
+            "repeating-linear-gradient(108deg, transparent 0, transparent 44px, color-mix(in srgb, var(--lauds-champagne-light) 3%, transparent) 44px, color-mix(in srgb, var(--lauds-champagne-light) 3%, transparent) 45px)",
         }}
       />
 
@@ -84,7 +84,7 @@ export default function WelcomePage() {
           className="w-full h-px mb-10"
           style={{
             background:
-              "linear-gradient(90deg, transparent, rgba(201,169,122,0.3), transparent)",
+              "linear-gradient(90deg, transparent, color-mix(in srgb, var(--lauds-champagne-light) 30%, transparent), transparent)",
           }}
         />
 

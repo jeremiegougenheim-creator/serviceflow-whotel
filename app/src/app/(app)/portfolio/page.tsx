@@ -86,14 +86,14 @@ export default function PortfolioPage() {
           className="absolute inset-0 pointer-events-none opacity-40"
           style={{
             backgroundImage:
-              "repeating-linear-gradient(108deg, transparent 0, transparent 44px, rgba(201,169,122,0.05) 44px, rgba(201,169,122,0.05) 45px)",
+              "repeating-linear-gradient(108deg, transparent 0, transparent 44px, color-mix(in srgb, var(--lauds-champagne-light) 5%, transparent) 44px, color-mix(in srgb, var(--lauds-champagne-light) 5%, transparent) 45px)",
           }}
         />
         <div
           className="absolute bottom-0 left-0 right-0 h-px"
           style={{
             background:
-              "linear-gradient(90deg, transparent, #A0784A, #C9A97A, #A0784A, transparent)",
+              "linear-gradient(90deg, transparent, var(--lauds-champagne), var(--lauds-champagne-light), var(--lauds-champagne), transparent)",
             opacity: 0.5,
           }}
         />
@@ -170,8 +170,8 @@ export default function PortfolioPage() {
         <div
           className="rounded-2xl px-5 py-4"
           style={{
-            background: "rgba(201,169,122,0.07)",
-            border: "1px solid rgba(201,169,122,0.18)",
+            background: "color-mix(in srgb, var(--lauds-champagne-light) 7%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--lauds-champagne-light) 18%, transparent)",
           }}
         >
           <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-lauds-champagne mb-3">
@@ -188,7 +188,7 @@ export default function PortfolioPage() {
             <div
               className="h-px w-full"
               style={{
-                background: "linear-gradient(90deg, rgba(201,169,122,0.25), transparent)",
+                background: "linear-gradient(90deg, color-mix(in srgb, var(--lauds-champagne-light) 25%, transparent), transparent)",
               }}
             />
             <div className="flex items-baseline justify-between">
@@ -245,8 +245,8 @@ function OutletRow({
   const isLive = outlet.badge === "live";
 
   const rowStyle = isLive
-    ? { background: "rgba(43,91,219,0.08)", border: "1px solid rgba(43,91,219,0.25)" }
-    : { background: "rgba(224,217,207,0.07)", border: "1px solid rgba(196,186,169,0.12)" };
+    ? { background: "color-mix(in srgb, var(--lauds-accent-action) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--lauds-accent-action) 25%, transparent)" }
+    : { background: "color-mix(in srgb, var(--lauds-divider) 7%, transparent)", border: "1px solid color-mix(in srgb, var(--lauds-divider) 12%, transparent)" };
 
   const inner = (
     <>
@@ -270,7 +270,7 @@ function OutletRow({
           stroke="currentColor"
           strokeWidth={1.9}
           className="w-4 h-4 flex-shrink-0 ml-1"
-          style={{ color: "#2B5BDB" }}
+          style={{ color: "var(--lauds-accent-action)" }}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
@@ -311,12 +311,12 @@ function Badge({ kind }: { kind: BadgeKind }) {
       style={
         isLive
           ? {
-              color: "#2B5BDB",
-              background: "rgba(43,91,219,0.10)",
+              color: "var(--lauds-accent-action)",
+              background: "color-mix(in srgb, var(--lauds-accent-action) 10%, transparent)",
             }
           : {
-              color: "#8C8479",
-              background: "rgba(196,186,169,0.15)",
+              color: "var(--lauds-text-muted)",
+              background: "color-mix(in srgb, var(--lauds-divider) 15%, transparent)",
             }
       }
     >

@@ -24,7 +24,10 @@
     --lauds-accent-savings: #4A8F5E;  /* savings, ESG */
     --lauds-accent-alert:   #E01E8C;  /* waste alerts */
     --lauds-divider:        #E2DDD4;
-    --lauds-font-heading:   "Cormorant Garamond";
+    --lauds-font-heading:    "Cormorant Garamond";
+    /* Champagne tones — not in property_themes but used as design tokens */
+    --lauds-champagne:       #A0784A;
+    --lauds-champagne-light: #C9A97A;
   }
 
   * {

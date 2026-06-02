@@ -162,14 +162,14 @@ export default function BriefPage() {
           className="absolute inset-0 pointer-events-none opacity-40"
           style={{
             backgroundImage:
-              "repeating-linear-gradient(108deg, transparent 0, transparent 44px, rgba(201,169,122,0.05) 44px, rgba(201,169,122,0.05) 45px)",
+              "repeating-linear-gradient(108deg, transparent 0, transparent 44px, color-mix(in srgb, var(--lauds-champagne-light) 5%, transparent) 44px, color-mix(in srgb, var(--lauds-champagne-light) 5%, transparent) 45px)",
           }}
         />
         <div
           className="absolute bottom-0 left-0 right-0 h-px"
           style={{
             background:
-              "linear-gradient(90deg, transparent, #A0784A, #C9A97A, #A0784A, transparent)",
+              "linear-gradient(90deg, transparent, var(--lauds-champagne), var(--lauds-champagne-light), var(--lauds-champagne), transparent)",
             opacity: 0.5,
           }}
         />

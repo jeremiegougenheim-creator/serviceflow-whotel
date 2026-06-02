@@ -65,8 +65,8 @@ export default function OutletSelector({ open, onClose }: Props) {
                   style={
                     isSelected
                       ? {
-                          background: "rgba(43,91,219,0.08)",
-                          border: "1px solid rgba(43,91,219,0.2)",
+                          background: "color-mix(in srgb, var(--lauds-accent-action) 8%, transparent)",
+                          border: "1px solid color-mix(in srgb, var(--lauds-accent-action) 20%, transparent)",
                         }
                       : {
                           background: "rgba(224,217,207,0.07)",
@@ -84,7 +84,7 @@ export default function OutletSelector({ open, onClose }: Props) {
                     ) : (
                       <span
                         className="w-3.5 h-3.5 rounded-full border-[1.5px]"
-                        style={{ borderColor: "#C4BAA9" }}
+                        style={{ borderColor: "var(--lauds-divider)" }}
                       />
                     )}
                   </span>
@@ -105,8 +105,8 @@ export default function OutletSelector({ open, onClose }: Props) {
                     <span
                       className="text-[10px] font-bold tracking-[0.12em] uppercase px-2.5 py-1 rounded-full flex-shrink-0"
                       style={{
-                        color: "#2B5BDB",
-                        background: "rgba(43,91,219,0.10)",
+                        color: "var(--lauds-accent-action)",
+                        background: "color-mix(in srgb, var(--lauds-accent-action) 10%, transparent)",
                       }}
                     >
                       Live
@@ -115,8 +115,8 @@ export default function OutletSelector({ open, onClose }: Props) {
                     <span
                       className="text-[10px] font-semibold tracking-[0.1em] px-2.5 py-1 rounded-full flex-shrink-0"
                       style={{
-                        color: "#8C8479",
-                        background: "rgba(196,186,169,0.15)",
+                        color: "var(--lauds-text-muted)",
+                        background: "color-mix(in srgb, var(--lauds-divider) 15%, transparent)",
                       }}
                     >
                       {outlet.timeline ?? "Soon"}
