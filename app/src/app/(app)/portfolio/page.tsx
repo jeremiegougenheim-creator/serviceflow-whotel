@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import OutletTrigger from "@/components/OutletTrigger";
 
 // ─── Data ──────────────────────────────────────────────────────────────────────
 
@@ -98,12 +99,20 @@ export default function PortfolioPage() {
         />
 
         <div className="relative z-10">
+          {/* Topbar */}
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-6 h-6 border border-lauds-champagne/50 rounded-md flex items-center justify-center flex-shrink-0">
+              <span className="font-serif text-sm font-medium text-lauds-champagne-light leading-none">L</span>
+            </div>
+            <OutletTrigger />
+          </div>
+
           <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-lauds-champagne mb-4">
             Portfolio
           </p>
 
           {/* Champion profile */}
-          <div className="flex items-center gap-3 mb-5">
+          <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-lauds-champagne/20 border border-lauds-champagne/30 flex items-center justify-center flex-shrink-0">
               <span className="font-serif text-lg font-medium text-lauds-champagne-light leading-none">
                 B
@@ -119,17 +128,11 @@ export default function PortfolioPage() {
             </div>
           </div>
 
-          {/* Scope badges */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 bg-lauds-blue/10 border border-lauds-blue/25 rounded-full px-3 py-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-lauds-blue animate-pulse" />
-              <span className="text-[11px] font-semibold tracking-[0.1em] uppercase text-lauds-blue/80">
-                W Taipei · Live
-              </span>
-            </div>
-            <span className="text-[11px] text-lauds-cream/35">3 properties</span>
+          {/* Scope */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-lauds-cream/40">3 properties</span>
             <span className="w-1 h-1 rounded-full bg-lauds-cream/20" />
-            <span className="text-[11px] text-lauds-cream/35">7 outlets</span>
+            <span className="text-[11px] text-lauds-cream/40">7 outlets</span>
           </div>
         </div>
       </div>

@@ -6,13 +6,14 @@ export interface Outlet {
   id: string;
   name: string;
   status: "live" | "coming";
+  timeline?: string; // e.g. "Q3 2026"
 }
 
 const OUTLETS: Outlet[] = [
   { id: "kitchen-table", name: "The Kitchen Table", status: "live" },
-  { id: "wet-bar", name: "WET Bar", status: "coming" },
-  { id: "woobar", name: "WOOBAR", status: "coming" },
-  { id: "in-room-dining", name: "In-Room Dining", status: "coming" },
+  { id: "yen",          name: "YEN",               status: "coming", timeline: "Q3 2026" },
+  { id: "woobar",       name: "WOOBAR",             status: "coming", timeline: "Q3 2026" },
+  { id: "wet-deck",     name: "WET DECK",           status: "coming", timeline: "Q4 2026" },
 ];
 
 interface OutletContextValue {

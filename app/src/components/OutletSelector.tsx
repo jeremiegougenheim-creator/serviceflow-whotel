@@ -30,8 +30,18 @@ export default function OutletSelector({ open, onClose }: Props) {
           <div className="w-10 h-1 rounded-full bg-lauds-border" />
         </div>
 
-        <div className="px-5 pt-3 pb-8">
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-lauds-muted mb-4">
+        <div className="px-5 pt-2 pb-8">
+          {/* Property label */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-6 h-6 border border-lauds-champagne/60 rounded-md flex items-center justify-center">
+              <span className="font-serif text-sm font-medium text-lauds-champagne leading-none">L</span>
+            </div>
+            <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-lauds-charcoal/70">
+              W Taipei · Xinyi
+            </p>
+          </div>
+
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-lauds-muted mb-3">
             Select outlet
           </p>
 
@@ -51,7 +61,7 @@ export default function OutletSelector({ open, onClose }: Props) {
                     setSelectedOutlet(outlet);
                     onClose();
                   }}
-                  className="w-full flex items-center gap-3.5 rounded-2xl px-4 py-3.5 text-left transition-colors active:opacity-80"
+                  className="w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition-colors active:opacity-80"
                   style={
                     isSelected
                       ? {
@@ -64,9 +74,25 @@ export default function OutletSelector({ open, onClose }: Props) {
                         }
                   }
                 >
-                  <div className="flex-1">
+                  {/* ● / ○ selection indicator */}
+                  <span className="flex-shrink-0 flex items-center justify-center w-4 h-4">
+                    {isSelected ? (
+                      <span
+                        className="w-3.5 h-3.5 rounded-full"
+                        style={{ background: "var(--lauds-accent-action)" }}
+                      />
+                    ) : (
+                      <span
+                        className="w-3.5 h-3.5 rounded-full border-[1.5px]"
+                        style={{ borderColor: "#C4BAA9" }}
+                      />
+                    )}
+                  </span>
+
+                  {/* Outlet name */}
+                  <div className="flex-1 min-w-0">
                     <p
-                      className={`text-[14px] font-medium ${
+                      className={`text-[14px] font-medium leading-tight ${
                         isLive ? "text-lauds-charcoal" : "text-lauds-muted"
                       }`}
                     >
@@ -74,26 +100,27 @@ export default function OutletSelector({ open, onClose }: Props) {
                     </p>
                   </div>
 
+                  {/* Badge: LIVE or timeline date */}
                   {isLive ? (
-                    <span className="text-[10px] font-bold tracking-[0.14em] uppercase text-lauds-blue bg-lauds-blue/10 px-2.5 py-1 rounded-full">
+                    <span
+                      className="text-[10px] font-bold tracking-[0.12em] uppercase px-2.5 py-1 rounded-full flex-shrink-0"
+                      style={{
+                        color: "#2B5BDB",
+                        background: "rgba(43,91,219,0.10)",
+                      }}
+                    >
                       Live
                     </span>
                   ) : (
-                    <span className="text-[10px] font-semibold tracking-[0.1em] uppercase text-lauds-muted bg-lauds-border/40 px-2.5 py-1 rounded-full">
-                      Soon
-                    </span>
-                  )}
-
-                  {isSelected && isLive && (
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2.2}
-                      className="w-4 h-4 text-lauds-blue flex-shrink-0"
+                    <span
+                      className="text-[10px] font-semibold tracking-[0.1em] px-2.5 py-1 rounded-full flex-shrink-0"
+                      style={{
+                        color: "#8C8479",
+                        background: "rgba(196,186,169,0.15)",
+                      }}
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
+                      {outlet.timeline ?? "Soon"}
+                    </span>
                   )}
                 </button>
               );
@@ -108,7 +135,7 @@ export default function OutletSelector({ open, onClose }: Props) {
               Bientôt disponible
             </p>
             <p className="text-[13px] text-lauds-muted leading-relaxed">
-              This outlet will be available in a future release of the W Taipei pilot.
+              This outlet is on the roadmap for the W Taipei pilot.
             </p>
             <button
               onClick={() => setShowComingSoon(false)}

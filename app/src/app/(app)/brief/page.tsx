@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { format, startOfWeek, addDays, getDay } from "date-fns";
 import WeekCarousel, { WEEK_DATA } from "@/components/WeekCarousel";
+import OutletTrigger from "@/components/OutletTrigger";
 
 const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -173,6 +174,14 @@ export default function BriefPage() {
           }}
         />
         <div className="relative z-10">
+          {/* Topbar */}
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-6 h-6 border border-lauds-champagne/50 rounded-md flex items-center justify-center flex-shrink-0">
+              <span className="font-serif text-sm font-medium text-lauds-champagne-light leading-none">L</span>
+            </div>
+            <OutletTrigger />
+          </div>
+
           <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-lauds-champagne mb-1">
             Morning Brief
           </p>

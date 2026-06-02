@@ -129,17 +129,12 @@ export default async function DashboardPage() {
 
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 border border-lauds-champagne rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 border border-lauds-champagne rounded-lg flex items-center justify-center flex-shrink-0">
               <span className="font-serif text-lg font-medium text-lauds-champagne-light leading-none">
                 L
               </span>
             </div>
-            <span className="text-xs font-semibold tracking-[0.2em] uppercase text-lauds-cream/80">
-              {property?.name ?? "Lauds"}
-            </span>
-            <div className="ml-auto">
-              <OutletTrigger />
-            </div>
+            <OutletTrigger />
           </div>
 
           <h1 className="font-serif text-4xl font-medium leading-[1.05] mb-2">
