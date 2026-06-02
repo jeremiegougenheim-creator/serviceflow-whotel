@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Jost } from "next/font/google";
 import "./globals.css";
+import OnboardingGate from "@/components/OnboardingGate";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -73,6 +74,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-lauds-cream font-sans text-lauds-charcoal antialiased">
+        <OnboardingGate />
         {children}
       </body>
     </html>

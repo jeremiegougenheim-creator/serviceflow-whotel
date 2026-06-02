@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import BottomNav from "@/components/nav/BottomNav";
+import { OutletProvider } from "@/context/OutletContext";
 import {
   buildCssVars,
   getPropertyTheme,
@@ -30,12 +31,14 @@ export default async function AppLayout({
   const cssVars = buildCssVars(theme) as CSSProperties;
 
   return (
-    <div
-      style={{ background: "var(--lauds-bg-primary)", ...cssVars }}
-      className="min-h-screen flex flex-col"
-    >
-      <main className="flex-1 overflow-y-auto pb-20">{children}</main>
-      <BottomNav />
-    </div>
+    <OutletProvider>
+      <div
+        style={{ background: "var(--lauds-bg-primary)", ...cssVars }}
+        className="min-h-screen flex flex-col"
+      >
+        <main className="flex-1 overflow-y-auto pb-20">{children}</main>
+        <BottomNav />
+      </div>
+    </OutletProvider>
   );
 }

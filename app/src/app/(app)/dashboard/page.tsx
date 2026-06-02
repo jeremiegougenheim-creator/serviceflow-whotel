@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { format } from "date-fns";
+import WeekCarousel from "@/components/WeekCarousel";
+import OutletTrigger from "@/components/OutletTrigger";
 
 async function getLatestForecast(outletId: string) {
   const supabase = createClient();
@@ -135,11 +137,8 @@ export default async function DashboardPage() {
             <span className="text-xs font-semibold tracking-[0.2em] uppercase text-lauds-cream/80">
               {property?.name ?? "Lauds"}
             </span>
-            <div className="ml-auto flex items-center gap-1.5 bg-lauds-blue/10 border border-lauds-blue/30 rounded-full px-2.5 py-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-lauds-blue animate-pulse" />
-              <span className="text-[11px] font-semibold tracking-[0.1em] uppercase text-lauds-blue">
-                Live
-              </span>
+            <div className="ml-auto">
+              <OutletTrigger />
             </div>
           </div>
 
@@ -167,6 +166,17 @@ export default async function DashboardPage() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Week carousel */}
+      <div className="px-5 py-4 border-b border-lauds-border bg-lauds-surface">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="w-1.5 h-1.5 bg-lauds-champagne" />
+          <span className="text-[10px] font-semibold tracking-[0.24em] uppercase text-lauds-muted">
+            This week
+          </span>
+        </div>
+        <WeekCarousel />
       </div>
 
       <div className="px-5 py-5 space-y-4">
@@ -262,8 +272,8 @@ export default async function DashboardPage() {
             />
             <NavTile
               href="/portfolio"
-              label="Owner View"
-              description="Portfolio KPIs, asset value & ESG reporting"
+              label="Portfolio"
+              description="Portfolio KPIs, outlet pipeline & ESG reporting"
               accentClass="bg-lauds-champagne/10"
               iconClass="text-lauds-champagne"
               icon={
