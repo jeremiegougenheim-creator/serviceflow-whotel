@@ -3,42 +3,83 @@
 import { useState } from "react";
 import Link from "next/link";
 
-const OUTLETS = [
+// ─── Data ──────────────────────────────────────────────────────────────────────
+
+type BadgeKind = "live" | "q3_2026" | "q4_2026" | "q1_2027" | "q2_2027";
+
+interface OutletRow {
+  id: string;
+  name: string;
+  sub: string;
+  badge: BadgeKind;
+  href?: string; // defined only for live outlets
+}
+
+interface PropertySection {
+  property: string;
+  sub: string;
+  outlets: OutletRow[];
+}
+
+const BADGE_LABEL: Record<BadgeKind, string> = {
+  live: "Live",
+  q3_2026: "Q3 2026",
+  q4_2026: "Q4 2026",
+  q1_2027: "Q1 2027",
+  q2_2027: "Q2 2027",
+};
+
+const SECTIONS: PropertySection[] = [
   {
-    id: "kitchen-table",
-    name: "The Kitchen Table",
-    subtitle: "9 stations · Buffet",
-    status: "live" as const,
-    covers: 1719,
-    savings: 14980,
-    accuracy: 91,
+    property: "W Taipei",
+    sub: "405 keys",
+    outlets: [
+      {
+        id: "kitchen-table",
+        name: "The Kitchen Table",
+        sub: "9 stations · Buffet",
+        badge: "live",
+        href: "/dashboard",
+      },
+      { id: "yen", name: "YEN", sub: "Japanese restaurant", badge: "q3_2026" },
+      { id: "woobar", name: "WOOBAR", sub: "Lobby lounge", badge: "q3_2026" },
+      { id: "wet-deck", name: "WET DECK", sub: "Pool deck", badge: "q4_2026" },
+    ],
   },
   {
-    id: "wet-bar",
-    name: "WET Bar",
-    subtitle: "Pool bar",
-    status: "coming" as const,
-  },
-  {
-    id: "woobar",
-    name: "WOOBAR",
-    subtitle: "Lobby lounge",
-    status: "coming" as const,
-  },
-  {
-    id: "in-room-dining",
-    name: "In-Room Dining",
-    subtitle: "24h",
-    status: "coming" as const,
+    property: "Marriott Taiwan · Portfolio",
+    sub: "Area GM scope",
+    outlets: [
+      {
+        id: "meridien",
+        name: "Le Méridien Taipei",
+        sub: "Marriott · Taipei",
+        badge: "q1_2027",
+      },
+      {
+        id: "sheraton",
+        name: "Sheraton Grande",
+        sub: "Marriott · Taipei",
+        badge: "q1_2027",
+      },
+      {
+        id: "renaissance",
+        name: "Renaissance",
+        sub: "Marriott · Taipei",
+        badge: "q2_2027",
+      },
+    ],
   },
 ];
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function PortfolioPage() {
   const [comingSoonModal, setComingSoonModal] = useState(false);
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
+      {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="bg-lauds-charcoal text-lauds-cream px-5 pt-14 pb-6 relative overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none opacity-40"
@@ -55,6 +96,7 @@ export default function PortfolioPage() {
             opacity: 0.5,
           }}
         />
+
         <div className="relative z-10">
           <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-lauds-champagne mb-4">
             Portfolio
@@ -68,149 +110,97 @@ export default function PortfolioPage() {
               </span>
             </div>
             <div>
-              <p className="text-sm font-semibold text-lauds-cream">Bastien Giannetti</p>
-              <p className="text-[11px] text-lauds-cream/55">Area GM · Marriott Taiwan</p>
+              <p className="text-[14px] font-semibold text-lauds-cream leading-tight">
+                Bastien Giannetti
+              </p>
+              <p className="text-[11px] text-lauds-cream/55 mt-0.5">
+                Area GM · Marriott Taiwan
+              </p>
             </div>
           </div>
 
-          {/* Property badge */}
+          {/* Scope badges */}
           <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-1.5 bg-lauds-blue/10 border border-lauds-blue/25 rounded-full px-3 py-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-lauds-blue" />
+              <span className="w-1.5 h-1.5 rounded-full bg-lauds-blue animate-pulse" />
               <span className="text-[11px] font-semibold tracking-[0.1em] uppercase text-lauds-blue/80">
-                W Taipei
+                W Taipei · Live
               </span>
             </div>
-            <span className="text-[11px] text-lauds-cream/40">405 keys</span>
-            <span className="w-1 h-1 rounded-full bg-lauds-cream/25" />
-            <span className="text-[11px] text-lauds-cream/40">1 property</span>
+            <span className="text-[11px] text-lauds-cream/35">3 properties</span>
+            <span className="w-1 h-1 rounded-full bg-lauds-cream/20" />
+            <span className="text-[11px] text-lauds-cream/35">7 outlets</span>
           </div>
         </div>
       </div>
 
-      <div className="px-5 py-5 space-y-5 pb-24">
-        {/* Week KPIs */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-1.5 h-1.5 bg-lauds-champagne" />
-            <span className="text-[10px] font-semibold tracking-[0.24em] uppercase text-lauds-muted">
-              This week · The Kitchen Table
-            </span>
-          </div>
+      {/* ── Body ────────────────────────────────────────────────────────── */}
+      <div className="px-5 py-5 space-y-6 pb-32">
 
-          <div className="grid grid-cols-3 gap-2">
-            <KpiCard label="Covers" value="1,719" sub="7-day p50" />
-            <KpiCard label="NT$ Saved" value="14.9k" sub="Lauds (3 pts)" color="text-lauds-esg" />
-            <KpiCard label="Accuracy" value="91%" sub="14-day avg" />
-          </div>
-        </div>
+        {/* Sections */}
+        {SECTIONS.map((section) => (
+          <div key={section.property}>
+            {/* Section header */}
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-1.5 h-1.5 bg-lauds-champagne flex-shrink-0" />
+              <span className="text-[10px] font-semibold tracking-[0.24em] uppercase text-lauds-muted">
+                {section.property}
+              </span>
+              <span className="text-[10px] text-lauds-muted/50 ml-0.5">
+                · {section.sub}
+              </span>
+            </div>
 
-        {/* Outlet pipeline */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-1.5 h-1.5 bg-lauds-champagne" />
-            <span className="text-[10px] font-semibold tracking-[0.24em] uppercase text-lauds-muted">
-              Outlet pipeline
-            </span>
-          </div>
-
-          <div className="space-y-2">
-            {OUTLETS.map((outlet) => {
-              const isLive = outlet.status === "live";
-
-              if (isLive) {
-                return (
-                  <Link
-                    key={outlet.id}
-                    href="/dashboard"
-                    className="flex items-center gap-3.5 rounded-2xl px-4 py-4 active:opacity-80 transition-opacity"
-                    style={{
-                      background: "rgba(43,91,219,0.08)",
-                      border: "1px solid rgba(43,91,219,0.18)",
-                    }}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="text-[14px] font-semibold text-lauds-charcoal">
-                          {outlet.name}
-                        </p>
-                        <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-lauds-blue bg-lauds-blue/10 px-2 py-0.5 rounded-full">
-                          Live
-                        </span>
-                      </div>
-                      <p className="text-[12px] text-lauds-muted">{outlet.subtitle}</p>
-                      {outlet.covers && (
-                        <p className="text-[11px] text-lauds-esg font-medium mt-1.5">
-                          {outlet.covers.toLocaleString()} covers this week · NT${(outlet.savings! / 1000).toFixed(1)}k saved
-                        </p>
-                      )}
-                    </div>
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={1.9}
-                      className="w-5 h-5 text-lauds-blue flex-shrink-0"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                );
-              }
-
-              return (
-                <button
+            <div className="space-y-2">
+              {section.outlets.map((outlet) => (
+                <OutletRow
                   key={outlet.id}
-                  onClick={() => setComingSoonModal(true)}
-                  className="w-full flex items-center gap-3.5 rounded-2xl px-4 py-3.5 text-left active:opacity-70 transition-opacity"
-                  style={{
-                    background: "rgba(224,217,207,0.07)",
-                    border: "1px solid rgba(228,221,210,0.5)",
-                  }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-medium text-lauds-muted">{outlet.name}</p>
-                    <p className="text-[12px] text-lauds-muted/60 mt-0.5">{outlet.subtitle}</p>
-                  </div>
-                  <span className="text-[10px] font-semibold tracking-[0.1em] uppercase text-lauds-muted/60 bg-lauds-border/30 px-2.5 py-1 rounded-full flex-shrink-0">
-                    Soon
-                  </span>
-                </button>
-              );
-            })}
+                  outlet={outlet}
+                  onComingSoon={() => setComingSoonModal(true)}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        ))}
 
-        {/* ESG summary */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-1.5 h-1.5 bg-lauds-esg" />
-            <span className="text-[10px] font-semibold tracking-[0.24em] uppercase text-lauds-muted">
-              ESG · This week
-            </span>
-          </div>
-
-          <div className="bg-white border border-lauds-border rounded-2xl p-4 shadow-lauds-card">
-            <p className="text-[11px] text-lauds-muted italic mb-3">
-              Measured by the bin — not modelled.
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-lauds-muted">CO₂e avoided</p>
-                <p className="font-serif text-2xl font-medium text-lauds-esg mt-1">—</p>
-                <p className="text-[11px] text-lauds-muted mt-0.5">Winnow data pending</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-lauds-muted">Waste reduction</p>
-                <p className="font-serif text-2xl font-medium text-lauds-esg mt-1">—</p>
-                <p className="text-[11px] text-lauds-muted mt-0.5">Winnow data pending</p>
-              </div>
+        {/* Summary strip */}
+        <div
+          className="rounded-2xl px-5 py-4"
+          style={{
+            background: "rgba(201,169,122,0.07)",
+            border: "1px solid rgba(201,169,122,0.18)",
+          }}
+        >
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-lauds-champagne mb-3">
+            Portfolio savings
+          </p>
+          <div className="space-y-2">
+            <div className="flex items-baseline justify-between">
+              <span className="text-[12px] text-lauds-muted">Live (The Kitchen Table)</span>
+              <span className="font-serif text-[18px] font-medium text-lauds-charcoal">
+                NT$2,896
+                <span className="text-[12px] font-sans font-normal text-lauds-muted ml-1">/ day</span>
+              </span>
+            </div>
+            <div
+              className="h-px w-full"
+              style={{
+                background: "linear-gradient(90deg, rgba(201,169,122,0.25), transparent)",
+              }}
+            />
+            <div className="flex items-baseline justify-between">
+              <span className="text-[12px] text-lauds-muted">Target (full portfolio)</span>
+              <span className="font-serif text-[18px] font-medium text-lauds-esg">
+                NT$15–25M
+                <span className="text-[12px] font-sans font-normal text-lauds-muted ml-1">/ year</span>
+              </span>
             </div>
           </div>
         </div>
+
       </div>
 
-      {/* Coming soon modal */}
+      {/* ── Bientôt disponible modal ──────────────────────────────────── */}
       {comingSoonModal && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center"
@@ -225,11 +215,11 @@ export default function PortfolioPage() {
               Bientôt disponible
             </p>
             <p className="text-[13px] text-lauds-muted leading-relaxed mb-6">
-              This outlet will be onboarded in a future release of the W Taipei pilot.
+              This outlet is on the roadmap. Lauds will be available here in a future release.
             </p>
             <button
               onClick={() => setComingSoonModal(false)}
-              className="w-full bg-lauds-charcoal text-lauds-cream rounded-[14px] py-3.5 text-[13px] font-semibold tracking-[0.08em] uppercase"
+              className="w-full bg-lauds-charcoal text-lauds-cream rounded-[14px] py-3.5 text-[13px] font-semibold tracking-[0.08em] uppercase active:opacity-80"
             >
               Got it
             </button>
@@ -240,24 +230,94 @@ export default function PortfolioPage() {
   );
 }
 
-function KpiCard({
-  label,
-  value,
-  sub,
-  color = "text-lauds-charcoal",
+// ─── Sub-components ────────────────────────────────────────────────────────────
+
+function OutletRow({
+  outlet,
+  onComingSoon,
 }: {
-  label: string;
-  value: string;
-  sub: string;
-  color?: string;
+  outlet: OutletRow;
+  onComingSoon: () => void;
 }) {
+  const isLive = outlet.badge === "live";
+
+  const rowStyle = isLive
+    ? { background: "rgba(43,91,219,0.08)", border: "1px solid rgba(43,91,219,0.25)" }
+    : { background: "rgba(224,217,207,0.07)", border: "1px solid rgba(196,186,169,0.12)" };
+
+  const inner = (
+    <>
+      <div className="flex-1 min-w-0">
+        <p
+          className={`text-[14px] font-medium leading-tight ${
+            isLive ? "text-lauds-charcoal" : "text-lauds-muted"
+          }`}
+        >
+          {outlet.name}
+        </p>
+        <p className="text-[11px] text-lauds-muted/60 mt-0.5">{outlet.sub}</p>
+      </div>
+
+      <Badge kind={outlet.badge} />
+
+      {isLive && (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.9}
+          className="w-4 h-4 flex-shrink-0 ml-1"
+          style={{ color: "#2B5BDB" }}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      )}
+    </>
+  );
+
+  if (isLive && outlet.href) {
+    return (
+      <Link
+        href={outlet.href}
+        className="flex items-center gap-3 rounded-2xl px-4 py-3.5 active:opacity-80 transition-opacity"
+        style={rowStyle}
+      >
+        {inner}
+      </Link>
+    );
+  }
+
   return (
-    <div className="bg-white border border-lauds-border rounded-2xl p-3 shadow-lauds-card">
-      <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-lauds-muted">
-        {label}
-      </p>
-      <p className={`font-serif text-2xl font-medium leading-tight mt-1 ${color}`}>{value}</p>
-      <p className="text-[10px] text-lauds-muted mt-0.5 leading-tight">{sub}</p>
-    </div>
+    <button
+      onClick={onComingSoon}
+      className="w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left active:opacity-70 transition-opacity"
+      style={rowStyle}
+    >
+      {inner}
+    </button>
+  );
+}
+
+function Badge({ kind }: { kind: BadgeKind }) {
+  const isLive = kind === "live";
+  const label = BADGE_LABEL[kind];
+
+  return (
+    <span
+      className="text-[10px] font-bold tracking-[0.12em] uppercase px-2.5 py-1 rounded-full flex-shrink-0"
+      style={
+        isLive
+          ? {
+              color: "#2B5BDB",
+              background: "rgba(43,91,219,0.10)",
+            }
+          : {
+              color: "#8C8479",
+              background: "rgba(196,186,169,0.15)",
+            }
+      }
+    >
+      {label}
+    </span>
   );
 }
