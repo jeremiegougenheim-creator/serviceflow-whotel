@@ -131,7 +131,7 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 border border-lauds-champagne rounded-lg flex items-center justify-center flex-shrink-0">
               <span className="font-serif text-lg font-medium text-lauds-champagne-light leading-none">
-                L
+                S
               </span>
             </div>
             <OutletTrigger />

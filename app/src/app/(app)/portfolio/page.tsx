@@ -102,7 +102,7 @@ export default function PortfolioPage() {
           {/* Topbar */}
           <div className="flex items-center gap-2.5 mb-4">
             <div className="w-6 h-6 border border-lauds-champagne/50 rounded-md flex items-center justify-center flex-shrink-0">
-              <span className="font-serif text-sm font-medium text-lauds-champagne-light leading-none">L</span>
+              <span className="font-serif text-sm font-medium text-lauds-champagne-light leading-none">S</span>
             </div>
             <OutletTrigger />
           </div>
@@ -218,7 +218,7 @@ export default function PortfolioPage() {
               Bientôt disponible
             </p>
             <p className="text-[13px] text-lauds-muted leading-relaxed mb-6">
-              This outlet is on the roadmap. Lauds will be available here in a future release.
+              This outlet is on the roadmap. ServiceFlow will be available here in a future release.
             </p>
             <button
               onClick={() => setComingSoonModal(false)}

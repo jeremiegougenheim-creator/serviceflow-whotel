@@ -48,14 +48,14 @@ export default function LoginPage() {
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-12 h-12 border border-lauds-champagne rounded-xl mb-5">
             <span className="font-serif text-2xl font-medium text-lauds-champagne leading-none">
-              L
+              S
             </span>
           </div>
           <h1 className="font-serif text-4xl font-medium text-lauds-charcoal tracking-tight mb-1">
-            Lauds
+            ServiceFlow
           </h1>
           <p className="text-xs font-semibold tracking-[0.2em] uppercase text-lauds-muted">
-            Orders, at dawn.
+            Hotel F&amp;B Intelligence
           </p>
         </div>
 
@@ -180,7 +180,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-[11px] tracking-[0.14em] uppercase text-lauds-muted/50 mt-8">
-          Lauds · Hotel F&amp;B Intelligence
+          ServiceFlow · Hotel F&amp;B Intelligence
         </p>
       </div>
     </div>

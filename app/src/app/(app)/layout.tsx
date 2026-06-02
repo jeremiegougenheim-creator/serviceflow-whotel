@@ -25,7 +25,7 @@ export default async function AppLayout({
   }
 
   // Load property theme — inject as CSS custom properties for the entire app shell.
-  // Falls back to Lauds defaults (defined in globals.css :root) when no theme row exists.
+  // Falls back to ServiceFlow defaults (defined in globals.css :root) when no theme row exists.
   const propertyId = await getSessionPropertyId();
   const theme = await getPropertyTheme(propertyId);
   const cssVars = buildCssVars(theme) as CSSProperties;

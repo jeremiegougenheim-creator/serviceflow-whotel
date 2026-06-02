@@ -92,7 +92,7 @@ export default function FBPage() {
           <div className="flex items-center gap-2.5 mb-4">
             <div className="w-6 h-6 border border-lauds-champagne/50 rounded-md flex items-center justify-center flex-shrink-0">
               <span className="font-serif text-sm font-medium text-lauds-champagne-light leading-none">
-                L
+                S
               </span>
             </div>
             <OutletTrigger />

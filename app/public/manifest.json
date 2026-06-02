@@ -1,0 +1,23 @@
+{
+  "name": "ServiceFlow",
+  "short_name": "ServiceFlow",
+  "description": "The prescriptive operating layer for hotel F&B.",
+  "start_url": "/serviceflow-whotel/",
+  "scope": "/serviceflow-whotel/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2A2520",
+  "theme_color": "#2A2520",
+  "icons": [
+    {
+      "src": "/serviceflow-whotel/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/serviceflow-whotel/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

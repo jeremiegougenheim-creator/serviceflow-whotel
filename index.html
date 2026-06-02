@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
-<title>Lauds · W Taipei</title>
+<title>ServiceFlow · W Taipei</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -306,7 +306,7 @@ html,body{
     <div class="ld-content">
       <div class="ld-mark">W&nbsp;TAIPEI</div>
       <div class="ld-rule"></div>
-      <div class="ld-sub">Lauds · Orders, at dawn.</div>
+      <div class="ld-sub">ServiceFlow · W Taipei Pilot</div>
       <div class="ld-bar-wrap"><div class="ld-bar-fill" id="ldFill"></div></div>
       <div class="ld-pct" id="ldPct">0%</div>
     </div>
@@ -506,7 +506,7 @@ function screenRole(){return `
     <div class="rolecard" onclick="pick('gm')"><div class="ico">${I.gm}</div><div><div class="t">General Manager <span class="badge">LIVE</span></div><div class="d">All modules · the Breakfast Brain</div></div></div>
     <div class="rolecard mg" onclick="pick('gm')"><div class="ico">${I.chef}</div><div><div class="t">Chef / F&amp;B — The Kitchen Table</div><div class="d">Breakfast operations · station-level</div></div></div>
     <div class="rolecard br" style="opacity:.55" onclick="pick('gm')"><div class="ico">${I.pin}</div><div><div class="t">Future W / Marriott property</div><div class="d">Regional expansion · coming</div></div></div>
-    <p class="sub" style="text-align:center;font-size:11px;margin-top:18px">Concept prototype · Lauds · figures illustrative until calibrated</p>
+    <p class="sub" style="text-align:center;font-size:11px;margin-top:18px">Concept prototype · ServiceFlow · figures illustrative until calibrated</p>
   </div>`;}
 
 function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
@@ -540,7 +540,7 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
     </div>
     <div class="dash-tile" onclick="go('winnow')">
       <div class="dash-i" style="background:rgba(74,143,94,.10);color:var(--esg)"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/></svg></div>
-      <div class="dash-b"><div class="dash-t">Why Lauds on top of Winnow</div><div class="dash-d">7-row comparison · combined economics · NT$220K → NT$550–750K/yr</div></div>
+      <div class="dash-b"><div class="dash-t">Why ServiceFlow on top of Winnow</div><div class="dash-d">7-row comparison · combined economics · NT$220K → NT$550–750K/yr</div></div>
       <div class="dash-arrow">›</div>
     </div>
     <div class="dash-tile" onclick="go('fb')">
@@ -582,7 +582,7 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
   <div class="hero bl">
     ${brandRow()}
     <h1>${s.label}, <em>${b.covers} covers</em></h1>
-    <p class="hero-sub">Lauds reads 7 signals — Winnow's measured waste being the most important — and prescribes tomorrow's production per station.</p>
+    <p class="hero-sub">ServiceFlow reads 7 signals — Winnow's measured waste being the most important — and prescribes tomorrow's production per station.</p>
     ${metaLine(s)}
   </div>
   <div class="body">
@@ -837,8 +837,8 @@ function screenWinnow(){
   return `
   <div class="hero dk">
     ${brandRow()}
-    <h1>Lauds × <em>Winnow.</em></h1>
-    <p class="hero-sub">Winnow measures what was wasted. Lauds prevents the waste before it happens — using Winnow's daily signal as its most important input.</p>
+    <h1>ServiceFlow × <em>Winnow.</em></h1>
+    <p class="hero-sub">Winnow measures what was wasted. ServiceFlow prevents the waste before it happens — using Winnow's daily signal as its most important input.</p>
   </div>
   <div class="body">
     <div class="eyebrow">Why they are complementary</div>
@@ -846,7 +846,7 @@ function screenWinnow(){
       <div class="winn-head">
         <div class="winn-dim-h">Dimension</div>
         <div class="winn-col-a">Winnow alone</div>
-        <div class="winn-col-b">Winnow + Lauds</div>
+        <div class="winn-col-b">Winnow + ServiceFlow</div>
       </div>
       ${tableRows}
     </div>
@@ -854,7 +854,7 @@ function screenWinnow(){
       <div class="ab-eb">COMBINED ECONOMICS · W TAIPEI PILOT</div>
       <div class="ab-h">NT$220K → <em>NT$550–750K/yr</em></div>
       <div style="position:relative;z-index:1;font-size:12px;color:rgba(245,240,232,.7);line-height:1.5">
-        Winnow alone: NT$220K/yr baseline (180-kitchen avg) · Winnow + Lauds: NT$550–750K/yr — forecast layer trims over-prep before service, waste meter closes the loop, Serve 360 captures ESG credit daily.
+        Winnow alone: NT$220K/yr baseline (180-kitchen avg) · Winnow + ServiceFlow: NT$550–750K/yr — forecast layer trims over-prep before service, waste meter closes the loop, Serve 360 captures ESG credit daily.
       </div>
     </div>
     <div class="card flat" style="margin-top:14px">

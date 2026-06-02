@@ -20,17 +20,17 @@ const jost = Jost({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s · Lauds",
-    default: "Lauds · Orders, at dawn.",
+    template: "%s · ServiceFlow",
+    default: "ServiceFlow · W Taipei Pilot",
   },
   description:
-    "Hotel F&B breakfast forecasting — precision prep, zero waste, every morning.",
-  applicationName: "Lauds",
+    "The prescriptive operating layer for hotel F&B. Precision prep, zero waste, every morning.",
+  applicationName: "ServiceFlow",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Lauds",
+    title: "ServiceFlow",
   },
   icons: {
     icon: [
@@ -41,10 +41,10 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    siteName: "Lauds",
-    title: "Lauds · Orders, at dawn.",
+    siteName: "ServiceFlow",
+    title: "ServiceFlow · W Taipei Pilot",
     description:
-      "Hotel F&B breakfast forecasting — precision prep, zero waste, every morning.",
+      "The prescriptive operating layer for hotel F&B. Precision prep, zero waste, every morning.",
   },
 };
 

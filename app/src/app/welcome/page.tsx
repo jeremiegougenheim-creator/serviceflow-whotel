@@ -27,16 +27,16 @@ export default function WelcomePage() {
         {/* Monogram */}
         <div className="w-14 h-14 border border-lauds-champagne rounded-[14px] flex items-center justify-center mb-6">
           <span className="font-serif text-[28px] font-medium text-lauds-champagne-light leading-none">
-            L
+            S
           </span>
         </div>
 
         {/* Wordmark */}
         <h1 className="font-serif text-[40px] font-medium text-lauds-cream tracking-wide mb-2">
-          Lauds
+          ServiceFlow
         </h1>
         <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-lauds-champagne mb-10">
-          Orders, at dawn.
+          The prescriptive operating layer for hotel F&amp;B.
         </p>
 
         {/* W Taipei badge */}
@@ -93,14 +93,14 @@ export default function WelcomePage() {
           onClick={handleEnter}
           className="w-full bg-lauds-cream text-lauds-charcoal rounded-[14px] py-4 px-6 text-[13px] font-semibold tracking-[0.1em] uppercase flex items-center justify-center gap-2 active:opacity-70 transition-opacity"
         >
-          Enter Lauds
+          Enter ServiceFlow
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} className="w-4 h-4">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-7-7 7 7-7 7" />
           </svg>
         </button>
 
         <p className="mt-8 text-[11px] tracking-[0.06em] text-lauds-cream/25">
-          lauds.ai · W Taipei pilot · SparkEdge Digital
+          service-flow.ai · W Taipei pilot · SparkEdge Digital
         </p>
       </div>
     </div>

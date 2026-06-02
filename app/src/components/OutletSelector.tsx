@@ -34,7 +34,7 @@ export default function OutletSelector({ open, onClose }: Props) {
           {/* Property label */}
           <div className="flex items-center gap-2 mb-4">
             <div className="w-6 h-6 border border-lauds-champagne/60 rounded-md flex items-center justify-center">
-              <span className="font-serif text-sm font-medium text-lauds-champagne leading-none">L</span>
+              <span className="font-serif text-sm font-medium text-lauds-champagne leading-none">S</span>
             </div>
             <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-lauds-charcoal/70">
               W Taipei · Xinyi
