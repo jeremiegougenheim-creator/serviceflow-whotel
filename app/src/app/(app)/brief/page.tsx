@@ -31,7 +31,7 @@ const BRIEF: Action[][] = [
       saving: 180,
     },
   ],
-  // TUE 204 covers
+  // TUE 221 covers
   [
     {
       text: "Extend Western Hot availability to 09:45 (+15 min)",
@@ -49,7 +49,7 @@ const BRIEF: Action[][] = [
       saving: 140,
     },
   ],
-  // WED 231 covers
+  // WED 198 covers
   [
     {
       text: "Reinforce Congee + Dim Sum stations for wave 1 (MICE group, 42 pax at 08:00)",
@@ -67,7 +67,7 @@ const BRIEF: Action[][] = [
       saving: 0,
     },
   ],
-  // THU 219 covers
+  // THU 215 covers
   [
     {
       text: "Run baseline pars — standard mid-week pattern",
@@ -85,10 +85,10 @@ const BRIEF: Action[][] = [
       saving: 0,
     },
   ],
-  // FRI 263 covers
+  // FRI 248 covers
   [
     {
-      text: "Prepare for wave 2 peak (85 covers, 09:00–09:45)",
+      text: "Prepare for wave 2 peak (80 covers, 09:00–09:45)",
       causal: "Pre-weekend FIT ramp — 52% FIT rate, late-morning attach pattern.",
       saving: 450,
     },

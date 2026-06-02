@@ -176,7 +176,7 @@ export default async function DashboardPage() {
             This week
           </span>
         </div>
-        <WeekCarousel />
+        <WeekCarousel defaultIndex={5} />
       </div>
 
       <div className="px-5 py-5 space-y-4">

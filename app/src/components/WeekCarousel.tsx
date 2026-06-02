@@ -1,61 +1,56 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { format, startOfWeek, addDays, getDay } from "date-fns";
+import { getDay } from "date-fns";
 
-// TODO: replace WEEK_DATA with useForecast(outletId, weekStartDate)
-const WEEK_DATA = [
-  { covers: 188, savings: 1640 },
-  { covers: 204, savings: 1780 },
-  { covers: 231, savings: 2010 },
-  { covers: 219, savings: 1900 },
-  { covers: 263, savings: 2290 },
-  { covers: 316, savings: 2760 },
-  { covers: 298, savings: 2610 },
+// TODO: replace with useForecast(outletId, weekStartDate)
+export const WEEK_DATA = [
+  { covers: 188, savings: 1640 },  // Mon
+  { covers: 221, savings: 2180 },  // Tue
+  { covers: 198, savings: 1920 },  // Wed
+  { covers: 215, savings: 2050 },  // Thu
+  { covers: 248, savings: 2340 },  // Fri
+  { covers: 316, savings: 2896 },  // Sat ← peak
+  { covers: 298, savings: 2610 },  // Sun
 ];
 
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 interface Props {
-  selectedIndex?: number;
-  onSelect?: (index: number) => void;
+  selectedIndex?: number;           // controlled
+  onSelect?: (i: number) => void;
+  defaultIndex?: number;            // uncontrolled default (overrides today)
 }
 
-export { WEEK_DATA };
+export default function WeekCarousel({
+  selectedIndex: controlled,
+  onSelect,
+  defaultIndex,
+}: Props) {
+  // getDay: 0=Sun..6=Sat → remap to 0=Mon..6=Sun
+  const todayIndex = useMemo(() => (getDay(new Date()) + 6) % 7, []);
+  const [internal, setInternal] = useState(defaultIndex ?? todayIndex);
 
-export default function WeekCarousel({ selectedIndex: controlledIndex, onSelect }: Props) {
-  const todayIndex = useMemo(() => {
-    // getDay: 0=Sun..6=Sat → convert to 0=Mon..6=Sun
-    return (getDay(new Date()) + 6) % 7;
-  }, []);
-
-  const [internalIndex, setInternalIndex] = useState(todayIndex);
-
-  const selectedIndex = controlledIndex ?? internalIndex;
+  const selected = controlled ?? internal;
 
   function handleSelect(i: number) {
-    if (onSelect) {
-      onSelect(i);
-    } else {
-      setInternalIndex(i);
-    }
+    if (onSelect) onSelect(i);
+    else setInternal(i);
   }
-
-  const weekStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 1 }), []);
 
   return (
     <div className="overflow-x-auto scrollbar-hide -mx-5 px-5">
-      <div className="flex gap-2 w-max pb-1">
+      <div className="flex gap-1.5 w-max">
         {WEEK_DATA.map((day, i) => {
-          const date = addDays(weekStart, i);
-          const isSelected = i === selectedIndex;
+          const isSelected = i === selected;
           const isToday = i === todayIndex;
+          const isWeekend = i >= 5; // Sat(5) + Sun(6)
 
           return (
             <button
               key={i}
               onClick={() => handleSelect(i)}
-              className="flex flex-col items-center rounded-2xl px-3.5 py-3 min-w-[72px] transition-all active:scale-95"
+              className="flex flex-col items-center rounded-[18px] px-3 pt-3 pb-2.5 min-w-[50px] active:scale-95 transition-transform"
               style={
                 isSelected
                   ? {
@@ -68,41 +63,52 @@ export default function WeekCarousel({ selectedIndex: controlledIndex, onSelect 
                     }
               }
             >
+              {/* Day name — 9px, stone or white */}
               <span
-                className={`text-[10px] font-bold tracking-[0.14em] uppercase mb-1 ${
-                  isSelected ? "text-white/70" : "text-lauds-muted"
-                }`}
+                className="text-[9px] font-bold tracking-[0.12em] uppercase leading-none mb-2.5"
+                style={{ color: isSelected ? "rgba(255,255,255,0.60)" : "#8A7E72" }}
               >
-                {DAY_LABELS[i]}
+                {DAYS[i]}
               </span>
+
+              {/* Covers — Cormorant Garamond, 20 / 22px selected */}
               <span
-                className={`text-[13px] font-medium mb-2.5 leading-none ${
-                  isSelected ? "text-white/80" : isToday ? "text-lauds-charcoal font-semibold" : "text-lauds-muted"
-                }`}
-              >
-                {format(date, "d")}
-              </span>
-              <span
-                className={`font-serif text-xl font-medium leading-none ${
-                  isSelected ? "text-white" : "text-lauds-charcoal"
-                }`}
+                className="font-serif leading-none mb-1.5"
+                style={{
+                  fontSize: isSelected ? "22px" : "20px",
+                  fontWeight: 500,
+                  color: isSelected ? "#FFFFFF" : "#2A2520",
+                  letterSpacing: "-0.01em",
+                }}
               >
                 {day.covers}
               </span>
+
+              {/* NT$ savings — 9px, green or white */}
               <span
-                className={`text-[10px] mt-0.5 leading-none ${
-                  isSelected ? "text-white/60" : "text-lauds-muted"
-                }`}
-              >
-                cov.
-              </span>
-              <span
-                className={`text-[10px] font-semibold mt-2 leading-none ${
-                  isSelected ? "text-white/75" : "text-lauds-esg"
-                }`}
+                className="text-[9px] font-semibold leading-none mb-2.5"
+                style={{
+                  color: isSelected ? "rgba(255,255,255,0.65)" : "#4A8F5E",
+                }}
               >
                 {(day.savings / 1000).toFixed(1)}k
               </span>
+
+              {/* Dot — blue pulsing = selected or today; gold = weekend; stone = weekday */}
+              <span
+                className={`block w-1.5 h-1.5 rounded-full ${
+                  isSelected || isToday ? "animate-pulse" : ""
+                }`}
+                style={{
+                  background: isSelected
+                    ? "rgba(255,255,255,0.75)"
+                    : isToday
+                    ? "var(--lauds-accent-action)"
+                    : isWeekend
+                    ? "#C9A97A"
+                    : "#8A7E72",
+                }}
+              />
             </button>
           );
         })}
