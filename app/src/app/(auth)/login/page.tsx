@@ -179,7 +179,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-[11px] tracking-[0.14em] uppercase text-lauds-muted/50 mt-8">
+        <p className="text-center text-[11px] tracking-[0.14em] uppercase text-lauds-secondary mt-8">
           ServiceFlow · Hotel F&amp;B Intelligence
         </p>
       </div>

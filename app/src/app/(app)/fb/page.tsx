@@ -144,7 +144,7 @@ export default function FBPage() {
                     className="text-[9px] font-bold tracking-[0.1em] uppercase leading-none mb-1"
                     style={{
                       color: isActive
-                        ? "rgba(255,255,255,0.65)"
+                        ? "rgba(255,255,255,0.85)"
                         : "var(--lauds-text-muted)",
                     }}
                   >
@@ -164,7 +164,7 @@ export default function FBPage() {
                     className="text-[8px] mt-0.5 leading-none"
                     style={{
                       color: isActive
-                        ? "rgba(255,255,255,0.50)"
+                        ? "rgba(255,255,255,0.85)"
                         : "var(--lauds-text-muted)",
                     }}
                   >
