@@ -180,7 +180,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-[11px] tracking-[0.14em] uppercase text-lauds-secondary mt-8">
-          ServiceFlow · Hotel F&amp;B Intelligence
+          Lauds · lauds.ai/wtaipei · SparkEdge Digital
         </p>
       </div>
     </div>

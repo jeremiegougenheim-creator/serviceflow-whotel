@@ -75,15 +75,15 @@ export default function BottomNav() {
               className={clsx(
                 "flex-1 flex flex-col items-center justify-center gap-1 transition-colors",
                 isActive
-                  ? "text-lauds-champagne"
-                  : "text-lauds-muted hover:text-lauds-charcoal"
+                  ? "text-lauds-champagne-dark"
+                  : "text-lauds-secondary hover:text-lauds-charcoal"
               )}
             >
               {tab.icon}
               <span
                 className={clsx(
                   "text-[10px] font-semibold tracking-[0.1em] uppercase",
-                  isActive ? "text-lauds-champagne" : "text-lauds-muted"
+                  isActive ? "text-lauds-champagne-dark" : "text-lauds-secondary"
                 )}
               >
                 {tab.label}

@@ -12,6 +12,7 @@ const config: Config = {
         "lauds-cream": "#FAF8F4",
         "lauds-charcoal": "#2A2520",
         "lauds-champagne": "#A0784A",
+        "lauds-champagne-dark": "#7A5A32",
         "lauds-champagne-light": "#C9A97A",
         "lauds-blue": "#16A6EC",
         "lauds-mag": "#E01E8C",
