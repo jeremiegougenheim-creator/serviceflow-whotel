@@ -19,7 +19,7 @@ const config: Config = {
         "lauds-esg": "#4A8F5E",
         "lauds-surface": "#F2EFE9",
         "lauds-border": "#E4DDD2",
-        "lauds-muted": "#8A7E72",
+        "lauds-muted": "#6B6560",
         "lauds-secondary": "#4A453F",
       },
       fontFamily: {

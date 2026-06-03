@@ -89,7 +89,7 @@ export default function LoginPage() {
               </p>
               <button
                 onClick={() => setStatus("idle")}
-                className="mt-6 text-xs font-semibold tracking-[0.14em] uppercase text-lauds-champagne hover:text-lauds-charcoal transition-colors"
+                className="mt-6 text-xs font-semibold tracking-[0.14em] uppercase text-lauds-champagne-dark hover:text-lauds-charcoal transition-colors"
               >
                 Use a different address
               </button>

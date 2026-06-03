@@ -356,7 +356,7 @@ export default function ESGPage() {
             border: "1px solid color-mix(in srgb, var(--lauds-champagne-light) 18%, transparent)",
           }}
         >
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-lauds-champagne mb-3">
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-lauds-champagne-dark mb-3">
             GRI 306 · Export
           </p>
           <div className="space-y-2">
@@ -417,12 +417,12 @@ function ExportRow({
   > = {
     scheduled: {
       dot:   "var(--lauds-accent-action)",
-      text:  "var(--lauds-accent-action)",
+      text:  "var(--lauds-text-secondary)",
       label: "Scheduled",
     },
     connected: {
       dot:   "var(--lauds-accent-savings)",
-      text:  "var(--lauds-accent-savings)",
+      text:  "var(--lauds-text-secondary)",
       label: "Connected",
     },
     pending: {

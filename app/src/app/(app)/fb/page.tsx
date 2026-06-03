@@ -200,7 +200,7 @@ export default function FBPage() {
           </div>
           <div className="flex items-center gap-3 mt-2">
             {readyCount > 0 && (
-              <span className="text-[11px] text-lauds-esg font-semibold">
+              <span className="text-[11px] text-lauds-charcoal font-semibold">
                 {readyCount} ready
               </span>
             )}

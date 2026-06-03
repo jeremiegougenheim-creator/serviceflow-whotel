@@ -261,7 +261,7 @@ function ActionCard({ rank, action }: { rank: number; action: Action }) {
             {action.causal}
           </p>
           {action.saving > 0 && (
-            <p className="text-[12px] font-semibold text-lauds-esg mt-2">
+            <p className="text-[12px] font-semibold text-lauds-charcoal mt-2">
               Est. NT${action.saving.toLocaleString()} saved
             </p>
           )}

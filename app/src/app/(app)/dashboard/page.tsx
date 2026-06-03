@@ -189,7 +189,7 @@ export default async function DashboardPage() {
               label="Covers (p50)"
               value={forecast ? forecast.covers_p50.toString() : "—"}
               sub="tomorrow's forecast"
-              valueClass="text-lauds-blue"
+              valueClass="text-lauds-charcoal"
             />
             <KpiTile
               label="Savings"
