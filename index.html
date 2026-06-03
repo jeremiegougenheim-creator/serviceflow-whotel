@@ -258,7 +258,7 @@ html,body{
 
 .silhouette{position:absolute;right:-20px;bottom:-10px;width:140px;height:120px;opacity:.18;pointer-events:none;z-index:0}
 .silhouette svg{width:100%;height:100%;fill:var(--champagne-light)}
-/* Winnow comparison table */
+/* Gap comparison table */
 .winn-head{display:grid;grid-template-columns:1fr 1fr 1.1fr;background:var(--charcoal);padding:10px 14px;gap:8px}
 .winn-dim-h{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(245,240,232,.65)}
 .winn-col-a{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(245,240,232,.65)}
@@ -268,7 +268,7 @@ html,body{
 .winn-dim{font-size:10.5px;font-weight:700;color:var(--charcoal);letter-spacing:.04em;line-height:1.35}
 .winn-a{font-size:11px;color:var(--mid-grey);line-height:1.4}
 .winn-b{font-size:11px;color:var(--charcoal);font-weight:500;line-height:1.4}
-.st-winnow{font-size:10px;color:var(--esg);margin-top:3px;font-weight:600;letter-spacing:.03em}
+.st-wastelog{font-size:10px;color:var(--esg);margin-top:3px;font-weight:600;letter-spacing:.03em}
 /* Notifications timeline */
 .notif-timeline{position:relative;padding-left:14px;margin-top:8px}
 .notif-timeline::before{content:'';position:absolute;left:5px;top:8px;bottom:8px;width:1px;background:linear-gradient(180deg,var(--marble-dark),var(--champagne-light),var(--marble-dark))}
@@ -403,11 +403,11 @@ function explainReason(natMult,weaMult,dayMult,suiteMult,learning,s){
 function buildAction(st){
   const pct=Math.round(Math.abs(st.delta)*100);
   const w2k=st.waves.wave_0800||st.waves.wave_0745||0;
-  if(st.delta<0)return{tx:'Trim '+st.label+' −'+pct+'% — '+st.reason,meta:'Open '+st.waves.open_0630+' · exported to Serve 360',saving:st.savingNTD};
+  if(st.delta<0)return{tx:'Trim '+st.label+' −'+pct+'% — '+st.reason,meta:'Open '+st.waves.open_0630+' · exported to Serve 360 format',saving:st.savingNTD};
   return{tx:'Boost '+st.label+' +'+pct+'% — '+st.reason,meta:'Open '+st.waves.open_0630+', then +'+w2k+' in waves',saving:0};
 }
 // Station waste log: waste_kg / produced_kg per station (yesterday's reading)
-const WINNOW_CORRECTION={congee_noodle:0.08,dim_sum:0.11,japanese:0.09,korean:0.07,western_hot:0.14,bakery_pastry:0.12,fruit_cold:0.06,taiwanese_local:0.08,coffee_bar:0.05};
+const WASTE_CORRECTION={congee_noodle:0.08,dim_sum:0.11,japanese:0.09,korean:0.07,western_hot:0.14,bakery_pastry:0.12,fruit_cold:0.06,taiwanese_local:0.08,coffee_bar:0.05};
 
 function computeBriefingV3(s,history){
   history=history||[];
@@ -429,19 +429,19 @@ function computeBriefingV3(s,history){
     const suiteMult=suitePremiumMultiplier(st.key,s.suiteRatio||0.12);
     const learning=learningCorrection(st.key,history);
     // Station waste log is the primary feedback signal — 80% of measured waste ratio corrected into forecast
-    const winnowRatio=WINNOW_CORRECTION[st.key]||0.10;
-    const winnowMult=1-winnowRatio*0.8;
+    const wasteRatio=WASTE_CORRECTION[st.key]||0.10;
+    const wasteMult=1-wasteRatio*0.8;
     const base=BASE_PARS[st.key]*scale;
-    const demand=base*natMult*weaMult*dayMult*suiteMult*winnowMult;
+    const demand=base*natMult*weaMult*dayMult*suiteMult*wasteMult;
     const total=Math.round(demand);
     const confidence=Math.min(0.95,natConf*0.4+learning.conf*0.4+0.2);
     const waves=waveSchedule(st.key,s.isWeekend,total);
-    const winnowWasteKg=Math.round(BASE_PARS[st.key]*scale*winnowRatio*10)/10;
-    const savingKg=Math.max(0,winnowWasteKg-(total*0.05));
+    const wasteLogKg=Math.round(BASE_PARS[st.key]*scale*wasteRatio*10)/10;
+    const savingKg=Math.max(0,wasteLogKg-(total*0.05));
     const delta=(demand-base)/base;
     return{...st,total,opening:waves.open_0630,replenish:Math.max(0,total-waves.open_0630),delta,
       reason:explainReason(natMult,weaMult,dayMult,suiteMult,learning,s),
-      measuredY:winnowWasteKg,winnowRatio,waves,confidence,
+      measuredY:wasteLogKg,wasteRatio,waves,confidence,
       savingNTD:Math.round(savingKg*CPP),co2Avoided:Math.round(savingKg*CO2*10)/10};
   });
   const ranked=[...stations].filter(x=>Math.abs(x.delta)>0.08).sort((a,b)=>Math.abs(b.delta*BASE_PARS[b.key])-Math.abs(a.delta*BASE_PARS[a.key]));
@@ -464,13 +464,13 @@ function computeBriefing(s){return computeBriefingV3(s,[]);}
 // NOTIFICATION TIMELINE — Démo statique 24h
 // ============================================================
 const NOTIF_TIMELINE=[
-  {time:'18:00',day:'Yesterday',tier:'PRESCRIPTIVE',icon:'🌙',to:['GM','Chef','F&B'],title:'Nightly Brief · Sat 14 Mar',body:'316 covers forecast · Confidence 84% ↑ · 3 priority actions ready for approval.',metric:'NT$2,803',metricLabel:'estimated saving',color:'blue'},
+  {time:'18:00',day:'Yesterday',tier:'PRESCRIPTIVE',icon:'🌙',to:['GM','Chef','F&B'],title:'Nightly Brief · Sat 14 Mar',body:'316 covers Sat. Cut Bacon -2kg, push Congee +1kg. Save NT$2,803.',metric:'NT$2,803',metricLabel:'estimated saving',color:'blue'},
   {time:'03:30',day:'Today',tier:'DAWN UPDATE',icon:'🌅',to:['Chef','Sous-chef'],title:'Overnight changes detected',body:'Late CN tour group +12 rooms · Weather upgrade 24°→26° · 38 early arrivals 04:30–06:00.',metric:'+18',metricLabel:'covers adjusted',color:'champagne'},
-  {time:'06:00',day:'Today',tier:'SERVICE READY',icon:'🟢',to:['Chef','Service Mgr'],title:'All 9 stations confirmed open',body:'7 cooks · 16 servers ✓ · Bakery 2nd bake deferred to 08:00 per forecast.',metric:null,color:'esg'},
+  {time:'06:00',day:'Today',tier:'SERVICE READY',icon:'🟢',to:['Chef','Service Mgr'],title:'All 9 stations confirmed open',body:'Eggs station: 8/9kg prepped. Congee replenish at 08:30. · 7 cooks · 16 servers ✓',metric:null,color:'esg'},
   {time:'07:30',day:'Today',tier:'LIVE · COVER CHECK',icon:'📊',to:['Chef'],title:'Cover count +11% above forecast',body:'142 seated vs 128 expected · System auto-adjusting Coffee +20, Congee +8.',metric:null,color:'mag'},
-  {time:'08:12',day:'Today',tier:'LIVE · CONSUMPTION',icon:'⚡',to:['Chef'],title:'Dim Sum running fast — 73% consumed',body:'+22% above pace · Bring 08:30 wave forward 15min · Add +6 portions (CN group still seated).',metric:null,color:'mag'},
+  {time:'08:12',day:'Today',tier:'LIVE · CONSUMPTION',icon:'⚡',to:['Chef'],title:'Dim Sum running fast — 73% consumed',body:'Dim Sum +20% faster. Bring 08:30 wave forward 15 min. Add +6 portions (CN group still seated).',metric:null,color:'mag'},
   {time:'09:30',day:'Today',tier:'WASTE PREVENT',icon:'⏱',to:['Chef','F&B'],title:'2 stations at over-stock risk',body:'Western Hot: 11 portions risk · Bakery croissants: 5 risk · Recommend: stop replenish, prepare donation box.',metric:'NT$680',metricLabel:'saved if approved',color:'esg'},
-  {time:'12:30',day:'Today',tier:'LEARN',icon:'📚',to:['Chef','F&B','GM'],title:'Service debrief · 347 covers (+9.8%)',body:'Korea × Coffee Bar coefficient auto-updated 1.20 → 1.32 · Confidence next time: 86% ↑',metric:'NT$3,420',metricLabel:'captured · CO₂e 5.1kg',color:'blue'},
+  {time:'12:30',day:'Today',tier:'LEARN',icon:'📚',to:['Chef','F&B','GM'],title:'Service debrief · 347 covers (+9.8%)',body:'347 covers (+9.8%). Korea×Coffee coef updated. · CO₂e 5.1kg logged.',metric:'NT$3,420',metricLabel:'captured · CO₂e 5.1kg',color:'blue'},
   {time:'Anytime',day:'Event-driven',tier:'EXCEPTION',icon:'🚨',to:['Chef','F&B','GM'],title:'Group booking +18 rooms · 22h to check-in',body:'Re-forecast running · Impact: +24 covers · Dim Sum +8 · Congee +6 · Notify procurement.',metric:null,color:'red'}
 ];
 const TIER_COLORS={blue:'var(--w-blue)',mag:'var(--w-mag)',esg:'var(--esg)',champagne:'var(--champagne)',red:'#C04848'};
@@ -538,9 +538,9 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
       <div class="dash-b"><div class="dash-t">How it talks to you</div><div class="dash-d">8 notifications across 24h · 5 tiers · auto-routed to the right person</div></div>
       <div class="dash-arrow">›</div>
     </div>
-    <div class="dash-tile" onclick="go('winnow')">
+    <div class="dash-tile" onclick="go('gap')">
       <div class="dash-i" style="background:rgba(74,143,94,.10);color:var(--esg)"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/></svg></div>
-      <div class="dash-b"><div class="dash-t">W Taipei today vs with ServiceFlow</div><div class="dash-d">7-gap analysis · NT$867K/yr opportunity · GRI 306 aligned</div></div>
+      <div class="dash-b"><div class="dash-t">W Taipei today vs with ServiceFlow</div><div class="dash-d">8-gap analysis · NT$867K/yr opportunity · GRI 306 aligned</div></div>
       <div class="dash-arrow">›</div>
     </div>
     <div class="dash-tile" onclick="go('fb')">
@@ -564,7 +564,7 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
   const grades=Object.entries(b.grades).map(([k,v])=>'<div class="g" data-kind="'+k+'"><div class="v">'+v+'</div><div class="k">'+k+'</div></div>').join('');
   const top=b.actions.slice(0,3);
   const wh=b.stations.find(st=>st.key==='western_hot');
-  const winnowNote=wh?'Western Hot adjusted '+Math.round(wh.delta*100)+'% based on yesterday\'s measured waste ('+wh.measuredY+' kg / ~'+Math.round(BASE_PARS['western_hot']*b.scale)+' portions = waste log)':'';
+  const wasteNote=wh?'Western Hot adjusted '+Math.round(wh.delta*100)+'% based on yesterday\'s staff-logged waste ('+wh.measuredY+' kg / ~'+Math.round(BASE_PARS['western_hot']*b.scale)+' portions = waste log)':'';
   const actionItems=top.map((a,i)=>'<div class="ab-item"><div class="ab-ring">'+(i+1)+'</div><div class="ab-body"><div class="ab-tx">'+a.tx+'</div><div class="ab-meta">'+a.meta+'</div></div>'+(a.saving>0?'<div class="ab-save">NT$'+a.saving.toLocaleString()+'</div>':'<div class="ab-save zero">—</div>')+'</div>').join('');
   const stationRows=b.stations.map(st=>{
     const sg=st.delta>0?'+':'';
@@ -575,8 +575,8 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
     const confPct=Math.round(st.confidence*100);
     const confClr=st.confidence>0.8?'var(--esg)':st.confidence>0.65?'var(--champagne)':'#999';
     const prep='<b>'+w1+'</b> at 06:30 · <b>+'+w2k+'</b> at '+wt2+(isCoffee?'':' · <b>+'+w3k+'</b> at '+wt3);
-    const winnowTag=st.winnowRatio>=0.10?'<div class="st-winnow">Waste log: '+st.measuredY+' kg yesterday ('+Math.round(st.winnowRatio*100)+'% ratio)</div>':'';
-    return '<div class="st-row"><div class="st-badge" style="background:'+STATION_BADGE[st.key]+'"></div><div class="st-body"><div class="st-name">'+st.label+'<span style="float:right;font-size:10px;color:'+confClr+'">'+confPct+'%</span></div><div class="st-prep">'+prep+'</div><div class="st-cause">'+st.reason+'</div>'+winnowTag+'<div class="st-waste">Yest. waste: '+st.measuredY+' kg</div></div><div class="st-pct '+cls+'">'+sg+Math.round(st.delta*100)+'%</div></div>';
+    const wasteTag=st.wasteRatio>=0.10?'<div class="st-wastelog">Staff-logged · per station: '+st.measuredY+' kg yesterday ('+Math.round(st.wasteRatio*100)+'% ratio)</div>':'';
+    return '<div class="st-row"><div class="st-badge" style="background:'+STATION_BADGE[st.key]+'"></div><div class="st-body"><div class="st-name">'+st.label+'<span style="float:right;font-size:10px;color:'+confClr+'">'+confPct+'%</span></div><div class="st-prep">'+prep+'</div><div class="st-cause">'+st.reason+'</div>'+wasteTag+'<div class="st-waste">Yest. waste: '+st.measuredY+' kg</div></div><div class="st-pct '+cls+'">'+sg+Math.round(st.delta*100)+'%</div></div>';
   }).join('');
   return `
   <div class="hero bl">
@@ -607,7 +607,7 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
         <div class="ab-recap-l">Tonight's estimated value</div>
         <div class="ab-recap-v">NT$${b.save.toLocaleString()}</div>
       </div>
-      ${winnowNote?'<div style="font-size:11px;color:rgba(245,240,232,.55);line-height:1.5;margin-top:8px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px">'+winnowNote+'</div>':''}
+      ${wasteNote?'<div style="font-size:11px;color:rgba(245,240,232,.55);line-height:1.5;margin-top:8px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px">'+wasteNote+'</div>':''}
     </div>
 
     <div class="sec-h"><h3>Stations · ${s.label} breakfast</h3><span class="sa">9 stations</span></div>
@@ -631,10 +631,10 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
     <div class="card flat">
       <div class="eyebrow" style="margin:0 0 6px">Sources</div>
       <div style="font-size:11px;line-height:1.8;color:var(--mid-grey)">
-        WRAP 2024 — hotel F&amp;B waste 12% of food cost · industry benchmark<br>
+        WRAP 2025 — hotel F&amp;B waste 12% of food cost · 180 resort kitchens globally<br>
         SHA / Cornell 2023 — $7 saved per $1 invested in food waste reduction<br>
-        Ellen MacArthur Foundation — food waste underestimated by 2× at baselining<br>
-        Marriott Serve 360 — GRI 306 mapping · CO₂e scope 3 reporting
+        Ellen MacArthur Foundation — food waste underestimated by 2× at baselining · 30g CO₂e per PET bottle<br>
+        Marriott Serve 360 — GRI 306 mapping · CO₂e scope 3 reporting · Export-ready
       </div>
     </div>
     <div class="sec-h"><h3>When it runs</h3><button class="sa" onclick="go('cadence')">5 gates ›</button></div>
@@ -679,7 +679,7 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
     <div class="strike">
       <div class="st-eb">PRE-EMPTIVE STRIKE</div>
       <div class="st-tt">Trim ${strike.label} <em>−${pct}%</em> & hold a fast-replenish buffer.</div>
-      <div style="position:relative;z-index:1;font-size:12px;color:rgba(245,240,232,.7);line-height:1.5">${strike.reason} · save est. NT$${saving.toLocaleString()} · auto-log Serve 360.</div>
+      <div style="position:relative;z-index:1;font-size:12px;color:rgba(245,240,232,.7);line-height:1.5">${strike.reason} · save est. NT$${saving.toLocaleString()} · export to Serve 360 format.</div>
       <div class="st-grid">
         <div class="st-tile"><div class="v">${strike.waves.open_0630}</div><div class="k">06:30 opening</div></div>
         <div class="st-tile"><div class="v">+${strike.waves.wave_0800||strike.waves.wave_0745||0}</div><div class="k">${s.isWeekend?'08:00':'07:45'} wave</div></div>
@@ -725,7 +725,7 @@ function screenEsg(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
   </div>
   <div class="body">
     <div class="kpi-grid">
-      <div class="kpi"><div class="k">CO₂e / guest</div><div class="v gn">0.34<small>kg ↓</small></div><div class="d">vs. ind. range 0.40–0.55 <span title="Industry benchmark range: WRAP 2024 · SHA/Cornell 2023 · full-service hotel breakfast" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
+      <div class="kpi"><div class="k">CO₂e / guest</div><div class="v gn">0.34<small>kg ↓</small></div><div class="d">vs. ind. range 0.40–0.55 <span title="² CO₂e factors: Poore &amp; Nemecek (Science 2018) + WRAP UK. Industry range 0.40–0.55: Sustainable Hospitality Alliance benchmark" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
       <div class="kpi"><div class="k">Waste cut</div><div class="v">28<small>%</small></div><div class="d">30-day rolling <span title="WRAP 2024 — 12% waste baseline; ServiceFlow pilot target 28% reduction" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
     </div>
     <div class="eyebrow">Frameworks</div>
@@ -738,7 +738,7 @@ function screenEsg(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
     <div class="card">
       <div class="prow"><span class="nm">Over-prep avoided</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500">NT$${b.save.toLocaleString()}</b></div>
       <div class="prow"><span class="nm">CO₂e reduced</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500">${b.co2} kg</b></div>
-      <div class="prow"><span class="nm">Single-use bottles avoided · MTD</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500">3,140 <span title="329 avg covers × 30 days × 32% single-use reduction rate · Ellen MacArthur Foundation baseline" style="font-size:12px;cursor:help;font-weight:400;opacity:0.55">ⓘ</span></b></div>
+      <div class="prow"><span class="nm">Single-use bottles avoided · MTD</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500">3,140 <span title="³ Ellen MacArthur Foundation · 30g CO₂e per PET 500ml bottle (production + transport)" style="font-size:12px;cursor:help;font-weight:400;opacity:0.55">ⓘ</span></b></div>
     </div>
     <div class="card flat"><div style="font-size:12px;line-height:1.55"><b class="gn">Measured, not modelled —</b> waste → CO₂e from the staff-recorded waste log. The model only forecasts; the log audits.</div></div>
   </div>`;}
@@ -823,15 +823,16 @@ function screenNotifs(){
     <button class="btn" onclick="go('brief')" style="margin-top:14px">← Back to briefing</button>
   </div>`;}
 
-function screenWinnow(){
+function screenGap(){
   const rows=[
-    {dim:'Prep guidance',a:'None — chef decides from yesterday\'s sales',b:'Station pars per wave · prescribes by 18:00 J−1'},
-    {dim:'Data sources',a:'Shiji POS covers only',b:'PMS (guest profile) + Shiji POS + weather + events + One Yield RMS + waste log'},
-    {dim:'Forecast horizon',a:'Reactive (same day)',b:'18h ahead · P10 / P50 / P90 confidence bands'},
-    {dim:'Waste signal',a:'Staff tally sheets — end of service',b:'Same staff log → feeds next day\'s forecast automatically'},
-    {dim:'ESG reporting',a:'Manual export · monthly · error-prone',b:'Export-ready GRI 306 + Serve 360 format · weekly'},
-    {dim:'Savings captured',a:'~4% cost reduction (reactive trim)',b:'12% target — 3 predictive points + 1 reactive = NT$867K/yr'},
-    {dim:'Chef workload',a:'Chef re-estimates every morning',b:'Brief delivered 18:00 · chef reviews in 3 min · approves'}
+    {dim:'Food waste tracking',a:'None · unmeasured daily',b:'Logged · per station · daily'},
+    {dim:'Cover forecasting',a:'Chef\'s gut · spreadsheet',b:'8-signal model · 18:00 J-1'},
+    {dim:'Buffet over-prep cost',a:'NT$867K / year invisible <span title="Industry math: 12% waste baseline (WRAP 2025, 180 resort kitchens) applied to W Taipei volume. To be calibrated at pilot week 2." style="font-size:9px;cursor:help;opacity:0.55">ⓘ</span>',b:'NT$2,400 / day recovered avg'},
+    {dim:'ESG data quality',a:'Manual · unaudited',b:'Auto-logged · GRI 306 mapped'},
+    {dim:'Serve 360 reporting',a:'Estimated · ad-hoc',b:'Export-ready · monthly'},
+    {dim:'Chef planning time',a:'30+ min / day',b:'5 min / service · 0 planning'},
+    {dim:'Data sovereignty',a:'No system = no policy',b:'APAC-hosted · Singapore region'},
+    {dim:'Shiji POS integration',a:'Covers only · no forecast feed',b:'Shiji Infrasys POS · auto cover count via API'}
   ];
   const tableRows=rows.map(r=>'<div class="winn-row"><div class="winn-dim">'+r.dim+'</div><div class="winn-a">'+r.a+'</div><div class="winn-b">'+r.b+'</div></div>').join('');
   return `
@@ -841,7 +842,7 @@ function screenWinnow(){
     <p class="hero-sub">The Kitchen Table · 405 keys · The gap between a reactive kitchen and a prescriptive one.</p>
   </div>
   <div class="body">
-    <div class="eyebrow">7-gap analysis</div>
+    <div class="eyebrow">8-gap analysis</div>
     <div class="card" style="padding:0;overflow:hidden">
       <div class="winn-head">
         <div class="winn-dim-h">Gap</div>
@@ -852,15 +853,15 @@ function screenWinnow(){
     </div>
     <div class="ab-box" style="margin-top:14px">
       <div class="ab-eb">ECONOMICS · W TAIPEI PILOT · YEAR 1</div>
-      <div class="ab-h">4% today → <em>NT$867K/yr <span title="405 keys · 329 avg covers/day · NT$220 food cost/cover · 12% waste baseline (WRAP 2024) · 3 predictive points = NT$647K incremental" style="font-size:14px;cursor:help;font-style:normal;opacity:0.55">ⓘ</span></em></div>
+      <div class="ab-h">4% today → <em>NT$867K/yr <span title="¹ Industry math: WRAP 2025 baseline (12% waste, 180 resort kitchens) applied to W Taipei volume. To be calibrated at pilot week 2." style="font-size:14px;cursor:help;font-style:normal;opacity:0.55">ⓘ</span></em></div>
       <div style="position:relative;z-index:1;font-size:12px;color:rgba(245,240,232,.7);line-height:1.5">
-        Current reactive trim ≈ NT$220K/yr · ServiceFlow adds 3 predictive points on top → NT$647K incremental → NT$867K total. Every NT$ is auditable per station, per wave, per service date.
+        Current reactive trim ≈ NT$220K/yr · ServiceFlow adds 3 predictive points on top → NT$647K incremental → NT$867K total. Conservative NT$1,800/day · Realistic NT$2,400/day <span title="⁴ Realistic scenario: 65% of model savings target. Conservative NT$1,800 · Stretch NT$3,200." style="font-size:9px;cursor:help;opacity:0.55">ⓘ</span>. Every NT$ is auditable per station, per wave, per service date.
       </div>
     </div>
     <div class="card flat" style="margin-top:14px">
       <div class="eyebrow" style="margin:0 0 8px">Sources</div>
       <div style="font-size:11.5px;line-height:1.85;color:var(--mid-grey)">
-        <b style="color:var(--charcoal)">WRAP 2024</b> — hotel F&amp;B waste 12% of food cost · industry benchmark<br>
+        <b style="color:var(--charcoal)">WRAP 2025</b> — hotel F&amp;B waste 12% of food cost · 180 resort kitchens globally<br>
         <b style="color:var(--charcoal)">SHA / Cornell 2023</b> — $7 saved per $1 invested in food waste reduction<br>
         <b style="color:var(--charcoal)">Ellen MacArthur Foundation</b> — food waste underestimated by 2× at baselining<br>
         <b style="color:var(--charcoal)">Marriott Serve 360</b> — GRI 306 mapping · CO₂e scope 3 reporting framework
@@ -881,7 +882,7 @@ function openLog(){
     '<button class="voice-btn" onclick="confirmToast()" style="width:100%;justify-content:center;padding:13px;font-size:13px">'+I.mic+'<span>Hold to dictate</span></button>'+
     '<div class="field">Type</div><div class="opts">'+types.map(t=>'<div class="opt '+(logSel.type===t?'on':'')+'" onclick="logSel.type=\''+t+'\';openLog()">'+t+'</div>').join('')+'</div>'+
     '<div class="field">Station</div><div class="opts">'+STATIONS.slice(0,6).map(st=>'<div class="opt '+(logSel.station===st.label?'on':'')+'" onclick="logSel.station=\''+st.label+'\';openLog()">'+st.label+'</div>').join('')+'</div>'+
-    '<button class="btn mg" style="margin-top:20px" onclick="closeLog();confirmToast()">Submit — export to Serve 360 + Taiwan FSC</button>'+
+    '<button class="btn mg" style="margin-top:20px" onclick="closeLog();confirmToast()">Submit — export to Serve 360 format + Taiwan FSC</button>'+
     '<button class="btn ghost sm" style="margin-top:9px" onclick="closeLog()">Cancel</button></div>';
   document.querySelector('.phone').appendChild(sheet);
 }
@@ -894,7 +895,7 @@ const TABS=[
   ['esg','ESG','esg'],
   ['portfolio','Owner','portfolio']
 ];
-const SCREEN_BAR={dashboard:'dk',brief:'bl',fb:'mg',esg:'gn',portfolio:'br',cadence:'dk',notifs:'dk',winnow:'dk'};
+const SCREEN_BAR={dashboard:'dk',brief:'bl',fb:'mg',esg:'gn',portfolio:'br',cadence:'dk',notifs:'dk',gap:'dk'};
 function renderNav(){
   const navEl=g('nav');
   if(!state.role||state.role==='owner'){navEl.style.display='none';return;}
@@ -911,7 +912,7 @@ function render(){
   let html;
   if(!state.role)html=screenRole();
   else if(state.role==='owner')html=screenPortfolio();
-  else html=({dashboard:screenDashboard,brief:screenBrief,fb:screenFB,esg:screenEsg,portfolio:screenPortfolio,cadence:screenCadence,notifs:screenNotifs,winnow:screenWinnow}[state.tab]||screenDashboard)();
+  else html=({dashboard:screenDashboard,brief:screenBrief,fb:screenFB,esg:screenEsg,portfolio:screenPortfolio,cadence:screenCadence,notifs:screenNotifs,gap:screenGap}[state.tab]||screenDashboard)();
   g('screen').innerHTML=html;g('screen').scrollTop=0;
   renderNav();setSbar();
 }
@@ -922,7 +923,7 @@ function setOutlet(o){state.outlet=o;render();}
 function toast(msg,color){const t=document.createElement('div');t.textContent=msg;
   t.style.cssText='position:absolute;left:50%;bottom:110px;transform:translateX(-50%);background:'+color+';color:#fff;font-weight:600;padding:13px 19px;border-radius:13px;font-size:12.5px;letter-spacing:.04em;z-index:30;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:88%;text-align:center;font-family:Jost,sans-serif';
   document.querySelector('.phone').appendChild(t);setTimeout(()=>t.remove(),2200);}
-function confirmToast(){toast('✓ Logged · Exported to Serve 360 & Taiwan FSC format','#4A8F5E');}
+function confirmToast(){toast('✓ Logged · Exported to Serve 360 format & Taiwan FSC','#4A8F5E');}
 function shareToast(){toast('⤓ Prep sheet sent to kitchen + GM','#16A6EC');}
 
 (function tick(){const d=new Date(),pad=n=>(''+n).padStart(2,'0');const el=g('clock');if(el)el.textContent=pad(d.getHours())+':'+pad(d.getMinutes());setTimeout(tick,15000);})();

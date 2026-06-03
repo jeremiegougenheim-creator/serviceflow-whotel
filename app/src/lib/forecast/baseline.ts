@@ -69,8 +69,8 @@ export const NAT_PRIORS: Record<string, Record<string, { mult: number; conf: num
 };
 
 /**
- * Winnow measured waste ratio per station (waste_kg / produced_kg).
- * Used as primary feedback signal — 80% of ratio corrected into forecast.
+ * Station waste log ratio per station (waste_kg / produced_kg).
+ * Staff-logged · per station · service-end. Primary feedback signal — 80% of ratio corrected into forecast.
  */
 export const WINNOW_CORRECTION: Record<string, number> = {
   congee_noodle: 0.08,
@@ -586,7 +586,7 @@ export interface ComputeStationParsInput {
 /**
  * Compute per-station preparation quantities (PAR) in kg with confidence bands.
  * Applies: nationality priors, weather adjustment, day-of-week, suite premium,
- * Winnow feedback correction, and learning correction from waste history.
+ * station waste log feedback correction, and learning correction from waste history.
  */
 export function computeStationPars(input: ComputeStationParsInput): StationPar[] {
   const { covers, stations, natMix, weather, isWeekend, suiteRatio, history = [] } = input;
@@ -612,7 +612,7 @@ export function computeStationPars(input: ComputeStationParsInput): StationPar[]
     // Learning correction from historical waste
     const learning = learningCorrection(slug, history);
 
-    // Winnow correction: primary feedback signal, 80% of waste ratio corrected out
+    // Waste log correction: primary feedback signal, 80% of waste ratio corrected out
     const winnowRatio = WINNOW_CORRECTION[slug] ?? 0.1;
     const winnowMult = 1 - winnowRatio * 0.8;
 

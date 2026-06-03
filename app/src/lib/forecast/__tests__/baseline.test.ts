@@ -216,8 +216,8 @@ describe("computeStationPars", () => {
   });
 
   it("WINNOW_CORRECTION western_hot=0.14 reduces demand by ~11%", () => {
-    // Compare a world with winnow vs manual calculation
-    // winnow mult = 1 - 0.14 * 0.8 = 0.888 → ~11.2% reduction vs uncorrected
+    // Compare a world with waste log vs manual calculation
+    // waste log mult = 1 - 0.14 * 0.8 = 0.888 → ~11.2% reduction vs uncorrected
     const expectedReduction = 1 - WINNOW_CORRECTION["western_hot"]! * 0.8;
     expect(expectedReduction).toBeCloseTo(0.888, 2);
 
