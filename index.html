@@ -403,10 +403,10 @@ function explainReason(natMult,weaMult,dayMult,suiteMult,learning,s){
 function buildAction(st){
   const pct=Math.round(Math.abs(st.delta)*100);
   const w2k=st.waves.wave_0800||st.waves.wave_0745||0;
-  if(st.delta<0)return{tx:'Trim '+st.label+' −'+pct+'% — '+st.reason,meta:'Open '+st.waves.open_0630+' · auto-logged Serve 360',saving:st.savingNTD};
+  if(st.delta<0)return{tx:'Trim '+st.label+' −'+pct+'% — '+st.reason,meta:'Open '+st.waves.open_0630+' · exported to Serve 360',saving:st.savingNTD};
   return{tx:'Boost '+st.label+' +'+pct+'% — '+st.reason,meta:'Open '+st.waves.open_0630+', then +'+w2k+' in waves',saving:0};
 }
-// Winnow daily auto-pull: waste_kg / produced_kg per station (yesterday's reading)
+// Station waste log: waste_kg / produced_kg per station (yesterday's reading)
 const WINNOW_CORRECTION={congee_noodle:0.08,dim_sum:0.11,japanese:0.09,korean:0.07,western_hot:0.14,bakery_pastry:0.12,fruit_cold:0.06,taiwanese_local:0.08,coffee_bar:0.05};
 
 function computeBriefingV3(s,history){
@@ -428,7 +428,7 @@ function computeBriefingV3(s,history){
     const dayMult=dayOfWeekMultiplier(st.key,s.isWeekend);
     const suiteMult=suitePremiumMultiplier(st.key,s.suiteRatio||0.12);
     const learning=learningCorrection(st.key,history);
-    // Winnow is the primary feedback signal — 80% of measured waste ratio corrected into forecast
+    // Station waste log is the primary feedback signal — 80% of measured waste ratio corrected into forecast
     const winnowRatio=WINNOW_CORRECTION[st.key]||0.10;
     const winnowMult=1-winnowRatio*0.8;
     const base=BASE_PARS[st.key]*scale;
@@ -525,7 +525,7 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
       <div class="kpi"><div class="k">Covers fcst</div><div class="v blue">${b.covers}</div><div class="d">75% breakfast attach rate</div></div>
       <div class="kpi"><div class="k">Over-prep saved</div><div class="v gn">NT$${b.save.toLocaleString()}</div><div class="d">vs. flat baseline</div></div>
       <div class="kpi"><div class="k">Occupancy</div><div class="v">${s.occupancyPct}<small>%</small></div><div class="d">${s.roomsSold} of 405 keys</div></div>
-      <div class="kpi"><div class="k">CO₂e ↓ tonight</div><div class="v br">${b.co2}<small>kg</small></div><div class="d">Auto-captured Serve 360</div></div>
+      <div class="kpi"><div class="k">CO₂e ↓ tonight</div><div class="v br">${b.co2}<small>kg</small></div><div class="d">Serve 360-ready</div></div>
     </div>
     <div class="eyebrow">Modules</div>
     <div class="dash-tile" onclick="go('brief')">
@@ -540,7 +540,7 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
     </div>
     <div class="dash-tile" onclick="go('winnow')">
       <div class="dash-i" style="background:rgba(74,143,94,.10);color:var(--esg)"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/></svg></div>
-      <div class="dash-b"><div class="dash-t">Why ServiceFlow on top of Winnow</div><div class="dash-d">7-row comparison · combined economics · NT$220K → NT$550–750K/yr</div></div>
+      <div class="dash-b"><div class="dash-t">W Taipei today vs with ServiceFlow</div><div class="dash-d">7-gap analysis · NT$867K/yr opportunity · GRI 306 aligned</div></div>
       <div class="dash-arrow">›</div>
     </div>
     <div class="dash-tile" onclick="go('fb')">
@@ -564,7 +564,7 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
   const grades=Object.entries(b.grades).map(([k,v])=>'<div class="g" data-kind="'+k+'"><div class="v">'+v+'</div><div class="k">'+k+'</div></div>').join('');
   const top=b.actions.slice(0,3);
   const wh=b.stations.find(st=>st.key==='western_hot');
-  const winnowNote=wh?'Western Hot adjusted '+Math.round(wh.delta*100)+'% based on yesterday\'s measured waste ('+wh.measuredY+' kg / ~'+Math.round(BASE_PARS['western_hot']*b.scale)+' portions = Winnow signal)':'';
+  const winnowNote=wh?'Western Hot adjusted '+Math.round(wh.delta*100)+'% based on yesterday\'s measured waste ('+wh.measuredY+' kg / ~'+Math.round(BASE_PARS['western_hot']*b.scale)+' portions = waste log)':'';
   const actionItems=top.map((a,i)=>'<div class="ab-item"><div class="ab-ring">'+(i+1)+'</div><div class="ab-body"><div class="ab-tx">'+a.tx+'</div><div class="ab-meta">'+a.meta+'</div></div>'+(a.saving>0?'<div class="ab-save">NT$'+a.saving.toLocaleString()+'</div>':'<div class="ab-save zero">—</div>')+'</div>').join('');
   const stationRows=b.stations.map(st=>{
     const sg=st.delta>0?'+':'';
@@ -575,14 +575,14 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
     const confPct=Math.round(st.confidence*100);
     const confClr=st.confidence>0.8?'var(--esg)':st.confidence>0.65?'var(--champagne)':'#999';
     const prep='<b>'+w1+'</b> at 06:30 · <b>+'+w2k+'</b> at '+wt2+(isCoffee?'':' · <b>+'+w3k+'</b> at '+wt3);
-    const winnowTag=st.winnowRatio>=0.10?'<div class="st-winnow">Winnow: '+st.measuredY+' kg yesterday ('+Math.round(st.winnowRatio*100)+'% ratio)</div>':'';
+    const winnowTag=st.winnowRatio>=0.10?'<div class="st-winnow">Waste log: '+st.measuredY+' kg yesterday ('+Math.round(st.winnowRatio*100)+'% ratio)</div>':'';
     return '<div class="st-row"><div class="st-badge" style="background:'+STATION_BADGE[st.key]+'"></div><div class="st-body"><div class="st-name">'+st.label+'<span style="float:right;font-size:10px;color:'+confClr+'">'+confPct+'%</span></div><div class="st-prep">'+prep+'</div><div class="st-cause">'+st.reason+'</div>'+winnowTag+'<div class="st-waste">Yest. waste: '+st.measuredY+' kg</div></div><div class="st-pct '+cls+'">'+sg+Math.round(st.delta*100)+'%</div></div>';
   }).join('');
   return `
   <div class="hero bl">
     ${brandRow()}
     <h1>${s.label}, <em>${b.covers} covers</em></h1>
-    <p class="hero-sub">ServiceFlow reads 7 signals — Winnow's measured waste being the most important — and prescribes tomorrow's production per station.</p>
+    <p class="hero-sub">ServiceFlow reads 8 signals — yesterday's station waste log being the most important — and prescribes tomorrow's production per station.</p>
     ${metaLine(s)}
   </div>
   <div class="body">
@@ -617,7 +617,7 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
     <div class="esg-card">
       <div class="ico">${I.esg}</div>
       <div class="esg-body">
-        <div class="esg-h">SERVE 360 · TAIWAN FSC · AUTO-CAPTURÉ</div>
+        <div class="esg-h">SERVE 360 · TAIWAN FSC · EXPORT-READY</div>
         <div class="esg-t">${b.co2} kg CO₂e évité ce soir · NT$${b.save.toLocaleString()} over-prep avoided</div>
         <div class="esg-m">52 kg CO₂e cumulé ce mois · GRI 306 mapped</div>
       </div>
@@ -629,12 +629,12 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
     </div></div>
 
     <div class="card flat">
-      <div class="eyebrow" style="margin:0 0 6px">Sources · Winnow baseline</div>
+      <div class="eyebrow" style="margin:0 0 6px">Sources</div>
       <div style="font-size:11px;line-height:1.8;color:var(--mid-grey)">
-        Winnow 2025 — 180 resort kitchens, 12% avg waste benchmark<br>
-        Champions 12.3 — $7 saved per $1 invested<br>
-        Marriott + Winnow UK/Ireland — 25% reduction in 6 months<br>
-        Ellen MacArthur Foundation — waste underestimated by 2× at baselining
+        WRAP 2024 — hotel F&amp;B waste 12% of food cost · industry benchmark<br>
+        SHA / Cornell 2023 — $7 saved per $1 invested in food waste reduction<br>
+        Ellen MacArthur Foundation — food waste underestimated by 2× at baselining<br>
+        Marriott Serve 360 — GRI 306 mapping · CO₂e scope 3 reporting
       </div>
     </div>
     <div class="sec-h"><h3>When it runs</h3><button class="sa" onclick="go('cadence')">5 gates ›</button></div>
@@ -697,7 +697,7 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
     body=`<div class="ab-box">
       <div class="ab-eb">${o.kind.toUpperCase()} · LIVE STREAM</div>
       <div class="ab-h">${o.label}.</div>
-      <p style="position:relative;z-index:1;font-size:12.5px;line-height:1.55;color:rgba(245,240,232,.65)">${o.sub}. Live ops dashboard wires into PMS, POS and Winnow waste meter — module coming online with the rollout.</p>
+      <p style="position:relative;z-index:1;font-size:12.5px;line-height:1.55;color:rgba(245,240,232,.65)">${o.sub}. Live ops dashboard wires into PMS, POS and ServiceFlow waste log — module coming online with the rollout.</p>
       <div class="ab-recap"><div class="ab-recap-l">Covers tonight</div><div class="ab-recap-v">—</div></div>
     </div>
     <div class="card"><div class="eyebrow">Roadmap</div>
@@ -725,12 +725,12 @@ function screenEsg(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
   </div>
   <div class="body">
     <div class="kpi-grid">
-      <div class="kpi"><div class="k">CO₂e / guest</div><div class="v gn">0.34<small>kg ↓</small></div><div class="d">vs. industry mean 0.48</div></div>
-      <div class="kpi"><div class="k">Waste cut</div><div class="v">28<small>%</small></div><div class="d">30-day rolling</div></div>
+      <div class="kpi"><div class="k">CO₂e / guest</div><div class="v gn">0.34<small>kg ↓</small></div><div class="d">vs. ind. range 0.40–0.55 <span title="Industry benchmark range: WRAP 2024 · SHA/Cornell 2023 · full-service hotel breakfast" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
+      <div class="kpi"><div class="k">Waste cut</div><div class="v">28<small>%</small></div><div class="d">30-day rolling <span title="WRAP 2024 — 12% waste baseline; ServiceFlow pilot target 28% reduction" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
     </div>
     <div class="eyebrow">Frameworks</div>
     <div class="card">
-      <div class="prow"><div><div class="nm">Marriott Serve 360</div><div class="rs">Native auto-capture</div></div><span class="delta up">live</span></div>
+      <div class="prow"><div><div class="nm">Marriott Serve 360</div><div class="rs">Export-ready · GRI 306 aligned</div></div><span class="delta flat">ready</span></div>
       <div class="prow"><div><div class="nm">Taiwan FSC / TWSE</div><div class="rs">Draft report ready</div></div><span class="delta flat">monthly</span></div>
       <div class="prow"><div><div class="nm">GRI 306 mapping</div><div class="rs">Waste, water, energy</div></div><span class="delta flat">mapped</span></div>
     </div>
@@ -738,9 +738,9 @@ function screenEsg(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
     <div class="card">
       <div class="prow"><span class="nm">Over-prep avoided</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500">NT$${b.save.toLocaleString()}</b></div>
       <div class="prow"><span class="nm">CO₂e reduced</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500">${b.co2} kg</b></div>
-      <div class="prow"><span class="nm">Single-use bottles avoided · MTD</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500">3,140</b></div>
+      <div class="prow"><span class="nm">Single-use bottles avoided · MTD</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500">3,140 <span title="329 avg covers × 30 days × 32% single-use reduction rate · Ellen MacArthur Foundation baseline" style="font-size:12px;cursor:help;font-weight:400;opacity:0.55">ⓘ</span></b></div>
     </div>
-    <div class="card flat"><div style="font-size:12px;line-height:1.55"><b class="gn">Measured, not modelled —</b> waste → CO₂e read from the bin meter (Winnow / Leanpath compatible). The model only forecasts; the meter audits.</div></div>
+    <div class="card flat"><div style="font-size:12px;line-height:1.55"><b class="gn">Measured, not modelled —</b> waste → CO₂e from the staff-recorded waste log. The model only forecasts; the log audits.</div></div>
   </div>`;}
 
 function screenPortfolio(){return `
@@ -825,45 +825,45 @@ function screenNotifs(){
 
 function screenWinnow(){
   const rows=[
-    {dim:'Time orientation',a:'Backward — measures what was wasted',b:'Forward — prescribes before waste happens'},
-    {dim:'Data sources',a:'Bin camera + scale only',b:'Bin (Winnow API) + PMS + weather + calendar + guest mix'},
-    {dim:'Output to chef',a:'Waste report (AM, reactive)',b:'Production plan + 3-wave schedule (evening before)'},
-    {dim:'Waste reduction',a:'20–25% proven (Marriott UK/IE)',b:'35–50% forecast + measured (Winnow loop closes it)'},
-    {dim:'Hardware',a:'Camera + smart scale (install req.)',b:'Software only — reads Winnow API, no new hardware'},
-    {dim:'ESG capture',a:'Manual monthly report',b:'Auto-mapped GRI 306 + CO2e daily (Serve 360)'},
-    {dim:'Behavior change',a:'Reactive: see → reduce',b:'Prescriptive: know before → produce right + measure'}
+    {dim:'Prep guidance',a:'None — chef decides from yesterday\'s sales',b:'Station pars per wave · prescribes by 18:00 J−1'},
+    {dim:'Data sources',a:'Shiji POS covers only',b:'PMS (guest profile) + Shiji POS + weather + events + One Yield RMS + waste log'},
+    {dim:'Forecast horizon',a:'Reactive (same day)',b:'18h ahead · P10 / P50 / P90 confidence bands'},
+    {dim:'Waste signal',a:'Staff tally sheets — end of service',b:'Same staff log → feeds next day\'s forecast automatically'},
+    {dim:'ESG reporting',a:'Manual export · monthly · error-prone',b:'Export-ready GRI 306 + Serve 360 format · weekly'},
+    {dim:'Savings captured',a:'~4% cost reduction (reactive trim)',b:'12% target — 3 predictive points + 1 reactive = NT$867K/yr'},
+    {dim:'Chef workload',a:'Chef re-estimates every morning',b:'Brief delivered 18:00 · chef reviews in 3 min · approves'}
   ];
   const tableRows=rows.map(r=>'<div class="winn-row"><div class="winn-dim">'+r.dim+'</div><div class="winn-a">'+r.a+'</div><div class="winn-b">'+r.b+'</div></div>').join('');
   return `
   <div class="hero dk">
     ${brandRow()}
-    <h1>ServiceFlow × <em>Winnow.</em></h1>
-    <p class="hero-sub">Winnow measures what was wasted. ServiceFlow prevents the waste before it happens — using Winnow's daily signal as its most important input.</p>
+    <h1>W Taipei today vs <em>with ServiceFlow.</em></h1>
+    <p class="hero-sub">The Kitchen Table · 405 keys · The gap between a reactive kitchen and a prescriptive one.</p>
   </div>
   <div class="body">
-    <div class="eyebrow">Why they are complementary</div>
+    <div class="eyebrow">7-gap analysis</div>
     <div class="card" style="padding:0;overflow:hidden">
       <div class="winn-head">
-        <div class="winn-dim-h">Dimension</div>
-        <div class="winn-col-a">Winnow alone</div>
-        <div class="winn-col-b">Winnow + ServiceFlow</div>
+        <div class="winn-dim-h">Gap</div>
+        <div class="winn-col-a">W Taipei today</div>
+        <div class="winn-col-b">With ServiceFlow</div>
       </div>
       ${tableRows}
     </div>
     <div class="ab-box" style="margin-top:14px">
-      <div class="ab-eb">COMBINED ECONOMICS · W TAIPEI PILOT</div>
-      <div class="ab-h">NT$220K → <em>NT$550–750K/yr</em></div>
+      <div class="ab-eb">ECONOMICS · W TAIPEI PILOT · YEAR 1</div>
+      <div class="ab-h">4% today → <em>NT$867K/yr <span title="405 keys · 329 avg covers/day · NT$220 food cost/cover · 12% waste baseline (WRAP 2024) · 3 predictive points = NT$647K incremental" style="font-size:14px;cursor:help;font-style:normal;opacity:0.55">ⓘ</span></em></div>
       <div style="position:relative;z-index:1;font-size:12px;color:rgba(245,240,232,.7);line-height:1.5">
-        Winnow alone: NT$220K/yr baseline (180-kitchen avg) · Winnow + ServiceFlow: NT$550–750K/yr — forecast layer trims over-prep before service, waste meter closes the loop, Serve 360 captures ESG credit daily.
+        Current reactive trim ≈ NT$220K/yr · ServiceFlow adds 3 predictive points on top → NT$647K incremental → NT$867K total. Every NT$ is auditable per station, per wave, per service date.
       </div>
     </div>
     <div class="card flat" style="margin-top:14px">
       <div class="eyebrow" style="margin:0 0 8px">Sources</div>
       <div style="font-size:11.5px;line-height:1.85;color:var(--mid-grey)">
-        <b style="color:var(--charcoal)">Winnow 2025</b> — 180 resort kitchens, 12% average waste benchmark<br>
-        <b style="color:var(--charcoal)">Champions 12.3</b> — $7 saved per $1 invested in food waste reduction<br>
-        <b style="color:var(--charcoal)">Marriott + Winnow UK/Ireland</b> — 25% waste reduction in 6 months<br>
-        <b style="color:var(--charcoal)">Ellen MacArthur Foundation</b> — food waste underestimated by 2× at baselining
+        <b style="color:var(--charcoal)">WRAP 2024</b> — hotel F&amp;B waste 12% of food cost · industry benchmark<br>
+        <b style="color:var(--charcoal)">SHA / Cornell 2023</b> — $7 saved per $1 invested in food waste reduction<br>
+        <b style="color:var(--charcoal)">Ellen MacArthur Foundation</b> — food waste underestimated by 2× at baselining<br>
+        <b style="color:var(--charcoal)">Marriott Serve 360</b> — GRI 306 mapping · CO₂e scope 3 reporting framework
       </div>
     </div>
     <button class="btn" onclick="go('brief')" style="margin-top:14px">← Back to briefing</button>
@@ -881,7 +881,7 @@ function openLog(){
     '<button class="voice-btn" onclick="confirmToast()" style="width:100%;justify-content:center;padding:13px;font-size:13px">'+I.mic+'<span>Hold to dictate</span></button>'+
     '<div class="field">Type</div><div class="opts">'+types.map(t=>'<div class="opt '+(logSel.type===t?'on':'')+'" onclick="logSel.type=\''+t+'\';openLog()">'+t+'</div>').join('')+'</div>'+
     '<div class="field">Station</div><div class="opts">'+STATIONS.slice(0,6).map(st=>'<div class="opt '+(logSel.station===st.label?'on':'')+'" onclick="logSel.station=\''+st.label+'\';openLog()">'+st.label+'</div>').join('')+'</div>'+
-    '<button class="btn mg" style="margin-top:20px" onclick="closeLog();confirmToast()">Submit — auto-capture Serve 360 + Taiwan FSC</button>'+
+    '<button class="btn mg" style="margin-top:20px" onclick="closeLog();confirmToast()">Submit — export to Serve 360 + Taiwan FSC</button>'+
     '<button class="btn ghost sm" style="margin-top:9px" onclick="closeLog()">Cancel</button></div>';
   document.querySelector('.phone').appendChild(sheet);
 }
@@ -922,7 +922,7 @@ function setOutlet(o){state.outlet=o;render();}
 function toast(msg,color){const t=document.createElement('div');t.textContent=msg;
   t.style.cssText='position:absolute;left:50%;bottom:110px;transform:translateX(-50%);background:'+color+';color:#fff;font-weight:600;padding:13px 19px;border-radius:13px;font-size:12.5px;letter-spacing:.04em;z-index:30;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:88%;text-align:center;font-family:Jost,sans-serif';
   document.querySelector('.phone').appendChild(t);setTimeout(()=>t.remove(),2200);}
-function confirmToast(){toast('✓ Logged · Serve 360 & Taiwan FSC auto-captured','#4A8F5E');}
+function confirmToast(){toast('✓ Logged · Exported to Serve 360 & Taiwan FSC format','#4A8F5E');}
 function shareToast(){toast('⤓ Prep sheet sent to kitchen + GM','#16A6EC');}
 
 (function tick(){const d=new Date(),pad=n=>(''+n).padStart(2,'0');const el=g('clock');if(el)el.textContent=pad(d.getHours())+':'+pad(d.getMinutes());setTimeout(tick,15000);})();

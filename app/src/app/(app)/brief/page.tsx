@@ -136,7 +136,7 @@ const BRIEF: Action[][] = [
     },
     {
       text: "Log waste kg before 11:30 for weekly ESG report",
-      causal: "Weekly GRI 306 export runs at 12:00. Measured by the bin — not modelled.",
+      causal: "Weekly GRI 306 export runs at 12:00. Staff-logged · per station · service-end.",
       saving: 0,
     },
   ],

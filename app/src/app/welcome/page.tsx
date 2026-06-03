@@ -65,7 +65,7 @@ export default function WelcomePage() {
               </svg>
             }
             title="NT$ savings, measured"
-            desc="3 predictive points Winnow can't catch. Every NT$ auditable."
+            desc="3 predictive points traditional tools can't catch. Every NT$ auditable."
           />
           <ValueProp
             icon={
@@ -75,7 +75,7 @@ export default function WelcomePage() {
               </svg>
             }
             title="ESG, by the bin"
-            desc="CO₂e from Winnow measurements only — not modelled."
+            desc="CO₂e from staff-logged station waste. Staff-recorded · per station."
           />
         </div>
 

@@ -4,7 +4,7 @@ import { useState } from "react";
 import OutletTrigger from "@/components/OutletTrigger";
 
 // ─── Pilot data ────────────────────────────────────────────────────────────────
-// All kg values are from measured waste (bin / Winnow) — never from the forecast model.
+// All kg values are from measured waste (staff-logged station waste) — never from the forecast model.
 // CLAUDE.md §7 · RÈGLE 3.
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -157,7 +157,7 @@ export default function ESGPage() {
           />
           <p className="text-[12px] text-lauds-charcoal leading-relaxed">
             <span className="font-semibold">Measured by the bin — not modelled.</span>
-            {" "}CO₂e figures come from waste_measured (Winnow or manual entry). The forecast model is never the source of ESG data.
+            {" "}CO₂e figures come from waste_measured (staff-logged per station). The forecast model is never the source of ESG data.
           </p>
         </div>
 
@@ -361,7 +361,7 @@ export default function ESGPage() {
           </p>
           <div className="space-y-2">
             <ExportRow label="Weekly export"       status="scheduled" note="Monday 12:00" />
-            <ExportRow label="Marriott Serve 360"  status="connected" note="Auto-sync on" />
+            <ExportRow label="Marriott Serve 360"  status="scheduled" note="Export-ready" />
             <ExportRow label="TWSE / IFRS S2"      status="pending"   note="Q3 2026" />
           </div>
         </div>
