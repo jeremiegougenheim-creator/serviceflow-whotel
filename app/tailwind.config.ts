@@ -19,6 +19,7 @@ const config: Config = {
         "lauds-surface": "#F2EFE9",
         "lauds-border": "#E4DDD2",
         "lauds-muted": "#8A7E72",
+        "lauds-secondary": "#4A453F",
       },
       fontFamily: {
         serif: ["var(--font-cormorant)", "Cormorant Garamond", "Georgia", "serif"],

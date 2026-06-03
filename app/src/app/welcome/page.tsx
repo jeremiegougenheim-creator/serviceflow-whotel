@@ -99,7 +99,7 @@ export default function WelcomePage() {
           </svg>
         </button>
 
-        <p className="mt-8 text-[11px] tracking-[0.06em] text-lauds-cream/25">
+        <p className="mt-8 text-[11px] tracking-[0.06em] text-lauds-cream/50">
           service-flow.ai · W Taipei pilot · SparkEdge Digital
         </p>
       </div>

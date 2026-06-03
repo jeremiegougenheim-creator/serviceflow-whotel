@@ -122,7 +122,7 @@ export default function PortfolioPage() {
               <p className="text-[14px] font-semibold text-lauds-cream leading-tight">
                 Bastien Giannetti
               </p>
-              <p className="text-[11px] text-lauds-cream/55 mt-0.5">
+              <p className="text-[11px] text-lauds-cream/70 mt-0.5">
                 Area GM · Marriott Taiwan
               </p>
             </div>
@@ -130,9 +130,9 @@ export default function PortfolioPage() {
 
           {/* Scope */}
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-lauds-cream/40">3 properties</span>
+            <span className="text-[11px] text-lauds-cream/60">3 properties</span>
             <span className="w-1 h-1 rounded-full bg-lauds-cream/20" />
-            <span className="text-[11px] text-lauds-cream/40">7 outlets</span>
+            <span className="text-[11px] text-lauds-cream/60">7 outlets</span>
           </div>
         </div>
       </div>
@@ -146,10 +146,10 @@ export default function PortfolioPage() {
             {/* Section header */}
             <div className="flex items-center gap-2 mb-3">
               <span className="w-1.5 h-1.5 bg-lauds-champagne flex-shrink-0" />
-              <span className="text-[10px] font-semibold tracking-[0.24em] uppercase text-lauds-muted">
+              <span className="text-[10px] font-semibold tracking-[0.24em] uppercase text-lauds-secondary">
                 {section.property}
               </span>
-              <span className="text-[10px] text-lauds-muted/50 ml-0.5">
+              <span className="text-[10px] text-lauds-secondary ml-0.5">
                 · {section.sub}
               </span>
             </div>
@@ -253,12 +253,12 @@ function OutletRow({
       <div className="flex-1 min-w-0">
         <p
           className={`text-[14px] font-medium leading-tight ${
-            isLive ? "text-lauds-charcoal" : "text-lauds-muted"
+            isLive ? "text-lauds-charcoal" : "text-lauds-secondary"
           }`}
         >
           {outlet.name}
         </p>
-        <p className="text-[11px] text-lauds-muted/60 mt-0.5">{outlet.sub}</p>
+        <p className="text-[11px] text-lauds-secondary mt-0.5">{outlet.sub}</p>
       </div>
 
       <Badge kind={outlet.badge} />
