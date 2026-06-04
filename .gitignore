@@ -42,3 +42,6 @@ yarn-error.log*
 
 # Misc
 .turbo/
+
+# Wrangler build cache (Cloudflare Worker)
+.wrangler/
