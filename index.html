@@ -57,6 +57,7 @@ html,body{
 
 .sbar{height:44px;padding:0 12px 0 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:5;color:var(--ivory)}
 .sbar.dk{background:var(--charcoal)}
+.sbar.role{background:#0D1B2A;color:rgba(255,255,255,.95)}
 .sbar.bl{background:var(--w-blue-dark)}
 .sbar.mg{background:var(--w-mag-dark)}
 .sbar.gn{background:#1B3725}
@@ -240,6 +241,40 @@ html,body{
 .btn.br{background:var(--champagne);box-shadow:0 6px 16px rgba(160,120,74,.25)}
 .btn.ghost{background:var(--warm-white);border:1px solid var(--marble-dark);color:var(--charcoal);box-shadow:none}
 .btn.sm{padding:10px;font-size:11.5px;border-radius:11px}
+
+/* ── ROLE SELECTOR (dedicated dark-navy layout) ─────────────────── */
+.role-screen{min-height:100%;display:flex;flex-direction:column;background:#0D1B2A;color:rgba(255,255,255,.95);padding:34px 22px 22px;position:relative;overflow:hidden}
+.role-screen .silhouette{position:absolute;right:-30px;top:50%;transform:translateY(-50%);width:340px;height:340px;opacity:.04;pointer-events:none}
+.role-screen .silhouette svg{width:100%;height:100%;fill:#C9A84C}
+.role-hero{position:relative;z-index:1;flex-shrink:0}
+.role-brand{display:flex;align-items:center;gap:11px;margin-bottom:22px}
+.role-w{width:32px;height:32px;border:1.5px solid #C9A84C;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:#C9A84C;flex-shrink:0;letter-spacing:.02em}
+.role-prop{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#C9A84C;font-weight:600}
+.role-h1{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:500;line-height:1.04;letter-spacing:-.01em;color:#fff;margin-bottom:12px}
+.role-h1 em{font-style:italic;color:#C9A84C;font-weight:400}
+.role-sub{font-size:13px;line-height:1.5;color:rgba(255,255,255,.6);max-width:94%}
+.role-sub em{font-style:italic;color:rgba(255,255,255,.85);font-weight:400}
+.role-cards{position:relative;z-index:1;display:flex;flex-direction:column;gap:14px;margin-top:32px;flex:1;justify-content:center}
+.role-card{position:relative;text-align:left;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:18px 18px 16px;cursor:pointer;font-family:'Jost',sans-serif;color:inherit;transition:all .15s;overflow:hidden}
+.role-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.role-card.teal::before{background:#0EA5E9}
+.role-card.mag::before{background:#C4427A}
+.role-card:hover{background:rgba(255,255,255,.07);transform:translateY(-1px)}
+.role-card:active{transform:translateY(0)}
+.role-card-head{display:flex;align-items:center;gap:13px;margin-bottom:8px}
+.role-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.role-icon.teal{background:rgba(14,165,233,.14)}
+.role-icon.teal svg{stroke:#0EA5E9;fill:none;stroke-width:1.9;width:22px;height:22px}
+.role-icon.mag{background:rgba(196,66,122,.14)}
+.role-icon.mag svg{stroke:#C4427A;fill:none;stroke-width:1.9;width:22px;height:22px}
+.role-card-title{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:500;color:#fff;letter-spacing:-.005em;line-height:1.15;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.role-live{font-family:'Jost',sans-serif;font-size:8.5px;font-weight:700;letter-spacing:.18em;background:rgba(14,165,233,.18);color:#0EA5E9;padding:3px 8px;border-radius:5px;text-transform:uppercase}
+.role-card-sub{font-size:11.5px;color:rgba(255,255,255,.55);margin:0 0 12px 55px;line-height:1.4}
+.role-chips{display:flex;flex-wrap:wrap;gap:6px;margin-left:55px}
+.role-chip{font-size:10px;font-weight:500;letter-spacing:.04em;padding:5px 9px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);color:rgba(255,255,255,.78)}
+.role-card.teal .role-chip{border-color:rgba(14,165,233,.22);background:rgba(14,165,233,.06)}
+.role-card.mag  .role-chip{border-color:rgba(196,66,122,.22);background:rgba(196,66,122,.06)}
+.role-foot{position:relative;z-index:1;text-align:center;font-size:10px;color:rgba(255,255,255,.32);margin-top:18px;letter-spacing:.04em}
 
 .voice-btn{display:inline-flex;align-items:center;gap:8px;background:var(--warm-white);border:1px solid var(--marble-dark);color:var(--charcoal);padding:9px 14px;border-radius:11px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:'Jost',sans-serif;transition:all .15s;letter-spacing:.02em}
 .voice-btn:hover{border-color:var(--champagne);background:var(--champagne-pale)}
@@ -537,16 +572,32 @@ function weekBar(){return '<div class="week-bar"><div class="wb-l">This week</di
 function metaLine(s){return '<div class="meta-line"><span>'+s.weather.icon+' '+s.weather.tempC+'°</span><span class="sep"></span><span>'+s.occupancyPct+'% Occ.</span><span class="sep"></span><span>'+(s.isWeekend?'Weekend':'Weekday')+'</span><span class="sep"></span><span>'+s.date+'</span></div>';}
 
 function screenRole(){return `
-  <div class="hero dk" style="margin-bottom:0">
-    <div class="silhouette">${TPE101}</div>
-    <div class="brand-row"><div class="w-mono">W</div><div class="brand-name">W TAIPEI · XINYI</div></div>
-    <h1>The Breakfast <em>Brain.</em></h1>
-    <p class="hero-sub">An operating layer for <em style="color:var(--champagne-light);font-style:italic">W Taipei</em> — Xinyi District, 10 Zhongxiao East Rd Sec 5. Choose a vantage point.</p>
-  </div>
-  <div class="body" style="padding-top:18px">
-    <div class="rolecard" onclick="pick('gm')"><div class="ico">${I.gm}</div><div><div class="t">General Manager <span class="badge">LIVE</span></div><div class="d">All modules · the Breakfast Brain</div></div></div>
-    <div class="rolecard mg" onclick="pick('gm')"><div class="ico">${I.chef}</div><div><div class="t">Chef / F&amp;B — The Kitchen Table</div><div class="d">Breakfast operations · station-level</div></div></div>
-    <p class="sub" style="text-align:center;font-size:11px;margin-top:18px">Concept prototype · ServiceFlow · figures illustrative until calibrated</p>
+  <div class="role-screen">
+    <div class="role-hero">
+      <div class="silhouette">${TPE101}</div>
+      <div class="role-brand"><span class="role-w">W</span><span class="role-prop">W TAIPEI · XINYI</span></div>
+      <h1 class="role-h1">The Breakfast <em>Brain.</em></h1>
+      <p class="role-sub">An operating layer for <em>W Taipei</em> — Xinyi District. Choose a vantage point.</p>
+    </div>
+    <div class="role-cards">
+      <button class="role-card teal" onclick="pick('gm')">
+        <div class="role-card-head">
+          <div class="role-icon teal">${I.gm}</div>
+          <div class="role-card-title"><span>General Manager</span><span class="role-live">LIVE</span></div>
+        </div>
+        <div class="role-card-sub">Strategy · performance · ESG reporting</div>
+        <div class="role-chips"><span class="role-chip">Briefings</span><span class="role-chip">Weekly KPIs</span><span class="role-chip">Serve 360</span></div>
+      </button>
+      <button class="role-card mag" onclick="pick('gm')">
+        <div class="role-card-head">
+          <div class="role-icon mag">${I.chef}</div>
+          <div class="role-card-title"><span>Chef · The Kitchen Table</span></div>
+        </div>
+        <div class="role-card-sub">Station pars · waste log · prep waves</div>
+        <div class="role-chips"><span class="role-chip">Station prep</span><span class="role-chip">Voice log</span><span class="role-chip">Live flex</span></div>
+      </button>
+    </div>
+    <p class="role-foot">Concept prototype · figures illustrative until calibrated</p>
   </div>`;}
 
 function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
@@ -980,7 +1031,7 @@ function renderNav(){
 }
 function setSbar(){
   const s=g('sbar');if(!s)return;
-  const cls=!state.role?'dk':(state.role==='owner'?'br':(SCREEN_BAR[state.tab]||'dk'));
+  const cls=!state.role?'role':(state.role==='owner'?'br':(SCREEN_BAR[state.tab]||'dk'));
   s.className='sbar '+cls;
   const btn=g('backRoleBtn');
   if(!state.role){btn.style.display='none';return;}
@@ -996,7 +1047,10 @@ function render(){
   if(!state.role)html=screenRole();
   else if(state.role==='owner')html=screenPortfolio();
   else html=({dashboard:screenDashboard,brief:screenBrief,fb:screenFB,esg:screenEsg,portfolio:screenPortfolio,cadence:screenCadence,notifs:screenNotifs,gap:screenGap}[state.tab]||screenDashboard)();
-  g('screen').innerHTML=html;g('screen').scrollTop=0;
+  const screenEl=g('screen');
+  screenEl.innerHTML=html;screenEl.scrollTop=0;
+  // role selector has no bottom nav, so drop the reserved bottom padding
+  screenEl.style.paddingBottom=state.role?'120px':'0';
   renderNav();setSbar();
 }
 function pick(r){state.role=r;state.tab=r==='owner'?'portfolio':'dashboard';closeLog();render();}
