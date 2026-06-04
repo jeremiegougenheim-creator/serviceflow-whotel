@@ -1001,8 +1001,19 @@ const VOICE_STATION_MAP=[
   ['fruit','Fruit & Cold'],['cold','Fruit & Cold'],
   ['taiwanese','Taiwanese Local'],['coffee','Coffee Bar']
 ];
+// Pre-normalise spoken word numbers so "two kilos" parses like "2 kilos".
+// Browsers transcribe numbers inconsistently — Chrome often writes digits,
+// Safari and Edge often spell them out, and Android keyboards can mix both.
+const WORD_NUM={zero:'0',half:'0.5','a half':'0.5','one':'1','a':'1','an':'1','two':'2',twin:'2',three:'3',four:'4',five:'5',six:'6',seven:'7',eight:'8',nine:'9',ten:'10'};
+function normaliseSpokenNumbers(s){
+  let out=' '+s+' ';
+  Object.keys(WORD_NUM).sort((a,b)=>b.length-a.length).forEach(k=>{
+    out=out.replace(new RegExp('\\b'+k+'\\b','g'),WORD_NUM[k]);
+  });
+  return out.trim();
+}
 function parseVoice(text){
-  const lower=(text||'').toLowerCase().trim();
+  const lower=normaliseSpokenNumbers((text||'').toLowerCase().trim());
   // longest keyword wins (multi-word before single)
   let station=null;
   for(const [k,v] of VOICE_STATION_MAP){if(lower.includes(k)){station=v;break;}}
@@ -1059,11 +1070,11 @@ function voiceLogTemplate(){
       +'</div>';
     if(p==='error')return '<div class="vlog-card vlog-error">'
       +'<p class="vlog-label" style="color:#C0392B;margin-bottom:8px">'+(voiceLog.error||'Try again')+'</p>'
-      +'<input type="text" placeholder="e.g. Japanese overprep 2 kilos" onkeypress="if(event.key===\'Enter\')submitVoiceText(this.value)" style="width:100%;padding:9px 11px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:transparent;color:rgba(245,242,236,.9);font-family:\'Jost\',sans-serif;font-size:13px;box-sizing:border-box">'
+      +'<input type="text" placeholder="e.g. Japanese overprep 2 kilos" onfocus="clearTimeout(voiceLogResetTimer)" onkeypress="if(event.key===\'Enter\')submitVoiceText(this.value)" style="width:100%;padding:9px 11px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:transparent;color:rgba(245,242,236,.9);font-family:\'Jost\',sans-serif;font-size:13px;box-sizing:border-box">'
       +'</div>';
     return '<div class="vlog-card vlog-idle">'
       +'<div class="vlog-head"><span class="vlog-label" style="opacity:.7">Type to log waste</span></div>'
-      +'<input type="text" placeholder="e.g. Japanese overprep 2 kilos · press Enter" onkeypress="if(event.key===\'Enter\')submitVoiceText(this.value)" style="width:100%;padding:9px 11px;margin-top:6px;border:1px solid rgba(255,255,255,.15);border-radius:6px;background:transparent;color:rgba(245,242,236,.9);font-family:\'Jost\',sans-serif;font-size:13px;box-sizing:border-box">'
+      +'<input type="text" placeholder="e.g. Japanese overprep 2 kilos · press Enter" onfocus="clearTimeout(voiceLogResetTimer)" onkeypress="if(event.key===\'Enter\')submitVoiceText(this.value)" style="width:100%;padding:9px 11px;margin-top:6px;border:1px solid rgba(255,255,255,.15);border-radius:6px;background:transparent;color:rgba(245,242,236,.9);font-family:\'Jost\',sans-serif;font-size:13px;box-sizing:border-box">'
       +'</div>';
   }
   if(p==='listening')return '<button class="vlog-card vlog-listening" onclick="toggleVoiceLog()" style="cursor:pointer;text-align:left;width:100%">'
@@ -1074,9 +1085,11 @@ function voiceLogTemplate(){
     +'<div class="vlog-head"><span style="font-size:18px;color:#16A34A">✓</span><span class="vlog-label" style="color:#16A34A">Logged</span></div>'
     +'<p class="vlog-summary">'+(voiceLog.result&&voiceLog.result.summary||'')+'</p>'
     +'</div>';
-  if(p==='error')return '<button class="vlog-card vlog-error" onclick="toggleVoiceLog()" style="cursor:pointer;text-align:left;width:100%">'
-    +'<p class="vlog-label" style="color:#C0392B">'+(voiceLog.error||'Error — tap to try again')+'</p>'
-    +'</button>';
+  if(p==='error')return '<div class="vlog-card vlog-error">'
+    +'<p class="vlog-label" style="color:#C0392B;margin-bottom:8px">'+(voiceLog.error||'Voice failed')+'</p>'
+    +'<input type="text" placeholder="Type instead · e.g. Japanese overprep 2 kilos" onfocus="clearTimeout(voiceLogResetTimer)" onkeypress="if(event.key===\'Enter\')submitVoiceText(this.value)" style="width:100%;padding:9px 11px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:transparent;color:rgba(245,242,236,.9);font-family:\'Jost\',sans-serif;font-size:13px;box-sizing:border-box;margin-bottom:8px">'
+    +'<button onclick="toggleVoiceLog()" style="background:none;border:none;color:rgba(245,242,236,.55);font-family:\'Jost\',sans-serif;font-size:11px;letter-spacing:.06em;cursor:pointer;padding:4px 0;text-decoration:underline;text-underline-offset:3px">↻ Or tap to retry voice</button>'
+    +'</div>';
   return '<button class="vlog-btn vlog-idle" onclick="toggleVoiceLog()">'
     +I.mic+'<span>Voice log — tap to dictate</span></button>';
 }
