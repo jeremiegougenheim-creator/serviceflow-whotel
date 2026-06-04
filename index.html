@@ -597,7 +597,7 @@ try{console.info('[ServiceFlow] voiceSupported='+voiceSupported,'· hasSR='+('Sp
 // Claude intent proxy. Set this to the Cloudflare Worker URL after deploy
 // (see worker/README.md). When unset OR the proxy fails, finishVoiceLog
 // transparently falls back to the local keyword parser so the demo still works.
-const INTENT_PROXY_URL='';  // e.g. 'https://serviceflow-intent.your-subdomain.workers.dev'
+const INTENT_PROXY_URL='https://serviceflow-intent.jeremiegougenheim.workers.dev';
 async function resolveVoiceIntent(transcript){
   if(!INTENT_PROXY_URL)throw new Error('proxy-not-configured');
   const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),3500);
