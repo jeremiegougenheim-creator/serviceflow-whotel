@@ -511,7 +511,6 @@ function screenRole(){return `
     <p class="hero-sub">An operating layer for <em style="color:var(--champagne-light);font-style:italic">W Taipei</em> — Xinyi District, 10 Zhongxiao East Rd Sec 5. Choose a vantage point.</p>
   </div>
   <div class="body" style="padding-top:18px">
-    <div class="rolecard" onclick="pick('owner')"><div class="ico">${I.owner}</div><div><div class="t">Owner / VP Regional</div><div class="d">Portfolio · asset value · ESG</div></div></div>
     <div class="rolecard" onclick="pick('gm')"><div class="ico">${I.gm}</div><div><div class="t">General Manager <span class="badge">LIVE</span></div><div class="d">All modules · the Breakfast Brain</div></div></div>
     <div class="rolecard mg" onclick="pick('gm')"><div class="ico">${I.chef}</div><div><div class="t">Chef / F&amp;B — The Kitchen Table</div><div class="d">Breakfast operations · station-level</div></div></div>
     <p class="sub" style="text-align:center;font-size:11px;margin-top:18px">Concept prototype · ServiceFlow · figures illustrative until calibrated</p>
@@ -563,7 +562,7 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
     </div>
     <div class="dash-tile" onclick="go('portfolio')">
       <div class="dash-i" style="background:rgba(160,120,74,.14);color:var(--champagne-dark)">${I.portfolio}</div>
-      <div class="dash-b"><div class="dash-t">W Taipei · Founding Partner</div><div class="dash-d">The Kitchen Table · NT$1.9M Yr-1 uplift · 4 outlets scoped</div></div>
+      <div class="dash-b"><div class="dash-t">W Taipei · Xinyi</div><div class="dash-d">The Kitchen Table · NT$1.9M Yr-1 uplift · 4 outlets scoped</div></div>
       <div class="dash-arrow">›</div>
     </div>
   </div>`;}
@@ -754,7 +753,7 @@ function screenPortfolio(){return `
   <div class="hero br">
     <div class="silhouette">${TPE101}</div>
     ${brandRow()}
-    <h1>W Taipei · <em>Founding Partner.</em></h1>
+    <h1>W Taipei · <em>Xinyi.</em></h1>
     <p class="hero-sub">The Kitchen Table · 9 stations · Pilot 2026</p>
   </div>
   <div class="body">
