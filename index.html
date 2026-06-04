@@ -284,6 +284,23 @@ html,body{
 .voice-btn.on{background:#0891B2;color:#fff;border-color:#0891B2;animation:voicePulse 1.4s ease-in-out infinite}
 .voice-btn.on svg{stroke:#fff}
 @keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 rgba(8,145,178,.45)}50%{box-shadow:0 0 0 8px rgba(8,145,178,0)}}
+
+/* Press-and-hold voice log (F&B card) */
+.vlog-btn{background:transparent;border:1px dashed rgba(255,255,255,.18);border-radius:9px;width:100%;padding:11px;font-family:'Jost',sans-serif;font-size:12px;font-weight:400;color:rgba(245,242,236,.45);display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.vlog-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.6}
+.vlog-card{border:1px dashed rgba(255,255,255,.22);border-radius:9px;width:100%;padding:12px 14px;box-sizing:border-box;-webkit-user-select:none;user-select:none}
+.vlog-listening{border-color:rgba(212,0,75,.5)}
+.vlog-confirmed{border-color:rgba(66,201,126,.5)}
+.vlog-error{border-color:rgba(192,57,43,.5);cursor:pointer}
+.vlog-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.vlog-label{font-family:'Jost',sans-serif;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,242,236,.7)}
+.vlog-pulse{width:8px;height:8px;border-radius:50%;background:#D4004B;flex-shrink:0;animation:vlogPulse 1s ease-in-out infinite}
+@keyframes vlogPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
+.vlog-transcript{font-size:13px;font-weight:400;color:rgba(245,242,236,.9);margin:6px 0 0;font-style:italic;line-height:1.45}
+.vlog-hint{font-size:12px;font-weight:400;color:rgba(245,242,236,.4);margin:4px 0 0;font-style:italic}
+.vlog-summary{font-family:'Jost',sans-serif;font-size:14px;font-weight:600;color:#16A34A;margin:4px 0 0;letter-spacing:.04em}
+.vlog-release{margin-top:10px;background:rgba(212,0,75,.15);border:1px solid rgba(212,0,75,.3);border-radius:6px;padding:7px 14px;font-family:'Jost',sans-serif;font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(245,242,236,.85);cursor:pointer;width:100%}
+.vlog-summary-line{margin-top:8px;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.04em;color:rgba(245,242,236,.7);text-align:center;line-height:1.4}
 .voice-btn svg{width:15px;height:15px;stroke:var(--champagne);fill:none;stroke-width:2;flex-shrink:0}
 
 #nav{position:absolute;left:0;right:0;bottom:0;height:78px;background:rgba(250,248,244,.96);backdrop-filter:blur(14px);border-top:1px solid var(--marble);display:flex;align-items:center;justify-content:space-around;padding:0 6px 14px;z-index:10}
@@ -795,9 +812,8 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
         <div class="st-tile"><div class="v">${strike.measuredY}<small style="font-size:10px;letter-spacing:.05em"> kg</small></div><div class="k">Yest. waste</div></div>
       </div>
       <button class="btn mg" onclick="openStrike('${strike.label}',${pct},${saving})">CONFIRM &amp; LOG</button>
-      ${voiceSupported?`<div style="position:relative;z-index:1;margin-top:10px;text-align:center">
-        <button class="voice-btn" onclick="openLog()" style="background:transparent;border:1px dashed rgba(245,240,232,.25);color:rgba(245,240,232,.7)">${I.mic}<span>Voice log — open full form</span></button>
-      </div>`:''}
+      ${voiceSupported?`<div id="voiceLogSlot" style="position:relative;z-index:1;margin-top:10px">${voiceLogTemplate()}</div>
+      <div id="voiceLogSummary" class="vlog-summary-line" style="position:relative;z-index:1"></div>`:''}
     </div>
     <div class="sec-h"><h3>Station prep</h3><span class="sa">${s.label} · ${b.covers} covers</span></div>
     ${cards}`;
@@ -971,19 +987,132 @@ function screenGap(){
 let logSel={type:'Over-prep',station:'Congee & Noodle',transcript:'',listening:false,expanded:false,qty:0,destination:null,photo:null,note:''};
 let strikeSel={station:'',recPct:0,savings:0,followed:null,modPct:0,note:''};
 let voiceRec=null;
-function parseVoiceTranscript(text){
-  const lower=(text||'').toLowerCase();
-  const stationMap=[['dim sum','Dim Sum'],['western','Western Hot'],['congee','Congee & Noodle'],['noodle','Congee & Noodle'],['japanese','Japanese'],['korean','Korean'],['pastry','Bakery & Pastry'],['bakery','Bakery & Pastry'],['fruit','Fruit & Cold'],['cold','Fruit & Cold'],['taiwanese','Taiwanese Local'],['coffee','Coffee Bar']];
-  for(const [k,v] of stationMap){if(lower.includes(k)){logSel.station=v;break;}}
-  if(/over[- ]?prep/.test(lower))logSel.type='Over-prep';
-  else if(/spoil/.test(lower))logSel.type='Spoilage';
-  else if(/miss|cover/.test(lower))logSel.type='Miss';
-  const qm=lower.match(/(\d+(?:\.\d+)?)\s*(?:kg|kilo|kilos)/);
-  if(qm){const v=parseFloat(qm[1]);if(v>=0&&v<=20)logSel.qty=v;}
-  if(/compost/.test(lower))logSel.destination='Compost';
-  else if(/staff/.test(lower))logSel.destination='Staff meal';
-  else if(/bin|trash|garbage/.test(lower))logSel.destination='Bin';
+// Voice parser — shared by the modal log sheet and the press-and-hold voice button.
+// Returns a structured result; parseVoiceTranscript also writes into logSel for the modal flow.
+const VOICE_STATION_MAP=[
+  ['western hot','Western Hot'],['dim sum','Dim Sum'],['dimsum','Dim Sum'],
+  ['congee noodle','Congee & Noodle'],['coffee bar','Coffee Bar'],
+  ['japanese','Japanese'],['yen','Japanese'],['korean','Korean'],
+  ['western','Western Hot'],['congee','Congee & Noodle'],['noodle','Congee & Noodle'],
+  ['pastry','Bakery & Pastry'],['bakery','Bakery & Pastry'],
+  ['fruit','Fruit & Cold'],['cold','Fruit & Cold'],
+  ['taiwanese','Taiwanese Local'],['coffee','Coffee Bar']
+];
+function parseVoice(text){
+  const lower=(text||'').toLowerCase().trim();
+  // longest keyword wins (multi-word before single)
+  let station=null;
+  for(const [k,v] of VOICE_STATION_MAP){if(lower.includes(k)){station=v;break;}}
+  let type='Over-prep';
+  if(/spoil/.test(lower))type='Spoilage';
+  else if(/miss|cover/.test(lower))type='Miss';
+  // quantity: kg (default) or grams normalised → kg
+  const kgMatch=lower.match(/(\d+(?:\.\d+)?)\s*(?:kg|kilo|kilos)/);
+  const gMatch=lower.match(/(\d+(?:\.\d+)?)\s*(?:gram|grams|\bg\b)/);
+  const numMatch=!kgMatch&&!gMatch?lower.match(/(\d+(?:\.\d+)?)/):null;
+  let amount=null;
+  if(kgMatch)amount=parseFloat(kgMatch[1]);
+  else if(gMatch)amount=parseFloat(gMatch[1])/1000;
+  else if(numMatch)amount=parseFloat(numMatch[1]);
+  let destination=null;
+  if(/compost/.test(lower))destination='Compost';
+  else if(/staff/.test(lower))destination='Staff meal';
+  else if(/bin|trash|garbage/.test(lower))destination='Bin';
+  const isValid=station!==null&&amount!==null;
+  const summary=isValid?(amount+'kg — '+station+(type!=='Over-prep'?' · '+type:' · over-prep')):null;
+  return{raw:text,station,type,amount,unit:'kg',destination,isValid,summary};
 }
+function parseVoiceTranscript(text){
+  const r=parseVoice(text);
+  if(r.station)logSel.station=r.station;
+  logSel.type=r.type;
+  if(r.amount!==null&&r.amount>=0&&r.amount<=20)logSel.qty=r.amount;
+  if(r.destination)logSel.destination=r.destination;
+}
+// ── Press-and-hold voice log (the F&B button) ────────────────────
+const voiceLogEntries=[];
+let voiceLog={phase:'idle',transcript:'',result:null,error:'',timer:null};
+let voiceLogRec=null;
+function renderVoiceLog(){const c=g('voiceLogSlot');if(c)c.innerHTML=voiceLogTemplate();updateVoiceSummary();}
+function updateVoiceSummary(){const s=g('voiceLogSummary');if(!s)return;
+  if(!voiceLogEntries.length){s.innerHTML='';return;}
+  const last=voiceLogEntries[voiceLogEntries.length-1];
+  s.innerHTML='<span style="opacity:.55">'+voiceLogEntries.length+' logged · last:</span> '+last.amount+'kg '+last.station+' ('+last.type.toLowerCase()+')';
+}
+function voiceLogTemplate(){
+  if(!voiceSupported)return '';
+  const p=voiceLog.phase,t=voiceLog.transcript;
+  if(p==='listening')return '<div class="vlog-card vlog-listening">'
+    +'<div class="vlog-head"><span class="vlog-pulse"></span><span class="vlog-label">Listening — release to log</span></div>'
+    +(t?'<p class="vlog-transcript">&ldquo;'+t.replace(/</g,'&lt;')+'&rdquo;</p>':'<p class="vlog-hint">Speak now…</p>')
+    +'<button class="vlog-release" ontouchend="event.preventDefault();stopVoiceLog()" onmouseup="stopVoiceLog()">Release to confirm</button>'
+    +'</div>';
+  if(p==='processing')return '<div class="vlog-card"><p class="vlog-label">Processing…</p>'+(t?'<p class="vlog-transcript">&ldquo;'+t.replace(/</g,'&lt;')+'&rdquo;</p>':'')+'</div>';
+  if(p==='confirmed')return '<div class="vlog-card vlog-confirmed">'
+    +'<div class="vlog-head"><span style="font-size:18px;color:#16A34A">✓</span><span class="vlog-label" style="color:#16A34A">Logged</span></div>'
+    +'<p class="vlog-summary">'+(voiceLog.result&&voiceLog.result.summary||'')+'</p>'
+    +'</div>';
+  if(p==='error')return '<div class="vlog-card vlog-error" onmousedown="startVoiceLog()" ontouchstart="event.preventDefault();startVoiceLog()">'
+    +'<p class="vlog-label" style="color:#C0392B">'+(voiceLog.error||'Error — tap to try again')+'</p>'
+    +'</div>';
+  return '<button class="vlog-btn vlog-idle" onmousedown="startVoiceLog()" ontouchstart="event.preventDefault();startVoiceLog()" oncontextmenu="return false">'
+    +I.mic+'<span>Voice log — hold to dictate</span></button>';
+}
+function startVoiceLog(){
+  if(!voiceSupported)return;
+  if(voiceLog.phase==='listening'||voiceLog.phase==='processing')return;
+  clearTimeout(voiceLog.timer);
+  const Rec=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!Rec){voiceLog={phase:'error',transcript:'',result:null,error:'Speech recognition not supported.',timer:null};renderVoiceLog();return;}
+  voiceLog={phase:'listening',transcript:'',result:null,error:'',timer:null};
+  try{
+    voiceLogRec=new Rec();
+    voiceLogRec.lang=(navigator.language&&navigator.language.startsWith('zh'))?'zh-CN':'en-US';
+    voiceLogRec.interimResults=true;voiceLogRec.continuous=true;
+    voiceLogRec.onresult=e=>{
+      let interim='',final='';
+      for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i][0].transcript;if(e.results[i].isFinal)final+=r;else interim+=r;}
+      voiceLog.transcript=(final||interim).trim();renderVoiceLog();
+    };
+    voiceLogRec.onerror=ev=>{
+      voiceLog.phase='error';
+      voiceLog.error=ev.error==='not-allowed'?'Microphone permission denied. Please allow access.':ev.error==='no-speech'?'No speech detected. Hold and speak clearly.':'Error: '+ev.error;
+      renderVoiceLog();autoResetVoiceLog(4000);
+    };
+    voiceLogRec.onend=()=>{if(voiceLog.phase==='listening')finishVoiceLog();};
+    voiceLogRec.start();renderVoiceLog();
+  }catch(err){voiceLog.phase='error';voiceLog.error='Voice failed to start.';renderVoiceLog();autoResetVoiceLog(3000);}
+}
+function stopVoiceLog(){
+  if(voiceLog.phase!=='listening')return;
+  voiceLog.phase='processing';renderVoiceLog();
+  try{if(voiceLogRec)voiceLogRec.stop();}catch(_){}
+}
+function finishVoiceLog(){
+  setTimeout(()=>{
+    const text=(voiceLog.transcript||'').trim();
+    if(!text){voiceLog.phase='error';voiceLog.error='Nothing heard. Try again.';renderVoiceLog();autoResetVoiceLog(3000);return;}
+    const parsed=parseVoice(text);voiceLog.result=parsed;
+    if(parsed.isValid){
+      voiceLogEntries.push({station:parsed.station,type:parsed.type,amount:parsed.amount,unit:parsed.unit,timestamp:new Date().toISOString(),source:'voice',raw:parsed.raw});
+      voiceLog.phase='confirmed';renderVoiceLog();autoResetVoiceLog(3000);
+    }else{
+      voiceLog.phase='error';
+      voiceLog.error='Heard: "'+text+'" — couldn\'t find station or amount. Try again.';
+      renderVoiceLog();autoResetVoiceLog(4500);
+    }
+  },300);
+}
+function autoResetVoiceLog(ms){
+  clearTimeout(voiceLog.timer);
+  voiceLog.timer=setTimeout(()=>{voiceLog={phase:'idle',transcript:'',result:null,error:'',timer:null};renderVoiceLog();},ms);
+}
+// Safety net: if the user lifts the mouse / finger anywhere on the page while
+// the press-and-hold flow is active, fire stopVoiceLog so the recognition
+// always completes — even if the press started on a button that has since
+// been replaced by a re-render.
+document.addEventListener('mouseup',function(){if(voiceLog.phase==='listening')stopVoiceLog();});
+document.addEventListener('touchend',function(){if(voiceLog.phase==='listening')stopVoiceLog();});
 function toggleVoice(){
   if(!voiceSupported)return;
   if(logSel.listening){if(voiceRec)voiceRec.stop();return;}
@@ -1144,7 +1273,7 @@ function render(){
   screenEl.innerHTML=html;screenEl.scrollTop=0;
   // role selector has no bottom nav, so drop the reserved bottom padding
   screenEl.style.paddingBottom=state.role?'120px':'0';
-  renderNav();setSbar();
+  renderNav();setSbar();updateVoiceSummary();
 }
 function pick(r){state.role=r;state.tab=r==='owner'?'portfolio':'dashboard';closeLog();render();}
 function go(t){state.tab=t;render();}
