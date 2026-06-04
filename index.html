@@ -332,7 +332,7 @@ html,body{
       <span class="sig"><span></span><span></span><span></span></span>
       <span class="bat"><svg width="22" height="11" viewBox="0 0 22 11"><rect x=".5" y=".5" width="18" height="10" rx="2" fill="none" stroke="currentColor"/><rect x="19.5" y="3.5" width="2" height="4" fill="currentColor"/><rect x="2" y="2" width="13" height="7" fill="currentColor"/></svg></span>
     </span>
-    <button class="back-role" id="backRoleBtn" onclick="state.role=null;render()" style="display:none">‹ ROLE</button>
+    <button class="back-role" id="backRoleBtn" onclick="backFromTopbar()" style="display:none">‹ ROLE</button>
   </div>
   <div id="screen"></div>
   <div id="nav" style="display:none"></div>
@@ -668,6 +668,7 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
     ${weekBar()}
     <div class="log-cta-wrap"><button onclick="openLog()" class="log-cta"><span style="font-size:17px">☑</span>LOG FIN DE SERVICE · 5 min</button><div class="log-trend">Team logging in ~5 min avg</div></div>
     <div class="sec-h"><h3>When it runs</h3><button class="sa" onclick="go('cadence')">5 gates ›</button></div>
+    <button class="btn ghost" data-go="dashboard" onclick="go('dashboard')" style="margin-top:14px">← Back to home</button>
   </div>`;}
 
 function screenCadence(){const gates=[
@@ -686,7 +687,7 @@ function screenCadence(){const gates=[
   <div class="body">
     <div class="card">${rows}</div>
     <div class="card flat"><div style="font-size:12.5px;line-height:1.55"><b class="br">↻ Continuous learn —</b> yesterday's measured covers + waste retrain tomorrow's forecast; the evening briefing is the last, highest-confidence gate.</div></div>
-    <button class="btn ghost" onclick="go('brief')">← Back to briefing</button>
+    <button class="btn ghost" data-go="brief" onclick="go('brief')">← Back to briefing</button>
   </div>`;}
 
 const OUTLETS={
@@ -914,8 +915,8 @@ const TABS=[
   ['dashboard','Home','dash'],
   ['brief','Brief','brief'],
   ['fb','F&B','fb'],
-  ['esg','ESG','esg'],
-  ['portfolio','Owner','portfolio']
+  ['esg','ESG','esg']
+  // TODO Phase 2 — re-add ['portfolio','Owner','portfolio'] once owner role ships
 ];
 const SCREEN_BAR={dashboard:'dk',brief:'bl',fb:'mg',esg:'gn',portfolio:'br',cadence:'dk',notifs:'dk',gap:'dk'};
 function renderNav(){
@@ -928,7 +929,14 @@ function setSbar(){
   const s=g('sbar');if(!s)return;
   const cls=!state.role?'dk':(state.role==='owner'?'br':(SCREEN_BAR[state.tab]||'dk'));
   s.className='sbar '+cls;
-  g('backRoleBtn').style.display=state.role?'':'none';
+  const btn=g('backRoleBtn');
+  if(!state.role){btn.style.display='none';return;}
+  btn.style.display='';
+  btn.textContent=state.tab==='dashboard'?'‹ ROLE':'‹ HOME';
+}
+function backFromTopbar(){
+  if(state.tab&&state.tab!=='dashboard'){state.tab='dashboard';render();return;}
+  state.role=null;render();
 }
 function render(){
   let html;
@@ -947,6 +955,14 @@ function toast(msg,color){const t=document.createElement('div');t.textContent=ms
   document.querySelector('.phone').appendChild(t);setTimeout(()=>t.remove(),2200);}
 function confirmToast(){toast('✓ Logged · Exported to Serve 360 format & Taiwan FSC','#16A34A');}
 function shareToast(){toast('⤓ Prep sheet sent to kitchen + GM','#0891B2');}
+
+// Safety net: delegated click on #screen for any [data-go] target. Inline
+// onclicks in innerHTML-rendered nodes are reliable in modern Safari, but
+// iOS occasionally drops them under low-memory churn — this catches both.
+document.addEventListener('click',function(e){
+  const t=e.target.closest('[data-go]');
+  if(t&&typeof go==='function'){go(t.getAttribute('data-go'));}
+});
 
 (function tick(){const d=new Date(),pad=n=>(''+n).padStart(2,'0');const el=g('clock');if(el)el.textContent=pad(d.getHours())+':'+pad(d.getMinutes());setTimeout(tick,15000);})();
 
