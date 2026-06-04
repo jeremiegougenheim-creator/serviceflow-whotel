@@ -249,9 +249,9 @@ html,body{
 .role-hero{position:relative;z-index:1;flex-shrink:0}
 .role-brand{display:flex;align-items:center;gap:11px;margin-bottom:22px}
 .role-w{width:32px;height:32px;border:1.5px solid #C9A84C;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:#C9A84C;flex-shrink:0;letter-spacing:.02em}
-.role-prop{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#C9A84C;font-weight:600}
+.role-prop{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#C9A84C;font-weight:600}
 .role-h1{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:500;line-height:1.04;letter-spacing:-.01em;color:#fff;margin-bottom:12px}
-.role-h1 em{font-style:italic;color:#C9A84C;font-weight:400}
+.role-h1 em{font-style:italic;color:#0EA5E9;font-weight:400}
 .role-sub{font-size:13px;line-height:1.5;color:rgba(255,255,255,.6);max-width:94%}
 .role-sub em{font-style:italic;color:rgba(255,255,255,.85);font-weight:400}
 .role-cards{position:relative;z-index:1;display:flex;flex-direction:column;gap:14px;margin-top:32px;flex:1;justify-content:center}
@@ -261,6 +261,9 @@ html,body{
 .role-card.mag::before{background:#C4427A}
 .role-card:hover{background:rgba(255,255,255,.07);transform:translateY(-1px)}
 .role-card:active{transform:translateY(0)}
+.role-arrow{position:absolute;right:18px;top:24px;font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:rgba(255,255,255,.35);line-height:1;pointer-events:none}
+.role-card.teal .role-arrow{color:rgba(14,165,233,.55)}
+.role-card.mag  .role-arrow{color:rgba(196,66,122,.55)}
 .role-card-head{display:flex;align-items:center;gap:13px;margin-bottom:8px}
 .role-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .role-icon.teal{background:rgba(14,165,233,.14)}
@@ -581,20 +584,22 @@ function screenRole(){return `
     </div>
     <div class="role-cards">
       <button class="role-card teal" onclick="pick('gm')">
+        <span class="role-arrow">›</span>
         <div class="role-card-head">
           <div class="role-icon teal">${I.gm}</div>
           <div class="role-card-title"><span>General Manager</span><span class="role-live">LIVE</span></div>
         </div>
         <div class="role-card-sub">Strategy · performance · ESG reporting</div>
-        <div class="role-chips"><span class="role-chip">Briefings</span><span class="role-chip">Weekly KPIs</span><span class="role-chip">Serve 360</span></div>
+        <div class="role-chips"><span class="role-chip">P&amp;L view</span><span class="role-chip">ESG</span><span class="role-chip">NT$ savings</span></div>
       </button>
       <button class="role-card mag" onclick="pick('gm')">
+        <span class="role-arrow">›</span>
         <div class="role-card-head">
           <div class="role-icon mag">${I.chef}</div>
           <div class="role-card-title"><span>Chef · The Kitchen Table</span></div>
         </div>
         <div class="role-card-sub">Station pars · waste log · prep waves</div>
-        <div class="role-chips"><span class="role-chip">Station prep</span><span class="role-chip">Voice log</span><span class="role-chip">Live flex</span></div>
+        <div class="role-chips"><span class="role-chip">Pars</span><span class="role-chip">Replenishment</span><span class="role-chip">Waste log</span></div>
       </button>
     </div>
     <p class="role-foot">Concept prototype · figures illustrative until calibrated</p>
