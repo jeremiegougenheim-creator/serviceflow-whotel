@@ -88,7 +88,7 @@ export default function WeekCarousel({
               <span
                 className="text-[9px] font-semibold leading-none mb-2.5"
                 style={{
-                  color: isSelected ? "rgba(255,255,255,0.85)" : "var(--lauds-accent-savings)",
+                  color: isSelected ? "rgba(255,255,255,0.85)" : "var(--lauds-text-muted)",
                 }}
               >
                 {(day.savings / 1000).toFixed(1)}k

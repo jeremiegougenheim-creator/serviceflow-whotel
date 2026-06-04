@@ -42,7 +42,7 @@ export default function WelcomePage() {
         {/* W Taipei badge */}
         <div className="inline-flex items-center gap-2 bg-lauds-blue/10 border border-lauds-blue/25 rounded-full px-4 py-2 mb-12">
           <span className="w-1.5 h-1.5 rounded-full bg-lauds-blue animate-pulse" />
-          <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-lauds-blue/80">
+          <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-lauds-blue">
             W Taipei · Pilot
           </span>
         </div>
@@ -123,7 +123,7 @@ function ValueProp({
       </div>
       <div>
         <p className="text-[14px] font-medium text-lauds-cream mb-0.5">{title}</p>
-        <p className="text-[12px] text-lauds-cream/48 leading-snug">{desc}</p>
+        <p className="text-[12px] text-lauds-cream/60 leading-snug">{desc}</p>
       </div>
     </div>
   );

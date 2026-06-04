@@ -6,7 +6,7 @@ import OutletTrigger from "@/components/OutletTrigger";
 
 // ─── Data ──────────────────────────────────────────────────────────────────────
 
-type BadgeKind = "live" | "q3_2026" | "q4_2026" | "q1_2027" | "q2_2027";
+type BadgeKind = "live" | "q3_2026" | "q4_2026";
 
 interface OutletRow {
   id: string;
@@ -16,61 +16,23 @@ interface OutletRow {
   href?: string; // defined only for live outlets
 }
 
-interface PropertySection {
-  property: string;
-  sub: string;
-  outlets: OutletRow[];
-}
-
 const BADGE_LABEL: Record<BadgeKind, string> = {
   live: "Live",
   q3_2026: "Q3 2026",
   q4_2026: "Q4 2026",
-  q1_2027: "Q1 2027",
-  q2_2027: "Q2 2027",
 };
 
-const SECTIONS: PropertySection[] = [
+const OUTLETS: OutletRow[] = [
   {
-    property: "W Taipei",
-    sub: "405 keys",
-    outlets: [
-      {
-        id: "kitchen-table",
-        name: "The Kitchen Table",
-        sub: "9 stations · Buffet",
-        badge: "live",
-        href: "/dashboard",
-      },
-      { id: "yen", name: "YEN", sub: "Japanese restaurant", badge: "q3_2026" },
-      { id: "woobar", name: "WOOBAR", sub: "Lobby lounge", badge: "q3_2026" },
-      { id: "wet-deck", name: "WET DECK", sub: "Pool deck", badge: "q4_2026" },
-    ],
+    id: "kitchen-table",
+    name: "The Kitchen Table",
+    sub: "9 stations · Buffet",
+    badge: "live",
+    href: "/dashboard",
   },
-  {
-    property: "Marriott Taiwan · Portfolio",
-    sub: "Area GM scope",
-    outlets: [
-      {
-        id: "meridien",
-        name: "Le Méridien Taipei",
-        sub: "Marriott · Taipei",
-        badge: "q1_2027",
-      },
-      {
-        id: "sheraton",
-        name: "Sheraton Grande",
-        sub: "Marriott · Taipei",
-        badge: "q1_2027",
-      },
-      {
-        id: "renaissance",
-        name: "Renaissance",
-        sub: "Marriott · Taipei",
-        badge: "q2_2027",
-      },
-    ],
-  },
+  { id: "yen", name: "YEN", sub: "Japanese restaurant", badge: "q3_2026" },
+  { id: "woobar", name: "WOOBAR", sub: "Lobby lounge", badge: "q3_2026" },
+  { id: "wet-deck", name: "WET DECK", sub: "Pool deck", badge: "q4_2026" },
 ];
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
@@ -107,9 +69,14 @@ export default function PortfolioPage() {
             <OutletTrigger />
           </div>
 
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-lauds-champagne mb-4">
-            Portfolio
-          </p>
+          <div className="flex items-center gap-2 mb-4">
+            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-lauds-champagne flex-1">
+              W Taipei · The Kitchen Table
+            </p>
+            <span className="text-[9px] font-bold tracking-[0.12em] uppercase px-2 py-0.5 rounded-full" style={{ background: "rgba(201,169,122,0.18)", color: "var(--lauds-champagne-light)" }}>
+              Founding Partner
+            </span>
+          </div>
 
           {/* Champion profile */}
           <div className="flex items-center gap-3 mb-4">
@@ -123,16 +90,16 @@ export default function PortfolioPage() {
                 Bastien Giannetti
               </p>
               <p className="text-[11px] text-lauds-cream/70 mt-0.5">
-                Area GM · Marriott Taiwan
+                GM · W Taipei
               </p>
             </div>
           </div>
 
           {/* Scope */}
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-lauds-cream/60">3 properties</span>
+            <span className="text-[11px] text-lauds-cream/60">405 keys</span>
             <span className="w-1 h-1 rounded-full bg-lauds-cream/20" />
-            <span className="text-[11px] text-lauds-cream/60">7 outlets</span>
+            <span className="text-[11px] text-lauds-cream/60">4 outlets scoped</span>
           </div>
         </div>
       </div>
@@ -140,31 +107,24 @@ export default function PortfolioPage() {
       {/* ── Body ────────────────────────────────────────────────────────── */}
       <div className="px-5 py-5 space-y-6 pb-32">
 
-        {/* Sections */}
-        {SECTIONS.map((section) => (
-          <div key={section.property}>
-            {/* Section header */}
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-1.5 h-1.5 bg-lauds-champagne flex-shrink-0" />
-              <span className="text-[10px] font-semibold tracking-[0.24em] uppercase text-lauds-secondary">
-                {section.property}
-              </span>
-              <span className="text-[10px] text-lauds-secondary ml-0.5">
-                · {section.sub}
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {section.outlets.map((outlet) => (
-                <OutletRow
-                  key={outlet.id}
-                  outlet={outlet}
-                  onComingSoon={() => setComingSoonModal(true)}
-                />
-              ))}
-            </div>
+        {/* Outlets */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-1.5 h-1.5 bg-lauds-champagne flex-shrink-0" />
+            <span className="text-[10px] font-semibold tracking-[0.24em] uppercase text-lauds-secondary">
+              W Taipei · 405 keys
+            </span>
           </div>
-        ))}
+          <div className="space-y-2">
+            {OUTLETS.map((outlet) => (
+              <OutletRow
+                key={outlet.id}
+                outlet={outlet}
+                onComingSoon={() => setComingSoonModal(true)}
+              />
+            ))}
+          </div>
+        </div>
 
         {/* Summary strip */}
         <div
@@ -174,15 +134,15 @@ export default function PortfolioPage() {
             border: "1px solid color-mix(in srgb, var(--lauds-champagne-light) 18%, transparent)",
           }}
         >
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-lauds-champagne mb-3">
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-lauds-champagne-dark mb-3">
             Portfolio savings
           </p>
           <div className="space-y-2">
             <div className="flex items-baseline justify-between">
-              <span className="text-[12px] text-lauds-muted">Live (The Kitchen Table)</span>
+              <span className="text-[12px] text-lauds-muted">The Kitchen Table · Live</span>
               <span className="font-serif text-[18px] font-medium text-lauds-charcoal">
                 NT$2,896
-                <span className="text-[12px] font-sans font-normal text-lauds-muted ml-1">/ day</span>
+                <span className="text-[12px] font-sans font-normal text-lauds-muted ml-1">/ day avg</span>
               </span>
             </div>
             <div
@@ -192,10 +152,9 @@ export default function PortfolioPage() {
               }}
             />
             <div className="flex items-baseline justify-between">
-              <span className="text-[12px] text-lauds-muted">Target (full portfolio)</span>
-              <span className="font-serif text-[18px] font-medium text-lauds-esg">
-                NT$15–25M
-                <span className="text-[12px] font-sans font-normal text-lauds-muted ml-1">/ year</span>
+              <span className="text-[12px] text-lauds-muted">Pilot start</span>
+              <span className="font-serif text-[18px] font-medium text-lauds-charcoal">
+                Pilot 2026
               </span>
             </div>
           </div>

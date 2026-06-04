@@ -139,7 +139,7 @@ export default function OutletSelector({ open, onClose }: Props) {
             </p>
             <button
               onClick={() => setShowComingSoon(false)}
-              className="mt-2 text-[13px] font-semibold tracking-[0.06em] text-lauds-blue"
+              className="mt-2 text-[13px] font-semibold tracking-[0.06em] text-lauds-secondary"
             >
               ← Back
             </button>
