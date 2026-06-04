@@ -6,6 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
 <title>ServiceFlow · W Taipei</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230891B2'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='-apple-system,Segoe UI,sans-serif' font-size='14' font-weight='700' fill='white'%3ESF%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -78,18 +79,17 @@ html,body{
 .hero.mg{background:linear-gradient(170deg,var(--w-mag-dark) 0%,var(--w-mag) 100%)}
 .hero.gn{background:linear-gradient(170deg,#1B3725 0%,var(--esg) 100%)}
 .hero.br{background:linear-gradient(170deg,var(--champagne-dark) 0%,var(--champagne) 100%)}
-.hero::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(108deg,transparent 0,transparent 44px,rgba(201,169,122,.05) 44px,rgba(201,169,122,.05) 45px);pointer-events:none}
-.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--champagne),var(--champagne-light),var(--champagne),transparent);opacity:.55}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:rgba(255,255,255,.10)}
 
 .brand-row{position:relative;z-index:1;display:flex;align-items:center;gap:11px;margin-bottom:14px}
-.w-mono{width:30px;height:30px;border:1px solid var(--champagne);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:var(--champagne-light);flex-shrink:0}
-.brand-name{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(245,240,232,.88);font-weight:600;flex:1}
+.w-mono{width:30px;height:30px;border:1px solid rgba(255,255,255,.35);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Jost',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,.95);flex-shrink:0;letter-spacing:.02em}
+.brand-name{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#B8962E;font-weight:600;flex:1}
 .live-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(8,145,178,.12);border:1px solid rgba(8,145,178,.32);padding:4px 9px;border-radius:18px;font-size:11px;color:var(--w-blue);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
 .live-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--w-blue);animation:pulse 2s infinite;box-shadow:0 0 6px rgba(8,145,178,.6)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 
 .hero h1{position:relative;z-index:1;font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:500;line-height:1.05;margin:8px 0 8px;letter-spacing:-.005em;color:var(--ivory)}
-.hero h1 em{font-style:italic;color:var(--champagne-light);font-weight:400}
+.hero h1 em{font-style:italic;color:var(--ivory);font-weight:400;opacity:.85}
 .hero-sub{position:relative;z-index:1;font-size:12.5px;line-height:1.55;color:rgba(245,240,232,.7);max-width:94%}
 
 .meta-line{position:relative;z-index:1;display:flex;gap:7px;align-items:center;font-size:13px;color:rgba(245,240,232,.65);font-weight:400;margin-top:10px;font-family:'Jost',sans-serif;flex-wrap:wrap}
@@ -738,16 +738,16 @@ function screenEsg(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
     <div class="eyebrow">Frameworks</div>
     <div class="card">
       <div class="prow"><div><div class="nm">Marriott Serve 360</div><div class="rs">Export-ready · GRI 306 aligned</div></div><span class="delta flat">ready</span></div>
-      <div class="prow"><div><div class="nm">Taiwan FSC / TWSE</div><div class="rs">Draft report ready</div></div><span class="delta flat">monthly</span></div>
+      <div class="prow"><div><div class="nm">Taiwan FSC</div><div class="rs">Draft report ready</div></div><span class="delta flat">monthly</span></div>
       <div class="prow"><div><div class="nm">GRI 306 mapping</div><div class="rs">Waste, water, energy</div></div><span class="delta flat">mapped</span></div>
     </div>
     <div class="eyebrow">This morning</div>
     <div class="card">
-      <div class="prow"><span class="nm">Over-prep avoided</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500">NT$${b.save.toLocaleString()}</b></div>
-      <div class="prow"><span class="nm">CO₂e reduced</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500">${b.co2} kg</b></div>
-      <div class="prow"><span class="nm">Single-use bottles avoided · MTD</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500">3,140 <span title="³ Ellen MacArthur Foundation · 30g CO₂e per PET 500ml bottle (production + transport)" style="font-size:12px;cursor:help;font-weight:400;opacity:0.55">ⓘ</span></b></div>
+      <div class="prow"><span class="nm">Over-prep avoided</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#16A34A">NT$${b.save.toLocaleString()}</b></div>
+      <div class="prow"><span class="nm">CO₂e reduced</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#16A34A">${b.co2} kg</b></div>
+      <div class="prow"><span class="nm">Single-use bottles avoided · MTD</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#16A34A">3,140 <span title="³ Ellen MacArthur Foundation · 30g CO₂e per PET 500ml bottle (production + transport)" style="font-size:12px;cursor:help;font-weight:400;opacity:0.55;color:#6B7280">ⓘ</span></b></div>
     </div>
-    <div class="card flat"><div style="font-size:12px;line-height:1.55"><b class="gn">Measured, not modelled —</b> waste → CO₂e from the staff-recorded waste log. The model only forecasts; the log audits.</div></div>
+    <div class="card flat" style="background:#F7F4EF;border:1px solid #E5E7EB"><div style="font-size:12px;line-height:1.55;color:#6B7280"><b class="gn" style="color:#16A34A">Measured, not modelled —</b> waste → CO₂e from the staff-recorded waste log. The model only forecasts; the log audits.</div></div>
   </div>`;}
 
 function screenPortfolio(){return `
