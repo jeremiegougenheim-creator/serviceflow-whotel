@@ -677,32 +677,32 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
       <div class="kpi"><div class="k">CO₂e ↓ tonight</div><div class="v br">${b.co2}<small>kg</small></div><div class="d">Serve 360-ready</div></div>
     </div>
     <div class="eyebrow">Modules</div>
-    <div class="dash-tile" onclick="go('brief')">
+    <div class="dash-tile" role="button" tabindex="0" data-go="brief" onclick="go('brief')">
       <div class="dash-i" style="background:rgba(8,145,178,.12);color:var(--w-blue-dark)">${I.brief}</div>
       <div class="dash-b"><div class="dash-t">Nightly briefing</div><div class="dash-d">9 stations · ${b.actions.length} priority actions · ${b.cooks} cooks / ${b.servers} servers</div></div>
       <div class="dash-arrow">›</div>
     </div>
-    <div class="dash-tile" onclick="go('notifs')">
+    <div class="dash-tile" role="button" tabindex="0" data-go="notifs" onclick="go('notifs')">
       <div class="dash-i" style="background:rgba(160,120,74,.14);color:var(--champagne-dark)"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9M9 21a3 3 0 006 0"/></svg></div>
       <div class="dash-b"><div class="dash-t">How it talks to you</div><div class="dash-d">8 notifications across 24h · 5 tiers · auto-routed to the right person</div></div>
       <div class="dash-arrow">›</div>
     </div>
-    <div class="dash-tile" onclick="go('gap')">
+    <div class="dash-tile" role="button" tabindex="0" data-go="gap" onclick="go('gap')">
       <div class="dash-i" style="background:rgba(74,143,94,.10);color:var(--esg)"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/></svg></div>
       <div class="dash-b"><div class="dash-t">W Taipei today vs with ServiceFlow</div><div class="dash-d">8-gap analysis · NT$867K/yr opportunity · GRI 306 aligned</div></div>
       <div class="dash-arrow">›</div>
     </div>
-    <div class="dash-tile" onclick="go('fb')">
+    <div class="dash-tile" role="button" tabindex="0" data-go="fb" onclick="go('fb')">
       <div class="dash-i" style="background:rgba(190,24,93,.12);color:var(--w-mag-dark)">${I.fb}</div>
       <div class="dash-b"><div class="dash-t">F&amp;B Hub</div><div class="dash-d">The Kitchen Table · YEN · WOOBAR · WET DECK · W&amp;W</div></div>
       <div class="dash-arrow">›</div>
     </div>
-    <div class="dash-tile" onclick="go('esg')">
+    <div class="dash-tile" role="button" tabindex="0" data-go="esg" onclick="go('esg')">
       <div class="dash-i" style="background:rgba(74,143,94,.12);color:var(--esg)">${I.esg}</div>
       <div class="dash-b"><div class="dash-t">ESG · Serve 360</div><div class="dash-d">${b.co2} kg CO₂e ↓ tonight · 52 kg this month · Taiwan FSC mapped</div></div>
       <div class="dash-arrow">›</div>
     </div>
-    <div class="dash-tile" onclick="go('portfolio')">
+    <div class="dash-tile" role="button" tabindex="0" data-go="portfolio" onclick="go('portfolio')">
       <div class="dash-i" style="background:rgba(160,120,74,.14);color:var(--champagne-dark)">${I.portfolio}</div>
       <div class="dash-b"><div class="dash-t">W Taipei · Xinyi</div><div class="dash-d">The Kitchen Table · NT$1.9M Yr-1 uplift · 4 outlets scoped</div></div>
       <div class="dash-arrow">›</div>
@@ -1456,7 +1456,7 @@ function renderNav(){
   const navEl=g('nav');
   if(!state.role||state.role==='owner'){navEl.style.display='none';return;}
   navEl.style.display='flex';
-  navEl.innerHTML=TABS.map(([id,lb,ic])=>'<button class="nb '+(state.tab===id?'on':'')+'" data-tab="'+id+'" onclick="go(\''+id+'\')">'+I[ic]+'<span>'+lb+'</span></button>').join('');
+  navEl.innerHTML=TABS.map(([id,lb,ic])=>'<button class="nb '+(state.tab===id?'on':'')+'" data-tab="'+id+'" data-go="'+id+'" onclick="go(\''+id+'\')">'+I[ic]+'<span>'+lb+'</span></button>').join('');
 }
 function setSbar(){
   const s=g('sbar');if(!s)return;
