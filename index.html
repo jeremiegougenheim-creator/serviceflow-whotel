@@ -481,6 +481,7 @@ function computeBriefingV3(s,history){
     totalSavingNTD,totalCO2,globalConfidence,
     cooks:Math.max(2,Math.round(covers/50)),servers:Math.max(2,Math.round(covers/(s.isWeekend?16:20))),
     openTime:s.isWeekend?'06:30 · peak 08:30–10:00':'06:30 · peak 07:00–08:30',
+    openLine1:'06:30',openLine2:s.isWeekend?'peak 08:30–10:00':'peak 07:00–08:30',
     waveTime:s.isWeekend?'08:00':'07:45'};
 }
 function computeBriefing(s){return computeBriefingV3(s,[]);}
@@ -645,9 +646,9 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
       </div>
     </div>
 
-    <div class="card flat"><div class="row" style="justify-content:space-between">
-      <div><div class="eyebrow" style="margin:0">OPEN TIMES</div><div style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:18px;margin-top:6px">${b.openTime}</div></div>
-      <div style="text-align:right"><div class="eyebrow" style="margin:0;justify-content:flex-end">STAFFING</div><div style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:18px;margin-top:6px">${b.cooks} cooks · ${b.servers} servers</div></div>
+    <div class="card flat" style="background:#F7F4EF;border:1px solid #E5E7EB"><div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div><div class="eyebrow" style="margin:0">OPEN TIMES</div><div style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:18px;margin-top:6px;color:#2C3E50;line-height:1.25">${b.openLine1}<br><span style="font-size:13px;color:#6B7280;font-weight:400">${b.openLine2}</span></div></div>
+      <div style="text-align:right"><div class="eyebrow" style="margin:0;justify-content:flex-end">STAFFING</div><div style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:18px;margin-top:6px;color:#2C3E50;line-height:1.25">${b.cooks} cooks<br><span style="font-size:13px;color:#6B7280;font-weight:400">${b.servers} servers</span></div></div>
     </div></div>
 
     <div class="card flat">
@@ -821,19 +822,19 @@ function screenNotifs(){
       <div class="notif-stat"><div class="v">5</div><div class="k">Tiers</div></div>
       <div class="notif-stat"><div class="v esg">NT$3,420</div><div class="k">Captured</div></div>
     </div>
-    <div class="card flat" style="margin-bottom:14px">
-      <div style="font-size:12px;line-height:1.55">
-        <b class="br">5 tiers · 1 logic —</b> <b>Prescriptive</b> plans the night before · <b>Pre-emptive</b> adjusts at dawn · <b>Live Flex</b> reacts during service · <b>Waste Prevent</b> closes the loop · <b>Learn</b> teaches the next forecast.
+    <div class="card flat" style="margin-bottom:14px;background:#F7F4EF;border:1px solid #E5E7EB">
+      <div style="font-size:12px;line-height:1.55;color:#6B7280">
+        <b class="br" style="color:#B8962E">5 tiers · 1 logic —</b> <b style="color:#2C3E50">Prescriptive</b> plans the night before · <b style="color:#2C3E50">Pre-emptive</b> adjusts at dawn · <b style="color:#2C3E50">Live Flex</b> reacts during service · <b style="color:#2C3E50">Waste Prevent</b> closes the loop · <b style="color:#2C3E50">Learn</b> teaches the next forecast.
       </div>
     </div>
     <div class="eyebrow">24-hour timeline</div>
     <div class="notif-timeline">${cards}</div>
-    <div class="card flat">
+    <div class="card flat" style="background:#F7F4EF;border:1px solid #E5E7EB">
       <div class="eyebrow" style="margin:0 0 8px">Channels per recipient</div>
-      <div style="font-size:12.5px;line-height:1.85">
-        <b style="font-family:'Cormorant Garamond',serif;font-size:15px">GM</b> — daily push + nightly WhatsApp summary · business KPIs only<br>
-        <b style="font-family:'Cormorant Garamond',serif;font-size:15px">Chef</b> — kitchen screen + push · portions, timing, stations<br>
-        <b style="font-family:'Cormorant Garamond',serif;font-size:15px">F&amp;B Manager</b> — email digest + push critical · mix, savings, schedule
+      <div style="font-size:12.5px;line-height:1.85;color:#6B7280">
+        <b style="font-family:'Cormorant Garamond',serif;font-size:15px;color:#2C3E50">GM</b> — daily push + nightly WhatsApp summary · business KPIs only<br>
+        <b style="font-family:'Cormorant Garamond',serif;font-size:15px;color:#2C3E50">Chef</b> — kitchen screen + push · portions, timing, stations<br>
+        <b style="font-family:'Cormorant Garamond',serif;font-size:15px;color:#2C3E50">F&amp;B Manager</b> — email digest + push critical · mix, savings, schedule
       </div>
     </div>
     <button class="btn" onclick="go('brief')" style="margin-top:14px">← Back to briefing</button>
