@@ -305,6 +305,18 @@ html,body{
 .opt{padding:9px 12px;border-radius:11px;border:1px solid var(--marble-dark);background:var(--warm-white);font-size:12px;font-weight:500;cursor:pointer;font-family:'Jost',sans-serif;color:var(--charcoal)}
 .opt.on{background:var(--w-mag-pale);border-color:var(--w-mag);color:var(--w-mag-dark)}
 
+/* Strike confirm modal (Mode 1) */
+.strike-opt{flex:1;padding:13px 8px;border:1px solid var(--marble-dark);background:var(--warm-white);border-radius:12px;font-family:'Jost',sans-serif;font-size:12.5px;font-weight:600;color:var(--charcoal);cursor:pointer;letter-spacing:.02em;transition:all .15s}
+.strike-opt.mini{flex:0 0 50px;font-size:20px;color:var(--mid-grey)}
+.strike-opt.on.yes{background:#DCFCE7;border-color:#16A34A;color:#16A34A}
+.strike-opt.on.mod{background:#FEF3C7;border-color:#B8962E;color:#7A5A32}
+.strike-opt.on.no{background:#FCE7F3;border-color:#BE185D;color:#BE185D}
+.heard-line{font-size:11px;color:#16A34A;margin-top:4px;line-height:1.35;font-weight:500}
+.disclose-btn{background:none;border:none;font-family:'Jost',sans-serif;font-size:12px;color:#6B7280;cursor:pointer;padding:14px 0 6px;font-weight:600;letter-spacing:.02em;width:100%;text-align:left}
+.disclose-panel{background:#F7F4EF;border:1px solid #E5E7EB;border-radius:14px;padding:14px;margin-top:4px}
+.disclose-panel .field{margin-top:0}
+.disclose-panel .field:not(:first-child){margin-top:14px}
+
 .sub{color:var(--mid-grey);font-size:12.5px;line-height:1.55;margin:0 0 14px}
 .row{display:flex;gap:11px}
 .muted{color:var(--mid-grey)}.faint{color:var(--mid-grey)}
@@ -542,6 +554,7 @@ const NOTIF_TIMELINE=[
   {time:'07:30',day:'Today',tier:'LIVE · COVER CHECK',icon:'📊',to:['Chef'],title:'Cover count +11% above forecast',body:'142 seated vs 128 expected · System auto-adjusting Coffee +20, Congee +8.',metric:null,color:'mag'},
   {time:'08:12',day:'Today',tier:'LIVE · CONSUMPTION',icon:'⚡',to:['Chef'],title:'Dim Sum running fast — 73% consumed',body:'Dim Sum +20% faster. Bring 08:30 wave forward 15 min. Add +6 portions (CN group still seated).',metric:null,color:'mag'},
   {time:'09:30',day:'Today',tier:'WASTE PREVENT',icon:'⏱',to:['Chef','F&B'],title:'2 stations at over-stock risk',body:'Western Hot: 11 portions risk · Bakery croissants: 5 risk · Recommend: stop replenish, prepare donation box.',metric:'NT$680',metricLabel:'saved if approved',color:'esg'},
+  {time:'10:30',day:'Today',tier:'CLOSE THE LOOP',icon:'🍳',to:['Chef'],title:'Breakfast done · 347 covers',body:'3 stations had pre-emptive strikes but weren\'t confirmed. Tap to log — 90 sec total.',metric:'3',metricLabel:'pending strike confirms',color:'champagne'},
   {time:'12:30',day:'Today',tier:'LEARN',icon:'📚',to:['Chef','F&B','GM'],title:'Service debrief · 347 covers (+9.8%)',body:'347 covers (+9.8%). Korea×Coffee coef updated. · CO₂e 5.1kg logged.',metric:'NT$3,420',metricLabel:'captured · CO₂e 5.1kg',color:'blue'},
   {time:'Anytime',day:'Event-driven',tier:'EXCEPTION',icon:'🚨',to:['Chef','F&B','GM'],title:'Group booking +18 rooms · 22h to check-in',body:'Re-forecast running · Impact: +24 covers · Dim Sum +8 · Congee +6 · Notify procurement.',metric:null,color:'red'}
 ];
@@ -780,9 +793,9 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
         <div class="st-tile"><div class="v">+${strike.waves.wave_0800||strike.waves.wave_0745||0}</div><div class="k">${s.isWeekend?'08:00':'07:45'} wave</div></div>
         <div class="st-tile"><div class="v">${strike.measuredY}<small style="font-size:10px;letter-spacing:.05em"> kg</small></div><div class="k">Yest. waste</div></div>
       </div>
-      <button class="btn mg" onclick="openLog()">Confirm &amp; log</button>
+      <button class="btn mg" onclick="openStrike('${strike.label}',${pct},${saving})">CONFIRM &amp; LOG</button>
       ${voiceSupported?`<div style="position:relative;z-index:1;margin-top:10px;text-align:center">
-        <button class="voice-btn" onclick="openLog()" style="background:transparent;border:1px dashed rgba(245,240,232,.25);color:rgba(245,240,232,.7)">${I.mic}<span>Voice log — hold to dictate</span></button>
+        <button class="voice-btn" onclick="openLog()" style="background:transparent;border:1px dashed rgba(245,240,232,.25);color:rgba(245,240,232,.7)">${I.mic}<span>Voice log — open full form</span></button>
       </div>`:''}
     </div>
     <div class="sec-h"><h3>Station prep</h3><span class="sa">${s.label} · ${b.covers} covers</span></div>
@@ -888,7 +901,7 @@ function screenNotifs(){
   <div class="body">
     <div class="eyebrow">A typical ${s.label}</div>
     <div class="notif-stats">
-      <div class="notif-stat"><div class="v blue">8</div><div class="k">Notifs / 24h</div></div>
+      <div class="notif-stat"><div class="v blue">9</div><div class="k">Notifs / 24h</div></div>
       <div class="notif-stat"><div class="v">5</div><div class="k">Tiers</div></div>
       <div class="notif-stat"><div class="v esg">NT$3,420</div><div class="k">Captured</div></div>
     </div>
@@ -957,7 +970,11 @@ function screenGap(){
     <button class="btn" data-go="brief" onclick="go('brief')" style="margin-top:14px">← Back to briefing</button>
   </div>`;}
 
-let logSel={type:'Over-prep',station:'Congee & Noodle',transcript:'',listening:false};
+// ── LOG REDESIGN v2 ──────────────────────────────────────────────
+// Mode 1 = Strike Confirm (Followed/Modified/Skipped, no qty)
+// Mode 2 = Waste Log (station + type required, rest behind disclosure)
+let logSel={type:'Over-prep',station:'Congee & Noodle',transcript:'',listening:false,expanded:false,qty:0,destination:null,photo:null,note:''};
+let strikeSel={station:'',recPct:0,savings:0,followed:null,modPct:0,note:''};
 let voiceRec=null;
 function parseVoiceTranscript(text){
   const lower=(text||'').toLowerCase();
@@ -965,8 +982,12 @@ function parseVoiceTranscript(text){
   for(const [k,v] of stationMap){if(lower.includes(k)){logSel.station=v;break;}}
   if(/over[- ]?prep/.test(lower))logSel.type='Over-prep';
   else if(/spoil/.test(lower))logSel.type='Spoilage';
-  else if(/cover/.test(lower))logSel.type='Cover count';
-  else if(/incident/.test(lower))logSel.type='Incident';
+  else if(/miss|cover/.test(lower))logSel.type='Miss';
+  const qm=lower.match(/(\d+(?:\.\d+)?)\s*(?:kg|kilo|kilos)/);
+  if(qm){const v=parseFloat(qm[1]);if(v>=0&&v<=20)logSel.qty=v;}
+  if(/compost/.test(lower))logSel.destination='Compost';
+  else if(/staff/.test(lower))logSel.destination='Staff meal';
+  else if(/bin|trash|garbage/.test(lower))logSel.destination='Bin';
 }
 function toggleVoice(){
   if(!voiceSupported)return;
@@ -979,13 +1000,7 @@ function toggleVoice(){
     voiceRec.continuous=false;
     voiceRec.onresult=e=>{
       const txt=Array.from(e.results).map(r=>r[0].transcript).join('');
-      logSel.transcript=txt;
-      parseVoiceTranscript(txt);
-      const t=g('voiceLine');if(t)t.textContent=txt;
-      const opts=document.querySelectorAll('#sheetbg .opt');opts.forEach(o=>{
-        const v=o.textContent.trim();
-        if(v===logSel.type||v===logSel.station)o.classList.add('on');else o.classList.remove('on');
-      });
+      logSel.transcript=txt;parseVoiceTranscript(txt);openLog();
     };
     voiceRec.onerror=ev=>{logSel.listening=false;openLog();console.warn('Voice error:',ev.error);};
     voiceRec.onend=()=>{logSel.listening=false;openLog();};
@@ -993,30 +1008,108 @@ function toggleVoice(){
     logSel.listening=true;openLog();
   }catch(err){logSel.listening=false;console.warn('Voice start failed:',err);}
 }
-function openLog(){
-  const types=['Over-prep','Spoilage','Cover count','Incident'];
+// ── MODE 1 — Strike Confirm ─────────────────────────────────────
+function openStrike(station,recPct,savings){
+  strikeSel={station,recPct,savings,followed:null,modPct:recPct,note:''};
+  renderStrike();
+}
+function pickStrike(opt){strikeSel.followed=opt;renderStrike();}
+function renderStrike(){
   const ex=g('sheetbg');if(ex)ex.remove();
   const sheet=document.createElement('div');sheet.className='sheet-bg';sheet.id='sheetbg';
   sheet.onclick=e=>{if(e.target===sheet)closeLog()};
-  const voiceState=logSel.listening?'Listening… tap to stop':'Tap to dictate (EN / 中文)';
-  const voiceBlock=voiceSupported
-    ?'<h2>Log — <em style="color:var(--champagne-dark);font-style:italic">voice first</em></h2>'
-     +'<p class="sub" style="margin:5px 0 14px">Tap the voice button to dictate. Auto-fills the form below.</p>'
-     +'<button class="voice-btn'+(logSel.listening?' on':'')+'" onclick="toggleVoice()" style="width:100%;justify-content:center;padding:13px;font-size:13px">'+I.mic+'<span>'+voiceState+'</span></button>'
-     +'<div id="voiceLine" style="font-size:12px;color:var(--mid-grey);min-height:18px;margin:8px 2px 0;line-height:1.35;font-style:italic">'+(logSel.transcript||'')+'</div>'
-    :'<h2>Log — <em style="color:var(--champagne-dark);font-style:italic">quick entry</em></h2>'
-     +'<p class="sub" style="margin:5px 0 14px">Pick a type and station below, or describe the waste in one line.</p>'
-     +'<input type="text" placeholder="Describe waste · e.g. Dim Sum 2kg over-prep" oninput="logSel.transcript=this.value;parseVoiceTranscript(this.value)" value="'+(logSel.transcript||'').replace(/"/g,'&quot;')+'" style="width:100%;padding:12px 14px;border:1px solid var(--marble-dark);border-radius:11px;font-family:Jost,sans-serif;font-size:13px;color:var(--charcoal);background:var(--warm-white);margin-bottom:8px">';
-  sheet.innerHTML='<div class="sheet"><div class="grab"></div>'+voiceBlock+
-    '<div class="field">Type</div><div class="opts">'+types.map(t=>'<div class="opt '+(logSel.type===t?'on':'')+'" onclick="logSel.type=\''+t+'\';openLog()">'+t+'</div>').join('')+'</div>'+
-    '<div class="field">Station</div><div class="opts">'+STATIONS.slice(0,6).map(st=>'<div class="opt '+(logSel.station===st.label?'on':'')+'" onclick="logSel.station=\''+st.label+'\';openLog()">'+st.label+'</div>').join('')+'</div>'+
-    '<button class="btn mg" style="margin-top:20px" onclick="closeLog();confirmToast()">Confirm &amp; log</button>'+
-    '<button class="btn ghost sm" style="margin-top:9px" onclick="closeLog()">Cancel</button></div>';
+  const now=new Date(),pad=n=>(''+n).padStart(2,'0');
+  const stamp=pad(now.getHours())+':'+pad(now.getMinutes());
+  const code=(SCEN[state.scenario]||{}).code||'';
+  const sel=strikeSel.followed;
+  const modBlock=sel==='modified'
+    ?'<div class="field">Reduction applied</div>'
+     +'<div style="display:flex;align-items:center;gap:14px">'
+     +'<input type="range" min="0" max="30" value="'+strikeSel.modPct+'" oninput="strikeSel.modPct=parseInt(this.value);g(\'strikeModVal\').textContent=\'−\'+this.value+\'%\'" style="flex:1;accent-color:#0891B2">'
+     +'<span id="strikeModVal" style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:500;color:#2C3E50;min-width:62px;text-align:right">−'+strikeSel.modPct+'%</span>'
+     +'</div>'
+    :'';
+  const noteBlock=sel==='no'
+    ?'<input type="text" placeholder="Why skipped? (optional)" oninput="strikeSel.note=this.value" value="'+(strikeSel.note||'').replace(/"/g,'&quot;')+'" style="width:100%;padding:11px 14px;border:1px solid var(--marble-dark);border-radius:11px;font-family:Jost,sans-serif;font-size:13px;color:var(--charcoal);background:var(--warm-white);margin-top:10px">'
+    :'';
+  sheet.innerHTML='<div class="sheet"><div class="grab"></div>'
+    +'<div style="display:flex;align-items:center;gap:9px;font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#6B7280;margin-bottom:14px">'
+    +'<span style="width:8px;height:8px;background:#BE185D;display:inline-block"></span>'+strikeSel.station+' · '+code+' · '+stamp+'</div>'
+    +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:500;color:#2C3E50;line-height:1.2;margin-bottom:6px">Recommended: <em style="color:#0891B2;font-style:italic">Trim −'+strikeSel.recPct+'%</em></div>'
+    +'<div style="font-size:12.5px;color:#6B7280;margin-bottom:18px">Est. savings: <b style="color:#16A34A;font-weight:600">NT$'+strikeSel.savings.toLocaleString()+'</b></div>'
+    +'<div class="field" style="margin-top:0">What did you do?</div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:14px">'
+    +'<button class="strike-opt'+(sel==='yes'?' on yes':'')+'" onclick="pickStrike(\'yes\')">✓ Followed</button>'
+    +'<button class="strike-opt'+(sel==='modified'?' on mod':'')+'" onclick="pickStrike(\'modified\')">Modified</button>'
+    +'<button class="strike-opt mini'+(sel==='no'?' on no':'')+'" onclick="pickStrike(\'no\')" title="Skipped">×</button>'
+    +'</div>'
+    +modBlock+noteBlock
+    +'<button class="btn" '+(sel?'':'style="opacity:.35;pointer-events:none;margin-top:18px;background:#0891B2"')+(sel?'style="margin-top:18px;background:#0891B2"':'')+' onclick="submitStrike()">CONFIRM</button>'
+    +'<button class="btn ghost sm" style="margin-top:9px" onclick="closeLog()">Cancel</button></div>';
   document.querySelector('.phone').appendChild(sheet);
+}
+function submitStrike(){
+  if(!strikeSel.followed)return;
+  const f=strikeSel.followed;
+  const pct=f==='modified'?strikeSel.modPct:(f==='no'?0:strikeSel.recPct);
+  const sv=f==='no'?0:Math.round(strikeSel.savings*(strikeSel.recPct?pct/strikeSel.recPct:1));
+  const lbl=f==='yes'?'Followed':f==='modified'?('Modified to −'+pct+'%'):'Skipped';
+  const tail=sv?' · NT$'+sv.toLocaleString()+' saved':'';
+  closeLog();
+  toast('✓ Logged · '+strikeSel.station+' · '+lbl+tail+' · Model updated','#16A34A');
+}
+// ── MODE 2 — Waste Log ─────────────────────────────────────────
+function openLog(){
+  const types=['Over-prep','Spoilage','Miss'];
+  const dests=['Bin','Compost','Staff meal'];
+  const ex=g('sheetbg');if(ex)ex.remove();
+  const sheet=document.createElement('div');sheet.className='sheet-bg';sheet.id='sheetbg';
+  sheet.onclick=e=>{if(e.target===sheet)closeLog()};
+  const transcript=logSel.transcript||'';
+  const placeholder=voiceSupported?"Say: 'Dim Sum over-prep 2 kg'":"e.g. Dim Sum over-prep 2kg";
+  const transcriptLine='<div id="voiceLine" style="font-size:13px;min-height:20px;margin:10px 2px 0;line-height:1.4;'+(transcript?'color:var(--charcoal);font-weight:500':'color:var(--mid-grey);font-style:italic')+'">'+(transcript||placeholder)+'</div>';
+  const heard=transcript?'<div class="heard-line">✓ Heard: <b>'+logSel.station+'</b> · '+logSel.type+(logSel.qty>0?' · '+logSel.qty+'kg':'')+'</div>':'';
+  const voiceState=logSel.listening?'Listening… tap to stop':'Tap to dictate (EN / 中文)';
+  const head=voiceSupported
+    ?'<h2>Log — <em style="color:var(--champagne-dark);font-style:italic">voice first</em></h2>'
+     +'<p class="sub" style="margin:5px 0 12px">Station + type is enough. Everything else is optional.</p>'
+     +'<button class="voice-btn'+(logSel.listening?' on':'')+'" onclick="toggleVoice()" style="width:100%;justify-content:center;padding:13px;font-size:13px">'+I.mic+'<span>'+voiceState+'</span></button>'
+     +transcriptLine+heard
+    :'<h2>Log — <em style="color:var(--champagne-dark);font-style:italic">quick entry</em></h2>'
+     +'<p class="sub" style="margin:5px 0 12px">Same result as voice — type a one-liner or pick below.</p>'
+     +'<input type="text" placeholder="'+placeholder+'" oninput="logSel.transcript=this.value;parseVoiceTranscript(this.value);const h=g(\'fbHeard\');if(h)h.innerHTML=this.value?\'✓ Heard: <b>\'+logSel.station+\'</b> · \'+logSel.type+(logSel.qty>0?\' · \'+logSel.qty+\'kg\':\'\'):\'\'" value="'+(transcript).replace(/"/g,'&quot;')+'" style="width:100%;padding:12px 14px;border:1px solid var(--marble-dark);border-radius:11px;font-family:Jost,sans-serif;font-size:13px;color:var(--charcoal);background:var(--warm-white)">'
+     +'<div id="fbHeard" class="heard-line" style="min-height:16px">'+(transcript?'✓ Heard: <b>'+logSel.station+'</b> · '+logSel.type+(logSel.qty>0?' · '+logSel.qty+'kg':''):'')+'</div>';
+  const discloseToggle='<button class="disclose-btn" onclick="logSel.expanded=!logSel.expanded;openLog()">'+(logSel.expanded?'▴':'▼')+' Add details (optional)</button>';
+  const panel=logSel.expanded?'<div class="disclose-panel">'
+    +'<div class="field" style="margin-top:0">Quantity</div>'
+    +'<div style="display:flex;align-items:center;gap:14px">'
+    +'<input type="range" min="0" max="20" step="0.5" value="'+logSel.qty+'" oninput="logSel.qty=parseFloat(this.value);g(\'logQtyVal\').textContent=this.value+\'kg\'" style="flex:1;accent-color:#0891B2">'
+    +'<span id="logQtyVal" style="font-family:\'Cormorant Garamond\',serif;font-size:18px;font-weight:500;color:#2C3E50;min-width:56px;text-align:right">'+logSel.qty+'kg</span>'
+    +'</div>'
+    +'<div class="field">Destination</div><div class="opts">'+dests.map(d=>'<div class="opt '+(logSel.destination===d?'on':'')+'" onclick="logSel.destination=\''+d+'\';openLog()">'+d+'</div>').join('')+'</div>'
+    +'<div class="field">Photo</div>'
+    +'<label class="btn ghost sm" style="display:block;cursor:pointer;text-align:center;text-transform:none;letter-spacing:0;font-size:13px;padding:11px;margin:0"><input type="file" accept="image/*" capture="environment" onchange="logSel.photo=(this.files[0]||{}).name||null;openLog()" style="display:none">'+(logSel.photo?'✓ '+(logSel.photo.length>22?logSel.photo.substring(0,22)+'…':logSel.photo):'📷 Quick snap')+'</label>'
+    +'<div class="field">Note</div>'
+    +'<input type="text" placeholder="Optional context" oninput="logSel.note=this.value" value="'+(logSel.note||'').replace(/"/g,'&quot;')+'" style="width:100%;padding:11px 14px;border:1px solid #E5E7EB;border-radius:11px;font-family:Jost,sans-serif;font-size:13px;color:var(--charcoal);background:#fff">'
+    +'</div>':'';
+  sheet.innerHTML='<div class="sheet"><div class="grab"></div>'+head
+    +'<div class="field">Station</div><div class="opts">'+STATIONS.slice(0,6).map(st=>'<div class="opt '+(logSel.station===st.label?'on':'')+'" onclick="logSel.station=\''+st.label+'\';openLog()">'+st.label+'</div>').join('')+'</div>'
+    +'<div class="field">Type</div><div class="opts">'+types.map(t=>'<div class="opt '+(logSel.type===t?'on':'')+'" onclick="logSel.type=\''+t+'\';openLog()">'+t+'</div>').join('')+'</div>'
+    +discloseToggle+panel
+    +'<button class="btn mg" style="margin-top:18px" onclick="submitLog()">CONFIRM &amp; LOG</button>'
+    +'<button class="btn ghost sm" style="margin-top:9px" onclick="closeLog()">Cancel</button></div>';
+  document.querySelector('.phone').appendChild(sheet);
+}
+function submitLog(){
+  const q=logSel.qty>0?' · '+logSel.qty+'kg':'';
+  const co2=logSel.qty>0?' · '+(logSel.qty*2.5).toFixed(1)+'kg CO₂e':'';
+  closeLog();
+  toast('✓ Logged · '+logSel.station+' '+logSel.type+q+co2+' · Serve 360 updated','#16A34A');
 }
 function closeLog(){
   if(voiceRec&&logSel.listening){try{voiceRec.stop();}catch(_){}}
-  logSel.listening=false;logSel.transcript='';
+  logSel.listening=false;logSel.transcript='';logSel.expanded=false;logSel.qty=0;logSel.destination=null;logSel.photo=null;logSel.note='';
+  strikeSel={station:'',recPct:0,savings:0,followed:null,modPct:0,note:''};
   const e=g('sheetbg');if(e)e.remove();
 }
 
