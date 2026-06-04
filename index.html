@@ -217,7 +217,7 @@ html,body{
 
 .strike{background:linear-gradient(170deg,#1F2937 0%,var(--charcoal) 100%);color:var(--ivory);border-radius:20px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;border:1px solid rgba(190,24,93,.25)}
 .strike::before{content:'';position:absolute;inset:0;pointer-events:none}
-.strike::after{content:'';position:absolute;top:-80px;right:-80px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(190,24,93,.2) 0%,transparent 70%);pointer-events:none}
+.strike .strike-skyline{position:absolute;right:0;bottom:0;pointer-events:none;z-index:0}
 .strike .st-eb{position:relative;z-index:1;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--w-mag);font-weight:600;display:flex;align-items:center;gap:9px;margin-bottom:10px}
 .strike .st-eb::before{content:'';display:inline-block;width:6px;height:6px;background:var(--w-mag)}
 .strike .st-tt{position:relative;z-index:1;font-family:'Playfair Display',serif;font-size:22px;font-weight:500;line-height:1.2;color:var(--ivory);margin-bottom:12px;letter-spacing:-.005em}
@@ -338,11 +338,11 @@ html,body{
 .silhouette{position:absolute;right:-20px;bottom:-10px;width:140px;height:120px;opacity:.18;pointer-events:none;z-index:0}
 .silhouette svg{width:100%;height:100%;fill:var(--champagne-light)}
 /* Gap comparison table */
-.winn-head{display:grid;grid-template-columns:32% 28% 40%;background:var(--card-navy);padding:12px 14px;gap:8px}
+.winn-head{display:grid;grid-template-columns:30% 28% 42%;background:var(--card-navy);padding:12px 14px;gap:8px}
 .winn-dim-h{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,242,236,.65);white-space:nowrap;font-family:'Barlow Condensed',sans-serif}
 .winn-col-a{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,242,236,.65);white-space:nowrap;font-family:'Barlow Condensed',sans-serif}
 .winn-col-b{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);white-space:nowrap;font-family:'Barlow Condensed',sans-serif}
-.winn-row{display:grid;grid-template-columns:32% 28% 40%;padding:14px 14px;gap:8px;border-top:1px solid var(--marble)}
+.winn-row{display:grid;grid-template-columns:30% 28% 42%;padding:14px 14px;gap:8px;border-top:1px solid var(--marble)}
 .winn-row:nth-child(even){background:rgba(237,233,224,.35)}
 .winn-dim{font-size:10.5px;font-weight:700;color:var(--charcoal);letter-spacing:.04em;line-height:1.35}
 .winn-a{font-size:11px;color:var(--mid-grey);line-height:1.4}
@@ -798,6 +798,7 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
       return '<div class="card" style="padding:14px 16px"><div class="row" style="justify-content:space-between;align-items:center"><div style="flex:1"><div class="st-name">'+st.label+'</div><div class="st-cause" style="margin-top:3px">'+st.reason+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:\'Cormorant Garamond\',serif;font-size:24px;font-weight:500;letter-spacing:-.01em;color:var(--charcoal);line-height:1">'+st.total+'</div><span class="delta '+cls+'" style="margin-top:4px;display:inline-block">'+sg+Math.round(st.delta*100)+'%</span></div></div></div>';}).join('');
     body=`
     <div class="strike">
+      <svg class="strike-skyline" viewBox="0 0 195 300" width="195" height="300" aria-hidden="true"><g fill="rgba(255,255,255,0.055)"><rect x="5" y="228" width="15" height="72"/><rect x="24" y="212" width="13" height="88"/><rect x="41" y="235" width="10" height="65"/><rect x="60" y="268" width="50" height="32"/><rect x="64" y="250" width="42" height="19"/><rect x="68" y="232" width="34" height="19"/><rect x="71" y="215" width="28" height="18"/><rect x="74" y="200" width="22" height="16"/><rect x="76" y="186" width="18" height="15"/><rect x="78" y="173" width="14" height="14"/><rect x="80" y="162" width="10" height="12"/><rect x="82" y="152" width="6" height="11"/><rect x="84" y="84" width="2" height="69"/><rect x="126" y="210" width="12" height="90"/><rect x="142" y="230" width="12" height="70"/><rect x="158" y="218" width="12" height="82"/><rect x="174" y="242" width="12" height="58"/></g></svg>
       <div class="st-eb">PRE-EMPTIVE STRIKE</div>
       <div class="st-tt">Trim ${strike.label} <em>−${pct}%</em> & hold a fast-replenish buffer.</div>
       <div style="position:relative;z-index:1;font-size:12px;color:rgba(245,240,232,.7);line-height:1.5">${strike.reason} · save est. NT$${saving.toLocaleString()} · export to Serve 360 format.</div>
