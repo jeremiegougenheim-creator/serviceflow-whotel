@@ -583,6 +583,9 @@ let state={role:null,scenario:'sat',tab:'dashboard',outlet:'kitchen'};
 // "Hold to dictate" button on Bastien's iPhone.
 const isIOSSafari=/iP(ad|hone|od)/.test(navigator.userAgent)&&/Safari/.test(navigator.userAgent)&&!/CriOS|FxiOS/.test(navigator.userAgent);
 const voiceSupported=!isIOSSafari&&(('SpeechRecognition' in window)||('webkitSpeechRecognition' in window));
+// Cross-browser diagnostic — one line in DevTools console so we can see why
+// the voice button shows up on Chrome but maybe hides on Edge/Safari/etc.
+try{console.info('[ServiceFlow] voiceSupported='+voiceSupported,'· hasSR='+('SpeechRecognition' in window),'· hasWebkitSR='+('webkitSpeechRecognition' in window),'· iOSSafari='+isIOSSafari,'· UA='+navigator.userAgent);}catch(_){}
 const g=id=>document.getElementById(id);
 const I={
  owner:'<svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>',
@@ -812,8 +815,8 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
         <div class="st-tile"><div class="v">${strike.measuredY}<small style="font-size:10px;letter-spacing:.05em"> kg</small></div><div class="k">Yest. waste</div></div>
       </div>
       <button class="btn mg" onclick="openStrike('${strike.label}',${pct},${saving})">CONFIRM &amp; LOG</button>
-      ${voiceSupported?`<div id="voiceLogSlot" style="position:relative;z-index:1;margin-top:10px">${voiceLogTemplate()}</div>
-      <div id="voiceLogSummary" class="vlog-summary-line" style="position:relative;z-index:1"></div>`:''}
+      <div id="voiceLogSlot" style="position:relative;z-index:1;margin-top:10px">${voiceLogTemplate()}</div>
+      <div id="voiceLogSummary" class="vlog-summary-line" style="position:relative;z-index:1"></div>
     </div>
     <div class="sec-h"><h3>Station prep</h3><span class="sa">${s.label} · ${b.covers} covers</span></div>
     ${cards}`;
@@ -1045,8 +1048,24 @@ function updateVoiceSummary(){const s=g('voiceLogSummary');if(!s)return;
   s.innerHTML='<span style="opacity:.55">'+voiceLogEntries.length+' logged · last:</span> '+last.amount+'kg '+last.station+' ('+last.type.toLowerCase()+')';
 }
 function voiceLogTemplate(){
-  if(!voiceSupported)return '';
   const p=voiceLog.phase,t=voiceLog.transcript;
+  // When the browser doesn't expose SpeechRecognition (Firefox, iOS Safari,
+  // some corporate Edge policies) show a text-input fallback that uses the
+  // same parser pipeline as voice. Same UX, same destination.
+  if(!voiceSupported){
+    if(p==='confirmed')return '<div class="vlog-card vlog-confirmed">'
+      +'<div class="vlog-head"><span style="font-size:18px;color:#16A34A">✓</span><span class="vlog-label" style="color:#16A34A">Logged</span></div>'
+      +'<p class="vlog-summary">'+(voiceLog.result&&voiceLog.result.summary||'')+'</p>'
+      +'</div>';
+    if(p==='error')return '<div class="vlog-card vlog-error">'
+      +'<p class="vlog-label" style="color:#C0392B;margin-bottom:8px">'+(voiceLog.error||'Try again')+'</p>'
+      +'<input type="text" placeholder="e.g. Japanese overprep 2 kilos" onkeypress="if(event.key===\'Enter\')submitVoiceText(this.value)" style="width:100%;padding:9px 11px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:transparent;color:rgba(245,242,236,.9);font-family:\'Jost\',sans-serif;font-size:13px;box-sizing:border-box">'
+      +'</div>';
+    return '<div class="vlog-card vlog-idle">'
+      +'<div class="vlog-head"><span class="vlog-label" style="opacity:.7">Type to log waste</span></div>'
+      +'<input type="text" placeholder="e.g. Japanese overprep 2 kilos · press Enter" onkeypress="if(event.key===\'Enter\')submitVoiceText(this.value)" style="width:100%;padding:9px 11px;margin-top:6px;border:1px solid rgba(255,255,255,.15);border-radius:6px;background:transparent;color:rgba(245,242,236,.9);font-family:\'Jost\',sans-serif;font-size:13px;box-sizing:border-box">'
+      +'</div>';
+  }
   if(p==='listening')return '<button class="vlog-card vlog-listening" onclick="toggleVoiceLog()" style="cursor:pointer;text-align:left;width:100%">'
     +'<div class="vlog-head"><span class="vlog-pulse"></span><span class="vlog-label">Listening — tap to stop</span></div>'
     +(t?'<p class="vlog-transcript">&ldquo;'+t.replace(/</g,'&lt;')+'&rdquo;</p>':'<p class="vlog-hint">Speak now…</p>')
@@ -1060,6 +1079,17 @@ function voiceLogTemplate(){
     +'</button>';
   return '<button class="vlog-btn vlog-idle" onclick="toggleVoiceLog()">'
     +I.mic+'<span>Voice log — tap to dictate</span></button>';
+}
+function submitVoiceText(text){
+  const t=(text||'').trim();if(!t)return;
+  const parsed=parseVoice(t);voiceLog.result=parsed;voiceLog.transcript=t;
+  if(parsed.isValid){
+    voiceLogEntries.push({station:parsed.station,type:parsed.type,amount:parsed.amount,unit:parsed.unit,timestamp:new Date().toISOString(),source:'text',raw:parsed.raw});
+    voiceLog.phase='confirmed';renderVoiceLog();autoResetVoiceLog(3000);
+  }else{
+    voiceLog.phase='error';voiceLog.error='Couldn\'t find station + amount in "'+t+'"';
+    renderVoiceLog();autoResetVoiceLog(4000);
+  }
 }
 function toggleVoiceLog(){
   if(!voiceSupported)return;
