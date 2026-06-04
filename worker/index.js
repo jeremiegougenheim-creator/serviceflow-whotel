@@ -1,26 +1,13 @@
-// Cloudflare Worker — Claude intent proxy for ServiceFlow voice log.
+// Cloudflare Worker — voice intent classifier for ServiceFlow.
 //
-// Browser POSTs { transcript: string } to this Worker. The Worker forwards
-// it to Anthropic with the x-api-key header (key stays server-side), then
-// returns the parsed intent JSON to the browser.
+// Now powered by Cloudflare Workers AI (Llama 3.1 8B Instruct) via the AI
+// binding declared in wrangler.toml. No external API, no API keys, no secret
+// management — just a native env.AI.run call. Free tier covers ~10k requests/day.
 //
-// Why Haiku 4.5: this is a 5-bucket intent classifier with a tiny entity
-// extraction inside one bucket. Haiku is fast (sub-500ms typical), cheap,
-// and plenty for the task. Swap to Sonnet only if accuracy on noisy
-// transcripts becomes a problem.
-//
-// Deploy:
-//   cd worker/
-//   npm i -g wrangler  (if you don't have it)
-//   wrangler login
-//   wrangler secret put ANTHROPIC_API_KEY    # paste sk-ant-... key
-//   wrangler deploy
-//   → copy the *.workers.dev URL into index.html INTENT_PROXY_URL.
-//
-// Restrict CORS in production by setting ALLOWED_ORIGIN as a Worker var
-// (e.g. https://service-flow.dev). Defaults to * for local dev convenience.
+// Browser POSTs { transcript: string }. Worker returns the parsed intent JSON.
 
 const ALLOWED_ORIGIN_DEFAULT = '*';
+const MODEL_DEFAULT = '@cf/meta/llama-3.1-8b-instruct';
 
 function corsHeaders(origin) {
   return {
@@ -78,9 +65,9 @@ export default {
     if (request.method !== 'POST') {
       return jsonResponse({ error: 'Method not allowed' }, 405, origin);
     }
-    if (!env.ANTHROPIC_API_KEY) {
+    if (!env.AI) {
       return jsonResponse(
-        { error: 'Worker not configured: missing ANTHROPIC_API_KEY secret' },
+        { error: 'Worker not configured: missing AI binding' },
         500,
         origin
       );
@@ -97,56 +84,27 @@ export default {
     if (!transcript) {
       return jsonResponse({ error: 'Empty transcript' }, 400, origin);
     }
-    // Sanity cap so we don't forward absurdly long inputs.
     if (transcript.length > 800) {
       return jsonResponse({ error: 'Transcript too long' }, 413, origin);
     }
 
-    let claudeRes;
+    let aiResponse;
     try {
-      claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: env.CLAUDE_MODEL || 'claude-haiku-4-5-20251001',
-          max_tokens: 300,
-          messages: [{ role: 'user', content: buildPrompt(transcript) }],
-        }),
+      aiResponse = await env.AI.run(env.AI_MODEL || MODEL_DEFAULT, {
+        messages: [{ role: 'user', content: buildPrompt(transcript) }],
       });
     } catch (err) {
       return jsonResponse(
-        { error: 'Anthropic fetch failed', message: String(err) },
+        { error: 'Workers AI call failed', message: String(err) },
         502,
         origin
       );
     }
 
-    if (!claudeRes.ok) {
-      const detail = await claudeRes.text().catch(() => '');
-      return jsonResponse(
-        { error: 'Anthropic API error', status: claudeRes.status, detail },
-        502,
-        origin
-      );
-    }
-
-    let claudeData;
-    try {
-      claudeData = await claudeRes.json();
-    } catch (err) {
-      return jsonResponse(
-        { error: 'Anthropic response not JSON', message: String(err) },
-        502,
-        origin
-      );
-    }
-
+    // Workers AI text-generation shape: { response: "..." } for most models;
+    // newer models may also include tool_calls etc. We only need the text.
     const text =
-      (claudeData.content && claudeData.content[0] && claudeData.content[0].text) || '';
+      (aiResponse && (aiResponse.response || aiResponse.result || aiResponse.output_text)) || '';
 
     // Prefer a direct parse; if the model wrapped the JSON in prose, extract.
     let intent = null;

@@ -1,25 +1,17 @@
-# ServiceFlow intent proxy (Cloudflare Worker)
+# ServiceFlow intent proxy (Cloudflare Worker + Workers AI)
 
-Forwards browser-side voice transcripts to Anthropic with the API key kept server-side. Returns a small JSON shape the front end uses to route to one of: `WASTE_LOG`, `QUESTION`, `CONFIRM`, `CANCEL`, `UNCLEAR`.
+Classifies browser-side voice transcripts into one of `WASTE_LOG / QUESTION / CONFIRM / CANCEL / UNCLEAR` so the front end can route appropriately. Runs entirely on Cloudflare — no external LLM API, no API keys, no secrets to manage.
 
 ## Deploy
 
 ```sh
 # from repo root
 cd worker
-
-# one-time
-npm install -g wrangler
-wrangler login
-
-# store the Anthropic key (never goes in the HTML)
-wrangler secret put ANTHROPIC_API_KEY
-# paste sk-ant-... when prompted
-
-wrangler deploy
+npx wrangler login   # one-time
+npx wrangler deploy
 ```
 
-Wrangler prints the public URL, e.g. `https://serviceflow-intent.your-subdomain.workers.dev`.
+Wrangler prints the public URL, e.g. `https://serviceflow-intent.your-subdomain.workers.dev`. Workers AI is enabled automatically by the `[ai] binding = "AI"` block in `wrangler.toml`.
 
 ## Wire the front end
 
@@ -33,25 +25,25 @@ Commit + push. GitHub Pages picks it up.
 
 ## Lock CORS (recommended)
 
-By default the Worker replies `Access-Control-Allow-Origin: *`. Once it's working, restrict to your domain:
+By default the Worker replies `Access-Control-Allow-Origin: *`. Once it's working, restrict to your domain via `wrangler.toml`:
 
-```sh
-wrangler secret put ALLOWED_ORIGIN
-# paste: https://service-flow.dev
-wrangler deploy
+```toml
+[vars]
+ALLOWED_ORIGIN = "https://service-flow.dev"
 ```
 
-Or uncomment the `[vars]` block in `wrangler.toml` and `wrangler deploy`.
+Then `npx wrangler deploy` again.
 
 ## Swap the model
 
-Default is `claude-haiku-4-5-20251001` (fast + cheap, fine for 5-bucket intent + tiny extraction). To use Sonnet for better robustness on noisy transcripts:
+Default is `@cf/meta/llama-3.1-8b-instruct` (fast, free tier covers ~10k requests/day, plenty for 5-bucket intent + 3-field extraction). Override via `wrangler.toml`:
 
-```sh
-wrangler secret put CLAUDE_MODEL
-# paste: claude-sonnet-4-6
-wrangler deploy
+```toml
+[vars]
+AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 ```
+
+See https://developers.cloudflare.com/workers-ai/models/ for the full list.
 
 ## Test directly
 
@@ -70,5 +62,5 @@ Expected reply:
 ## Failure modes the front end handles
 
 - Worker unreachable / 5xx → front end falls back to its local keyword parser.
-- Worker missing key → returns 500 with explicit message; front end falls back.
+- AI binding missing → returns 500 with explicit message; front end falls back.
 - Model returns unparseable text → Worker returns `{intent:"UNCLEAR", reply:"…"}`.
