@@ -309,7 +309,6 @@ html,body{
 .vlog-transcript{font-size:13px;font-weight:400;color:rgba(245,242,236,.9);margin:6px 0 0;font-style:italic;line-height:1.45}
 .vlog-hint{font-size:12px;font-weight:400;color:rgba(245,242,236,.4);margin:4px 0 0;font-style:italic}
 .vlog-summary{font-family:'Jost',sans-serif;font-size:14px;font-weight:600;color:#16A34A;margin:4px 0 0;letter-spacing:.04em}
-.vlog-release{margin-top:10px;background:rgba(212,0,75,.15);border:1px solid rgba(212,0,75,.3);border-radius:6px;padding:7px 14px;font-family:'Jost',sans-serif;font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(245,242,236,.85);cursor:pointer;width:100%}
 .vlog-summary-line{margin-top:8px;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.04em;color:rgba(245,242,236,.7);text-align:center;line-height:1.4}
 .voice-btn svg{width:15px;height:15px;stroke:var(--champagne);fill:none;stroke-width:2;flex-shrink:0}
 
@@ -857,9 +856,9 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
   } else {
     const o=OUTLETS[state.outlet];
     body=`<div class="ab-box">
-      <div class="ab-eb">${o.kind.toUpperCase()} · LIVE STREAM</div>
+      <div class="ab-eb" style="justify-content:space-between;width:100%"><span>${o.kind.toUpperCase()}</span><span style="display:inline-block;background:rgba(200,164,76,.18);color:#C8A44C;font-family:'Jost',sans-serif;font-size:10px;font-weight:700;letter-spacing:.18em;padding:3px 10px;border-radius:5px">COMING SOON</span></div>
       <div class="ab-h">${o.label}.</div>
-      <p style="position:relative;z-index:1;font-size:12.5px;line-height:1.55;color:rgba(245,240,232,.65)">${o.sub}. Live ops dashboard wires into PMS, POS and ServiceFlow waste log — module coming online with the rollout.</p>
+      <p style="position:relative;z-index:1;font-size:12.5px;line-height:1.55;color:rgba(245,240,232,.65)">${o.sub}. Live ops dashboard wires into PMS, POS and ServiceFlow waste log — module ships with the rollout. The Kitchen Table tab is live today.</p>
       <div class="ab-recap"><div class="ab-recap-l">Covers tonight</div><div class="ab-recap-v">—</div></div>
     </div>
     `;
