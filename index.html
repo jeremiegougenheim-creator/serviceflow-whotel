@@ -387,7 +387,6 @@ html,body{
 .notif-stat .v.blue{color:var(--w-blue-dark)}.notif-stat .v.esg{color:var(--esg)}
 .notif-stat .k{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mid-grey);margin-top:5px}
 </style>
-<link rel="stylesheet" href="w-theme-dark.css">
 </head>
 <body>
 <div class="phone">
@@ -647,7 +646,7 @@ function screenRole(){return `
         <div class="role-card-sub">Strategy · performance · ESG reporting</div>
         <div class="role-chips"><span class="role-chip">P&amp;L view</span><span class="role-chip">ESG</span><span class="role-chip">NT$ savings</span></div>
       </button>
-      <button class="role-card mag" onclick="pick('gm')">
+      <button class="role-card mag" onclick="pick('chef')">
         <span class="role-arrow">›</span>
         <div class="role-card-head">
           <div class="role-icon mag">${I.chef}</div>
@@ -663,7 +662,7 @@ function screenRole(){return `
 function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
   <div class="hero dk">
     ${brandRow()}
-    <h1>Good morning, <em>${s.mixLabel.toLowerCase()} ${s.isWeekend?'weekend':'day'}.</em></h1>
+    <h1>${state.role==='chef'?'Briefing ready,':'Good morning,'} <em>${s.mixLabel.toLowerCase()} ${s.isWeekend?'weekend':'day'}.</em></h1>
     <p class="hero-sub">${b.covers} breakfast covers forecast at The Kitchen Table — ${b.actions.length} priority actions ready for you.</p>
     ${metaLine(s)}
   </div>
@@ -956,7 +955,7 @@ function screenNotifs(){
         <b style="font-family:'Cormorant Garamond',serif;font-size:15px;color:#2C3E50">F&amp;B Manager</b> — email digest + push critical · mix, savings, schedule
       </div>
     </div>
-    <button class="btn" data-go="brief" onclick="go('brief')" style="margin-top:14px">← Back to briefing</button>
+    <button class="btn ghost" data-go="dashboard" onclick="go('dashboard')" style="margin-top:14px">← Back to home</button>
   </div>`;}
 
 function screenGap(){
@@ -1003,7 +1002,7 @@ function screenGap(){
         <b style="color:var(--charcoal)">Marriott Serve 360</b> — GRI 306 mapping · CO₂e scope 3 reporting framework
       </div>
     </div>
-    <button class="btn" data-go="brief" onclick="go('brief')" style="margin-top:14px">← Back to briefing</button>
+    <button class="btn ghost" data-go="dashboard" onclick="go('dashboard')" style="margin-top:14px">← Back to home</button>
   </div>`;}
 
 // ── LOG REDESIGN v2 ──────────────────────────────────────────────
@@ -1400,7 +1399,13 @@ function render(){
   screenEl.style.paddingBottom=state.role?'120px':'0';
   renderNav();setSbar();updateVoiceSummary();
 }
-function pick(r){state.role=r;state.tab=r==='owner'?'portfolio':'dashboard';closeLog();render();}
+function pick(r){
+  state.role=r;
+  if(r==='owner')state.tab='portfolio';
+  else if(r==='chef')state.tab='fb';
+  else state.tab='dashboard';
+  closeLog();render();
+}
 function go(t){state.tab=t;render();}
 function setSc(sc){state.scenario=sc;render();}
 function setOutlet(o){state.outlet=o;render();}
