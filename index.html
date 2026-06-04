@@ -1030,9 +1030,14 @@ function parseVoiceTranscript(text){
   if(r.destination)logSel.destination=r.destination;
 }
 // ── Press-and-hold voice log (the F&B button) ────────────────────
+// Tap-to-toggle voice log. States: idle | listening | confirmed | error.
+// No processing state — finishVoiceLog goes straight from listening to
+// confirmed/error. 2s silence auto-stops the session.
 const voiceLogEntries=[];
-let voiceLog={phase:'idle',transcript:'',result:null,error:'',timer:null};
+let voiceLog={phase:'idle',transcript:'',result:null,error:''};
 let voiceLogRec=null;
+let voiceLogSilenceTimer=null;
+let voiceLogResetTimer=null;
 function renderVoiceLog(){const c=g('voiceLogSlot');if(c)c.innerHTML=voiceLogTemplate();updateVoiceSummary();}
 function updateVoiceSummary(){const s=g('voiceLogSummary');if(!s)return;
   if(!voiceLogEntries.length){s.innerHTML='';return;}
@@ -1042,77 +1047,78 @@ function updateVoiceSummary(){const s=g('voiceLogSummary');if(!s)return;
 function voiceLogTemplate(){
   if(!voiceSupported)return '';
   const p=voiceLog.phase,t=voiceLog.transcript;
-  if(p==='listening')return '<div class="vlog-card vlog-listening">'
-    +'<div class="vlog-head"><span class="vlog-pulse"></span><span class="vlog-label">Listening — release to log</span></div>'
+  if(p==='listening')return '<button class="vlog-card vlog-listening" onclick="toggleVoiceLog()" style="cursor:pointer;text-align:left;width:100%">'
+    +'<div class="vlog-head"><span class="vlog-pulse"></span><span class="vlog-label">Listening — tap to stop</span></div>'
     +(t?'<p class="vlog-transcript">&ldquo;'+t.replace(/</g,'&lt;')+'&rdquo;</p>':'<p class="vlog-hint">Speak now…</p>')
-    +'<button class="vlog-release" ontouchend="event.preventDefault();stopVoiceLog()" onmouseup="stopVoiceLog()">Release to confirm</button>'
-    +'</div>';
-  if(p==='processing')return '<div class="vlog-card"><p class="vlog-label">Processing…</p>'+(t?'<p class="vlog-transcript">&ldquo;'+t.replace(/</g,'&lt;')+'&rdquo;</p>':'')+'</div>';
+    +'</button>';
   if(p==='confirmed')return '<div class="vlog-card vlog-confirmed">'
     +'<div class="vlog-head"><span style="font-size:18px;color:#16A34A">✓</span><span class="vlog-label" style="color:#16A34A">Logged</span></div>'
     +'<p class="vlog-summary">'+(voiceLog.result&&voiceLog.result.summary||'')+'</p>'
     +'</div>';
-  if(p==='error')return '<div class="vlog-card vlog-error" onmousedown="startVoiceLog()" ontouchstart="event.preventDefault();startVoiceLog()">'
+  if(p==='error')return '<button class="vlog-card vlog-error" onclick="toggleVoiceLog()" style="cursor:pointer;text-align:left;width:100%">'
     +'<p class="vlog-label" style="color:#C0392B">'+(voiceLog.error||'Error — tap to try again')+'</p>'
-    +'</div>';
-  return '<button class="vlog-btn vlog-idle" onmousedown="startVoiceLog()" ontouchstart="event.preventDefault();startVoiceLog()" oncontextmenu="return false">'
-    +I.mic+'<span>Voice log — hold to dictate</span></button>';
+    +'</button>';
+  return '<button class="vlog-btn vlog-idle" onclick="toggleVoiceLog()">'
+    +I.mic+'<span>Voice log — tap to dictate</span></button>';
+}
+function toggleVoiceLog(){
+  if(!voiceSupported)return;
+  if(voiceLog.phase==='listening'){finishVoiceLog();return;}
+  if(voiceLog.phase==='confirmed')return;
+  startVoiceLog();
 }
 function startVoiceLog(){
-  if(!voiceSupported)return;
-  if(voiceLog.phase==='listening'||voiceLog.phase==='processing')return;
-  clearTimeout(voiceLog.timer);
+  clearTimeout(voiceLogSilenceTimer);
+  clearTimeout(voiceLogResetTimer);
   const Rec=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!Rec){voiceLog={phase:'error',transcript:'',result:null,error:'Speech recognition not supported.',timer:null};renderVoiceLog();return;}
-  voiceLog={phase:'listening',transcript:'',result:null,error:'',timer:null};
+  if(!Rec){voiceLog={phase:'error',transcript:'',result:null,error:'Speech not supported — use Chrome or Safari'};renderVoiceLog();autoResetVoiceLog(4000);return;}
+  voiceLog={phase:'listening',transcript:'',result:null,error:''};
   try{
     voiceLogRec=new Rec();
     voiceLogRec.lang=(navigator.language&&navigator.language.startsWith('zh'))?'zh-CN':'en-US';
     voiceLogRec.interimResults=true;voiceLogRec.continuous=true;
     voiceLogRec.onresult=e=>{
+      clearTimeout(voiceLogSilenceTimer);
       let interim='',final='';
       for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i][0].transcript;if(e.results[i].isFinal)final+=r;else interim+=r;}
       voiceLog.transcript=(final||interim).trim();renderVoiceLog();
+      // 2s silence → auto-stop
+      voiceLogSilenceTimer=setTimeout(()=>{if(voiceLog.phase==='listening')finishVoiceLog();},2000);
     };
     voiceLogRec.onerror=ev=>{
+      clearTimeout(voiceLogSilenceTimer);
       voiceLog.phase='error';
-      voiceLog.error=ev.error==='not-allowed'?'Microphone permission denied. Please allow access.':ev.error==='no-speech'?'No speech detected. Hold and speak clearly.':'Error: '+ev.error;
+      voiceLog.error=ev.error==='not-allowed'?'Mic blocked — allow access in browser settings':ev.error==='no-speech'?'Nothing heard — tap to try again':'Error — tap to try again';
       renderVoiceLog();autoResetVoiceLog(4000);
     };
     voiceLogRec.onend=()=>{if(voiceLog.phase==='listening')finishVoiceLog();};
     voiceLogRec.start();renderVoiceLog();
-  }catch(err){voiceLog.phase='error';voiceLog.error='Voice failed to start.';renderVoiceLog();autoResetVoiceLog(3000);}
-}
-function stopVoiceLog(){
-  if(voiceLog.phase!=='listening')return;
-  voiceLog.phase='processing';renderVoiceLog();
-  try{if(voiceLogRec)voiceLogRec.stop();}catch(_){}
+  }catch(err){voiceLog.phase='error';voiceLog.error='Voice failed to start — tap to try again';renderVoiceLog();autoResetVoiceLog(4000);}
 }
 function finishVoiceLog(){
-  setTimeout(()=>{
-    const text=(voiceLog.transcript||'').trim();
-    if(!text){voiceLog.phase='error';voiceLog.error='Nothing heard. Try again.';renderVoiceLog();autoResetVoiceLog(3000);return;}
-    const parsed=parseVoice(text);voiceLog.result=parsed;
-    if(parsed.isValid){
-      voiceLogEntries.push({station:parsed.station,type:parsed.type,amount:parsed.amount,unit:parsed.unit,timestamp:new Date().toISOString(),source:'voice',raw:parsed.raw});
-      voiceLog.phase='confirmed';renderVoiceLog();autoResetVoiceLog(3000);
-    }else{
-      voiceLog.phase='error';
-      voiceLog.error='Heard: "'+text+'" — couldn\'t find station or amount. Try again.';
-      renderVoiceLog();autoResetVoiceLog(4500);
-    }
-  },300);
+  if(voiceLog.phase!=='listening')return;
+  clearTimeout(voiceLogSilenceTimer);
+  const rec=voiceLogRec;voiceLogRec=null;
+  if(rec){try{rec.stop();}catch(_){}}
+  const text=(voiceLog.transcript||'').trim();
+  if(!text){
+    voiceLog.phase='error';voiceLog.error='Nothing heard — tap to try again';
+    renderVoiceLog();autoResetVoiceLog(4000);return;
+  }
+  const parsed=parseVoice(text);voiceLog.result=parsed;
+  if(parsed.isValid){
+    voiceLogEntries.push({station:parsed.station,type:parsed.type,amount:parsed.amount,unit:parsed.unit,timestamp:new Date().toISOString(),source:'voice',raw:parsed.raw});
+    voiceLog.phase='confirmed';renderVoiceLog();autoResetVoiceLog(3000);
+  }else{
+    voiceLog.phase='error';
+    voiceLog.error='Heard: "'+text+'" — say station name + amount';
+    renderVoiceLog();autoResetVoiceLog(4000);
+  }
 }
 function autoResetVoiceLog(ms){
-  clearTimeout(voiceLog.timer);
-  voiceLog.timer=setTimeout(()=>{voiceLog={phase:'idle',transcript:'',result:null,error:'',timer:null};renderVoiceLog();},ms);
+  clearTimeout(voiceLogResetTimer);
+  voiceLogResetTimer=setTimeout(()=>{voiceLog={phase:'idle',transcript:'',result:null,error:''};renderVoiceLog();},ms);
 }
-// Safety net: if the user lifts the mouse / finger anywhere on the page while
-// the press-and-hold flow is active, fire stopVoiceLog so the recognition
-// always completes — even if the press started on a button that has since
-// been replaced by a re-render.
-document.addEventListener('mouseup',function(){if(voiceLog.phase==='listening')stopVoiceLog();});
-document.addEventListener('touchend',function(){if(voiceLog.phase==='listening')stopVoiceLog();});
 function toggleVoice(){
   if(!voiceSupported)return;
   if(logSel.listening){if(voiceRec)voiceRec.stop();return;}
