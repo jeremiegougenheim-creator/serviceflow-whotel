@@ -507,6 +507,11 @@ const NOTIF_TIMELINE=[
 const TIER_COLORS={blue:'var(--w-blue)',mag:'var(--w-mag)',esg:'var(--esg)',champagne:'var(--champagne)',red:'#C04848'};
 
 let state={role:null,scenario:'sat',tab:'dashboard',outlet:'kitchen'};
+// Voice input: Web Speech API ships broken on iOS Safari (defined but silent).
+// Feature-detect AND exclude iOS Safari explicitly so we never show a dead
+// "Hold to dictate" button on Bastien's iPhone.
+const isIOSSafari=/iP(ad|hone|od)/.test(navigator.userAgent)&&/Safari/.test(navigator.userAgent)&&!/CriOS|FxiOS/.test(navigator.userAgent);
+const voiceSupported=!isIOSSafari&&(('SpeechRecognition' in window)||('webkitSpeechRecognition' in window));
 const g=id=>document.getElementById(id);
 const I={
  owner:'<svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>',
@@ -717,9 +722,9 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
         <div class="st-tile"><div class="v">${strike.measuredY}<small style="font-size:10px;letter-spacing:.05em"> kg</small></div><div class="k">Yest. waste</div></div>
       </div>
       <button class="btn mg" onclick="openLog()">Confirm &amp; log</button>
-      <div style="position:relative;z-index:1;margin-top:10px;text-align:center">
+      ${voiceSupported?`<div style="position:relative;z-index:1;margin-top:10px;text-align:center">
         <button class="voice-btn" onclick="openLog()" style="background:transparent;border:1px dashed rgba(245,240,232,.25);color:rgba(245,240,232,.7)">${I.mic}<span>Voice log — hold to dictate</span></button>
-      </div>
+      </div>`:''}
     </div>
     <div class="sec-h"><h3>Station prep</h3><span class="sa">${s.label} · ${b.covers} covers</span></div>
     ${cards}`;
@@ -899,13 +904,17 @@ function openLog(){
   const ex=g('sheetbg');if(ex)ex.remove();
   const sheet=document.createElement('div');sheet.className='sheet-bg';sheet.id='sheetbg';
   sheet.onclick=e=>{if(e.target===sheet)closeLog()};
-  sheet.innerHTML='<div class="sheet"><div class="grab"></div>'+
-    '<h2>Log — <em style="color:var(--champagne-dark);font-style:italic">voice first</em></h2>'+
-    '<p class="sub" style="margin:5px 0 14px">Hold the voice button to dictate (English or 中文). Auto-fills the form · ~22s.</p>'+
-    '<button class="voice-btn" onclick="confirmToast()" style="width:100%;justify-content:center;padding:13px;font-size:13px">'+I.mic+'<span>Hold to dictate</span></button>'+
+  const head=voiceSupported
+    ?'<h2>Log — <em style="color:var(--champagne-dark);font-style:italic">voice first</em></h2>'
+     +'<p class="sub" style="margin:5px 0 14px">Hold the voice button to dictate (English or 中文). Auto-fills the form · ~22s.</p>'
+     +'<button class="voice-btn" onclick="confirmToast()" style="width:100%;justify-content:center;padding:13px;font-size:13px">'+I.mic+'<span>Hold to dictate</span></button>'
+    :'<h2>Log — <em style="color:var(--champagne-dark);font-style:italic">quick entry</em></h2>'
+     +'<p class="sub" style="margin:5px 0 14px">Pick a type and station below, or describe the waste in one line.</p>'
+     +'<input type="text" placeholder="Describe waste · e.g. Dim Sum 2kg over-prep" style="width:100%;padding:12px 14px;border:1px solid var(--marble-dark);border-radius:11px;font-family:Jost,sans-serif;font-size:13px;color:var(--charcoal);background:var(--warm-white);margin-bottom:8px">';
+  sheet.innerHTML='<div class="sheet"><div class="grab"></div>'+head+
     '<div class="field">Type</div><div class="opts">'+types.map(t=>'<div class="opt '+(logSel.type===t?'on':'')+'" onclick="logSel.type=\''+t+'\';openLog()">'+t+'</div>').join('')+'</div>'+
     '<div class="field">Station</div><div class="opts">'+STATIONS.slice(0,6).map(st=>'<div class="opt '+(logSel.station===st.label?'on':'')+'" onclick="logSel.station=\''+st.label+'\';openLog()">'+st.label+'</div>').join('')+'</div>'+
-    '<button class="btn mg" style="margin-top:20px" onclick="closeLog();confirmToast()">Submit — export to Serve 360 format + Taiwan FSC</button>'+
+    '<button class="btn mg" style="margin-top:20px" onclick="closeLog();confirmToast()">Confirm &amp; log</button>'+
     '<button class="btn ghost sm" style="margin-top:9px" onclick="closeLog()">Cancel</button></div>';
   document.querySelector('.phone').appendChild(sheet);
 }
