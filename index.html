@@ -110,6 +110,8 @@ html,body{
 .kpi .v small{font-family:'Jost',sans-serif;font-size:12px;font-weight:500;color:var(--mid-grey);letter-spacing:.02em;margin:0 2px}
 .kpi .v.blue{color:var(--w-blue-dark)}.kpi .v.mag{color:var(--w-mag-dark)}.kpi .v.gn{color:var(--esg)}.kpi .v.br{color:var(--champagne-dark)}
 .kpi .d{font-size:11px;color:var(--mid-grey);margin-top:4px;line-height:1.3}
+.trend{font-size:11px;line-height:1.3;margin-top:3px;font-weight:400}
+.log-trend{font-size:11px;color:#6B7280;text-align:center;margin-top:6px;line-height:1.3}
 
 .score{display:flex;gap:7px}
 .score .g{flex:1;text-align:center;background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:13px;padding:11px 5px;box-shadow:var(--shadow-sm)}
@@ -472,12 +474,15 @@ function computeBriefingV3(s,history){
   const totalSavingNTD=s.targetSaved||rawSavingNTD;
   const totalCO2=Math.round(stations.reduce((s,st)=>s+st.co2Avoided,0)*10)/10;
   const globalConfidence=stations.reduce((s,st)=>s+st.confidence,0)/stations.length;
-  const demandV=s.isWeekend?'B+':'A-',wasteV=totalSavingNTD>4000?'A':totalSavingNTD>2500?'B+':'B',speedV=globalConfidence>0.82?'A-':'B+';
-  const demandLbl={A:'±5% forecast accuracy','A-':'±10% forecast accuracy','B+':'±15% forecast accuracy',B:'±20% forecast accuracy',C:'±30% forecast accuracy',D:'>30% error'};
-  const wasteLbl={A:'40%+ waste reduction','A-':'30%+ waste reduction','B+':'20%+ waste reduction',B:'10%+ waste reduction',C:'5%+ waste reduction',D:'<5% reduction'};
-  const speedLbl={A:'Log in under 4 min','A-':'Log in under 6 min','B+':'Log in under 8 min',B:'Log in under 12 min',C:'Log in under 20 min',D:'>20 min'};
-  const grades={Demand:{v:demandV,label:demandLbl[demandV],c:s.isWeekend?'leisure mix · wave 2 heavy':'business attach · wave 1 sharp'},Waste:{v:wasteV,label:wasteLbl[wasteV],c:totalSavingNTD>4000?'strong cut · NT$'+totalSavingNTD.toLocaleString():totalSavingNTD>2500?'on track · trim 2 stations':'watch over-prep'},Speed:{v:speedV,label:speedLbl[speedV],c:globalConfidence>0.82?'high confidence · fast setup':'moderate · double-check pars'}};
-  return{covers,scale,stations,actions,grades,save:totalSavingNTD,co2:totalCO2,
+  // TODO: Phase 2 — scorecard. Triple-threat A/B/C grades rebuilt once
+  // we have 4+ weeks of measured data. Keep the math here, just don't surface
+  // it in the UI yet (per 2026-06-04 decision: trend indicators only).
+  // const demandV=s.isWeekend?'B+':'A-',wasteV=totalSavingNTD>4000?'A':totalSavingNTD>2500?'B+':'B',speedV=globalConfidence>0.82?'A-':'B+';
+  // const demandLbl={A:'±5% forecast accuracy','A-':'±10% forecast accuracy','B+':'±15% forecast accuracy',B:'±20% forecast accuracy',C:'±30% forecast accuracy',D:'>30% error'};
+  // const wasteLbl={A:'40%+ waste reduction','A-':'30%+ waste reduction','B+':'20%+ waste reduction',B:'10%+ waste reduction',C:'5%+ waste reduction',D:'<5% reduction'};
+  // const speedLbl={A:'Log in under 4 min','A-':'Log in under 6 min','B+':'Log in under 8 min',B:'Log in under 12 min',C:'Log in under 20 min',D:'>20 min'};
+  // const grades={Demand:{v:demandV,label:demandLbl[demandV],c:s.isWeekend?'leisure mix · wave 2 heavy':'business attach · wave 1 sharp'},Waste:{v:wasteV,label:wasteLbl[wasteV],c:totalSavingNTD>4000?'strong cut · NT$'+totalSavingNTD.toLocaleString():totalSavingNTD>2500?'on track · trim 2 stations':'watch over-prep'},Speed:{v:speedV,label:speedLbl[speedV],c:globalConfidence>0.82?'high confidence · fast setup':'moderate · double-check pars'}};
+  return{covers,scale,stations,actions,save:totalSavingNTD,co2:totalCO2,
     totalSavingNTD,totalCO2,globalConfidence,
     cooks:Math.max(2,Math.round(covers/50)),servers:Math.max(2,Math.round(covers/(s.isWeekend?16:20))),
     openTime:s.isWeekend?'06:30 · peak 08:30–10:00':'06:30 · peak 07:00–08:30',
@@ -547,7 +552,7 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
     ${dayToggle()}
     ${dayStory(s)}
     <div class="kpi-grid">
-      <div class="kpi"><div class="k">Covers fcst</div><div class="v blue">${b.covers}</div><div class="d">75% breakfast attach rate</div></div>
+      <div class="kpi"><div class="k">Covers fcst</div><div class="v blue">${b.covers}</div><div class="trend" style="color:#16A34A">↑ +9% vs last week</div><div class="d">75% breakfast attach rate</div></div>
       <div class="kpi"><div class="k">Over-prep saved</div><div class="v gn">NT$${b.save.toLocaleString()}</div><div class="d">vs. flat baseline</div></div>
       <div class="kpi"><div class="k">Occupancy</div><div class="v">${s.occupancyPct}<small>%</small></div><div class="d">${s.roomsSold} of 405 keys</div></div>
       <div class="kpi"><div class="k">CO₂e ↓ tonight</div><div class="v br">${b.co2}<small>kg</small></div><div class="d">Serve 360-ready</div></div>
@@ -586,7 +591,8 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
   </div>`;}
 
 function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
-  const grades=Object.entries(b.grades).map(([k,d])=>'<div class="g"><div class="v" style="color:'+gradeColor(d.v)+'">'+d.v+'</div><div class="k">'+k+'</div><div class="glabel">'+d.label+'</div><div class="gcrit">'+d.c+'</div></div>').join('');
+  // TODO: Phase 2 — scorecard render. Re-enable once b.grades is back.
+  // const grades=Object.entries(b.grades).map(([k,d])=>'<div class="g"><div class="v" style="color:'+gradeColor(d.v)+'">'+d.v+'</div><div class="k">'+k+'</div><div class="glabel">'+d.label+'</div><div class="gcrit">'+d.c+'</div></div>').join('');
   const top=b.actions.slice(0,3);
   const wh=b.stations.find(st=>st.key==='western_hot');
   const wasteNote=wh?'Western Hot adjusted '+Math.round(wh.delta*100)+'% based on yesterday\'s staff-logged waste ('+wh.measuredY+' kg / ~'+Math.round(BASE_PARS['western_hot']*b.scale)+' portions = waste log)':'';
@@ -606,7 +612,7 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
   return `
   <div class="hero bl">
     ${brandRow()}
-    <h1>${s.label}, <em>${b.covers} covers</em> <span style="font-family:'Jost',sans-serif;font-size:13px;font-weight:700;background:rgba(8,145,178,0.85);color:#fff;border-radius:6px;padding:2px 7px;letter-spacing:.04em;vertical-align:middle">${b.grades.Demand.v}</span></h1>
+    <h1>${s.label}, <em>${b.covers} covers</em></h1>
     <p class="hero-sub">Briefing J-1 · 18:00 · 8 signals read — yesterday's station waste log weighted highest — production prescribed per station.</p>
     ${metaLine(s)}
   </div>
@@ -619,8 +625,7 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
       <div class="kpi"><div class="k">ADR</div><div class="v br"><small>NT$</small>${s.adrNTD.toLocaleString()}</div><div class="d">Tonight's rate</div></div>
       <div class="kpi"><div class="k">NPS · 7d</div><div class="v gn">${s.nps}</div><div class="d">Breakfast contribution +6</div></div>
     </div>
-    <div class="eyebrow">Triple-threat scorecard</div>
-    <div class="card"><div class="score">${grades}</div></div>
+    <!-- TODO: Phase 2 — scorecard. Re-enable with: <div class="eyebrow">Triple-threat scorecard</div><div class="card"><div class="score">${grades}</div></div> -->
 
     <div class="ab-box">
       <div class="ab-eb">${s.label.toUpperCase()} — 3 PRIORITY ACTIONS</div>
@@ -661,7 +666,7 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
       </div>
     </div>
     ${weekBar()}
-    <div class="log-cta-wrap"><button onclick="openLog()" class="log-cta"><span style="font-size:17px">☑</span>LOG FIN DE SERVICE · 5 min</button></div>
+    <div class="log-cta-wrap"><button onclick="openLog()" class="log-cta"><span style="font-size:17px">☑</span>LOG FIN DE SERVICE · 5 min</button><div class="log-trend">Team logging in ~5 min avg</div></div>
     <div class="sec-h"><h3>When it runs</h3><button class="sa" onclick="go('cadence')">5 gates ›</button></div>
   </div>`;}
 
@@ -749,7 +754,7 @@ function screenEsg(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
   <div class="body">
     <div class="kpi-grid">
       <div class="kpi"><div class="k">CO₂e / guest</div><div class="v gn">0.34<small>kg ↓</small></div><div class="d">vs. ind. range 0.40–0.55 <span title="² CO₂e factors: Poore &amp; Nemecek (Science 2018) + WRAP UK. Industry range 0.40–0.55: Sustainable Hospitality Alliance benchmark" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
-      <div class="kpi"><div class="k">Waste cut</div><div class="v">28<small>%</small></div><div class="d">30-day rolling <span title="WRAP 2024 — 12% waste baseline; ServiceFlow pilot target 28% reduction" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
+      <div class="kpi"><div class="k">Waste cut</div><div class="v">28<small>%</small></div><div class="trend" style="color:#16A34A">↓ −28% · engine learning</div><div class="d">30-day rolling <span title="WRAP 2024 — 12% waste baseline; ServiceFlow pilot target 28% reduction" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
     </div>
     <div class="eyebrow">Frameworks</div>
     <div class="card">
