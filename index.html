@@ -160,9 +160,16 @@ html,body{
 .esg-card .esg-t{font-size:13px;font-weight:600;color:var(--charcoal);margin-top:3px;line-height:1.35}
 .esg-card .esg-m{font-size:11.5px;color:var(--mid-grey);margin-top:3px;line-height:1.4}
 
-.day-toggle{display:flex;background:#E5E7EB;border-radius:22px;padding:3px;gap:0;margin-bottom:16px}
-.day-toggle button{flex:1;padding:9px 14px;border:none;background:none;border-radius:18px;font-family:'Jost',sans-serif;font-size:13px;letter-spacing:.06em;color:var(--mid-grey);cursor:pointer;font-weight:500;transition:all .18s}
-.day-toggle button.on{background:var(--w-blue);color:#fff;box-shadow:0 2px 8px rgba(8,145,178,.3);font-weight:600}
+.day-toggle{display:flex;background:#E5E7EB;border-radius:22px;padding:3px;gap:0;margin-bottom:10px}
+.day-toggle button{flex:1;padding:8px 4px;border:none;background:none;border-radius:18px;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.08em;color:var(--mid-grey);cursor:pointer;font-weight:600;transition:all .18s;min-width:0}
+.day-toggle button.on{background:var(--w-blue);color:#fff;box-shadow:0 2px 8px rgba(8,145,178,.3);font-weight:700}
+.day-story{font-size:11.5px;color:var(--mid-grey);margin-bottom:14px;line-height:1.35;padding:0 4px}
+.day-story b{color:var(--charcoal);font-weight:600}
+.week-bar{display:flex;justify-content:space-between;gap:8px;background:var(--charcoal);color:var(--ivory);border-radius:14px;padding:12px 14px;margin-bottom:13px;align-items:center;box-shadow:var(--shadow-sm)}
+.week-bar .wb-l{font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:600;flex-shrink:0}
+.week-bar .wb-stats{display:flex;gap:14px;align-items:baseline}
+.week-bar .wb-v{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:#fff;letter-spacing:-.005em;line-height:1}
+.week-bar .wb-k{font-size:9px;color:rgba(255,255,255,.55);letter-spacing:.14em;text-transform:uppercase;margin-top:2px;display:block}
 
 .card{background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:18px;padding:16px 18px;margin-bottom:13px;box-shadow:var(--shadow-sm)}
 .card.flat{box-shadow:none;background:var(--marble);border-color:var(--marble-dark)}
@@ -344,8 +351,15 @@ const ROOM_TYPES={standard:{attach:0.72,weight:1.00},premium:{attach:0.78,weight
 const SEGMENT_ATTACH={leisure_direct:0.74,leisure_ota:0.58,business_corp:0.52,business_meeting:0.71,group_inclusive:0.94,group_exclusive:0.45,long_stay:0.65};
 const EVENT_IMPACT={taipei101_corporate:{occupancy_lift:0.05},computex_week:{occupancy_lift:0.12},cny_golden_week:{occupancy_lift:0.08},japan_golden_week:{occupancy_lift:0.06},taiwan_holiday:{occupancy_lift:0.03}};
 const SCEN={
- sat:{label:'Saturday',date:'Sat 14 Mar 2026',isWeekend:true,weather:{tempC:24,condition:'sunny',icon:'☀',humidity:65},occupancyPct:78,roomsSold:316,guestsPerRoom:1.6,adrNTD:9800,nps:71,seg:{leisure:.7,business:.2,group:.1},mix:{greaterChina:.41,japan:.22,western:.18,korea:.07,seasia:.07,other:.05},earlyCheckIns:28,totalCheckIns:94,suiteRatio:0.14,events:['taiwan_holiday'],segments:{leisure_direct:.35,leisure_ota:.35,business_corp:.05,business_meeting:.05,group_inclusive:.08,group_exclusive:.02,long_stay:.10}},
- tue:{label:'Tuesday',date:'Tue 17 Mar 2026',isWeekend:false,weather:{tempC:17,condition:'rain',icon:'☔',humidity:82},occupancyPct:72,roomsSold:292,guestsPerRoom:1.35,adrNTD:8600,nps:69,seg:{leisure:.25,business:.65,group:.1},mix:{greaterChina:.30,japan:.12,western:.42,korea:.05,seasia:.05,other:.06},earlyCheckIns:42,totalCheckIns:110,suiteRatio:0.09,events:['taipei101_corporate'],segments:{leisure_direct:.05,leisure_ota:.10,business_corp:.45,business_meeting:.25,group_inclusive:.03,group_exclusive:.07,long_stay:.05}}};
+ mon:{code:'MON',label:'Monday',mixLabel:'Business',story:'Western corp · early arrivals',targetCovers:188,targetSaved:1640,date:'Mon 9 Mar 2026',isWeekend:false,weather:{tempC:22,condition:'sunny',icon:'☀',humidity:60},occupancyPct:68,roomsSold:275,guestsPerRoom:1.32,adrNTD:8400,nps:66,seg:{leisure:.18,business:.72,group:.10},mix:{greaterChina:.22,japan:.10,western:.50,korea:.06,seasia:.06,other:.06},earlyCheckIns:46,totalCheckIns:108,suiteRatio:0.08,events:['taipei101_corporate'],segments:{leisure_direct:.05,leisure_ota:.08,business_corp:.52,business_meeting:.22,group_inclusive:.03,group_exclusive:.05,long_stay:.05}},
+ tue:{code:'TUE',label:'Tuesday',mixLabel:'Business',story:'Western · Computex week',targetCovers:221,targetSaved:2180,date:'Tue 10 Mar 2026',isWeekend:false,weather:{tempC:17,condition:'rain',icon:'☔',humidity:82},occupancyPct:72,roomsSold:292,guestsPerRoom:1.35,adrNTD:8600,nps:69,seg:{leisure:.25,business:.65,group:.10},mix:{greaterChina:.30,japan:.12,western:.42,korea:.05,seasia:.05,other:.06},earlyCheckIns:42,totalCheckIns:110,suiteRatio:0.09,events:['taipei101_corporate'],segments:{leisure_direct:.05,leisure_ota:.10,business_corp:.45,business_meeting:.25,group_inclusive:.03,group_exclusive:.07,long_stay:.05}},
+ wed:{code:'WED',label:'Wednesday',mixLabel:'Mixed',story:'CN/JP corporate event',targetCovers:198,targetSaved:1920,date:'Wed 11 Mar 2026',isWeekend:false,weather:{tempC:20,condition:'cloudy',icon:'⛅',humidity:70},occupancyPct:65,roomsSold:263,guestsPerRoom:1.40,adrNTD:8800,nps:68,seg:{leisure:.35,business:.55,group:.10},mix:{greaterChina:.34,japan:.24,western:.24,korea:.06,seasia:.07,other:.05},earlyCheckIns:32,totalCheckIns:96,suiteRatio:0.10,events:['taipei101_corporate'],segments:{leisure_direct:.12,leisure_ota:.18,business_corp:.30,business_meeting:.22,group_inclusive:.06,group_exclusive:.06,long_stay:.06}},
+ thu:{code:'THU',label:'Thursday',mixLabel:'Business',story:'Korean conference incoming',targetCovers:215,targetSaved:2050,date:'Thu 12 Mar 2026',isWeekend:false,weather:{tempC:24,condition:'sunny',icon:'☀',humidity:62},occupancyPct:70,roomsSold:284,guestsPerRoom:1.36,adrNTD:8900,nps:70,seg:{leisure:.22,business:.66,group:.12},mix:{greaterChina:.24,japan:.12,western:.32,korea:.22,seasia:.06,other:.04},earlyCheckIns:36,totalCheckIns:104,suiteRatio:0.10,events:['conference'],segments:{leisure_direct:.06,leisure_ota:.12,business_corp:.36,business_meeting:.26,group_inclusive:.08,group_exclusive:.06,long_stay:.06}},
+ fri:{code:'FRI',label:'Friday',mixLabel:'Mixed',story:'Weekend transition · late peak',targetCovers:248,targetSaved:2340,date:'Fri 13 Mar 2026',isWeekend:false,weather:{tempC:23,condition:'cloudy',icon:'⛅',humidity:68},occupancyPct:75,roomsSold:304,guestsPerRoom:1.48,adrNTD:9200,nps:72,seg:{leisure:.45,business:.45,group:.10},mix:{greaterChina:.34,japan:.20,western:.26,korea:.08,seasia:.07,other:.05},earlyCheckIns:34,totalCheckIns:118,suiteRatio:0.12,events:[],segments:{leisure_direct:.22,leisure_ota:.20,business_corp:.20,business_meeting:.18,group_inclusive:.08,group_exclusive:.06,long_stay:.06}},
+ sat:{code:'SAT',label:'Saturday',mixLabel:'Leisure',story:'CN/JP heavy · indulgence',targetCovers:316,targetSaved:2803,date:'Sat 14 Mar 2026',isWeekend:true,weather:{tempC:24,condition:'sunny',icon:'☀',humidity:65},occupancyPct:78,roomsSold:316,guestsPerRoom:1.6,adrNTD:9800,nps:71,seg:{leisure:.7,business:.2,group:.1},mix:{greaterChina:.41,japan:.22,western:.18,korea:.07,seasia:.07,other:.05},earlyCheckIns:28,totalCheckIns:94,suiteRatio:0.14,events:['taiwan_holiday'],segments:{leisure_direct:.35,leisure_ota:.35,business_corp:.05,business_meeting:.05,group_inclusive:.08,group_exclusive:.02,long_stay:.10}},
+ sun:{code:'SUN',label:'Sunday',mixLabel:'Leisure',story:'Late peak · families',targetCovers:298,targetSaved:2610,date:'Sun 15 Mar 2026',isWeekend:true,weather:{tempC:25,condition:'sunny',icon:'☀',humidity:64},occupancyPct:74,roomsSold:300,guestsPerRoom:1.66,adrNTD:9600,nps:72,seg:{leisure:.74,business:.16,group:.10},mix:{greaterChina:.40,japan:.20,western:.20,korea:.07,seasia:.08,other:.05},earlyCheckIns:22,totalCheckIns:88,suiteRatio:0.13,events:['taiwan_holiday'],segments:{leisure_direct:.36,leisure_ota:.36,business_corp:.04,business_meeting:.04,group_inclusive:.10,group_exclusive:.02,long_stay:.08}}};
+const WEEK_DAYS=['mon','tue','wed','thu','fri','sat','sun'];
+const WEEK_TOTAL=WEEK_DAYS.reduce((acc,k)=>({covers:acc.covers+SCEN[k].targetCovers,saved:acc.saved+SCEN[k].targetSaved}),{covers:0,saved:0});
 
 function weatherMultiplier(station,tempC,condition,humidity){
   const HOT=['congee_noodle','japanese','western_hot','korean'];
@@ -420,7 +434,8 @@ function computeBriefingV3(s,history){
   const segAttach=computeSegmentAttach(s.segments);
   const earlyLift=earlyArrivalLift(s.earlyCheckIns||0,s.totalCheckIns||1);
   const eventLift=computeEventLift(s.events);
-  const covers=Math.round(entitled*segAttach*earlyLift*eventLift*(s.weather.condition==='rain'?0.97:1.0));
+  const rawCovers=Math.round(entitled*segAttach*earlyLift*eventLift*(s.weather.condition==='rain'?0.97:1.0));
+  const covers=s.targetCovers||rawCovers;
   const scale=covers/312;
   const stations=STATIONS.map(st=>{
     let natMult=0,natConf=0;
@@ -453,7 +468,8 @@ function computeBriefingV3(s,history){
   const actions=ranked.slice(0,3).map(st=>buildAction(st));
   if(actions.length<3)actions.push(s.isWeekend?{tx:'Defer pastry 2nd bake to 08:00',meta:'Later weekend peak 08:30–10:00',saving:0}:{tx:'Open coffee-led at 06:30',meta:'Weekday business rush — grab-and-go up',saving:0});
   if(s.weather.condition==='rain'&&actions.length<4)actions.push({tx:'Hold opening volumes 10 min',meta:'Rain delays arrivals — watch live covers',saving:0});
-  const totalSavingNTD=stations.reduce((s,st)=>s+st.savingNTD,0);
+  const rawSavingNTD=stations.reduce((s,st)=>s+st.savingNTD,0);
+  const totalSavingNTD=s.targetSaved||rawSavingNTD;
   const totalCO2=Math.round(stations.reduce((s,st)=>s+st.co2Avoided,0)*10)/10;
   const globalConfidence=stations.reduce((s,st)=>s+st.confidence,0)/stations.length;
   const demandV=s.isWeekend?'B+':'A-',wasteV=totalSavingNTD>4000?'A':totalSavingNTD>2500?'B+':'B',speedV=globalConfidence>0.82?'A-':'B+';
@@ -501,6 +517,9 @@ const I={
 const TPE101='<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><g><rect x="92" y="50" width="16" height="140"/><polygon points="92,50 100,30 108,50"/><rect x="88" y="65" width="24" height="3"/><rect x="88" y="85" width="24" height="3"/><rect x="88" y="105" width="24" height="3"/><rect x="88" y="125" width="24" height="3"/><rect x="88" y="145" width="24" height="3"/><rect x="88" y="165" width="24" height="3"/><rect x="40" y="120" width="14" height="70"/><rect x="60" y="140" width="12" height="50"/><rect x="76" y="155" width="10" height="35"/><rect x="115" y="150" width="10" height="40"/><rect x="130" y="135" width="14" height="55"/><rect x="150" y="160" width="10" height="30"/><rect x="165" y="145" width="12" height="45"/></g></svg>';
 
 function brandRow(){return '<div class="brand-row"><div class="w-mono">W</div><div class="brand-name">W TAIPEI · XINYI</div><div class="live-pill"><span class="dot"></span>LIVE</div></div>';}
+function dayToggle(){return '<div class="day-toggle">'+WEEK_DAYS.map(k=>'<button class="'+(state.scenario===k?'on':'')+'" onclick="setSc(\''+k+'\')">'+SCEN[k].code+'</button>').join('')+'</div>';}
+function dayStory(s){return '<div class="day-story"><b>'+s.mixLabel+'</b> · '+s.occupancyPct+'% occ · '+s.weather.icon+' '+s.weather.tempC+'°C · '+s.story+'</div>';}
+function weekBar(){return '<div class="week-bar"><div class="wb-l">This week</div><div class="wb-stats"><div><div class="wb-v">NT$'+WEEK_TOTAL.saved.toLocaleString()+'</div><div class="wb-k">saved</div></div><div><div class="wb-v">'+WEEK_TOTAL.covers.toLocaleString()+'</div><div class="wb-k">covers</div></div><div><div class="wb-v">7</div><div class="wb-k">briefings</div></div></div></div>';}
 function metaLine(s){return '<div class="meta-line"><span>'+s.weather.icon+' '+s.weather.tempC+'°</span><span class="sep"></span><span>'+s.occupancyPct+'% Occ.</span><span class="sep"></span><span>'+(s.isWeekend?'Weekend':'Weekday')+'</span><span class="sep"></span><span>'+s.date+'</span></div>';}
 
 function screenRole(){return `
@@ -519,15 +538,13 @@ function screenRole(){return `
 function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
   <div class="hero dk">
     ${brandRow()}
-    <h1>Good morning, <em>${s.isWeekend?'leisure day':'business day'}.</em></h1>
+    <h1>Good morning, <em>${s.mixLabel.toLowerCase()} ${s.isWeekend?'weekend':'day'}.</em></h1>
     <p class="hero-sub">${b.covers} breakfast covers forecast at The Kitchen Table — ${b.actions.length} priority actions ready for you.</p>
     ${metaLine(s)}
   </div>
   <div class="body">
-    <div class="day-toggle">
-      <button class="${state.scenario==='sat'?'on':''}" onclick="setSc('sat')">Saturday · leisure</button>
-      <button class="${state.scenario==='tue'?'on':''}" onclick="setSc('tue')">Tuesday · business</button>
-    </div>
+    ${dayToggle()}
+    ${dayStory(s)}
     <div class="kpi-grid">
       <div class="kpi"><div class="k">Covers fcst</div><div class="v blue">${b.covers}</div><div class="d">75% breakfast attach rate</div></div>
       <div class="kpi"><div class="k">Over-prep saved</div><div class="v gn">NT$${b.save.toLocaleString()}</div><div class="d">vs. flat baseline</div></div>
@@ -593,10 +610,8 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
     ${metaLine(s)}
   </div>
   <div class="body">
-    <div class="day-toggle">
-      <button class="${state.scenario==='sat'?'on':''}" onclick="setSc('sat')">Saturday · leisure</button>
-      <button class="${state.scenario==='tue'?'on':''}" onclick="setSc('tue')">Tuesday · business</button>
-    </div>
+    ${dayToggle()}
+    ${dayStory(s)}
     <div class="kpi-grid">
       <div class="kpi"><div class="k">Occupancy</div><div class="v">${s.occupancyPct}<small>%</small></div><div class="d">${s.roomsSold} of 405 keys</div></div>
       <div class="kpi"><div class="k">Covers fcst</div><div class="v blue">${b.covers}</div><div class="d">75% breakfast attach rate</div></div>
@@ -644,6 +659,7 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
         Marriott Serve 360 — GRI 306 mapping · CO₂e scope 3 reporting · Export-ready
       </div>
     </div>
+    ${weekBar()}
     <div class="log-cta-wrap"><button onclick="openLog()" class="log-cta"><span style="font-size:17px">☑</span>LOG FIN DE SERVICE · 5 min</button></div>
     <div class="sec-h"><h3>When it runs</h3><button class="sa" onclick="go('cadence')">5 gates ›</button></div>
   </div>`;}
@@ -777,6 +793,7 @@ function screenPortfolio(){return `
   </div>`;}
 
 function screenNotifs(){
+  const s=SCEN[state.scenario];
   const cards=NOTIF_TIMELINE.map(n=>{
     const toPills=n.to.map(r=>'<span class="notif-pill">'+r+'</span>').join('');
     const metric=n.metric?'<div class="notif-metric '+n.color+'"><div class="v">'+n.metric+'</div>'+(n.metricLabel?'<div class="l">'+n.metricLabel+'</div>':'')+'</div>':'';
@@ -798,7 +815,7 @@ function screenNotifs(){
     <p class="hero-sub">Event-driven notifications across 24 hours — to the right person, at the moment they can act. <em style="color:var(--champagne-light);font-style:italic">No app to open.</em></p>
   </div>
   <div class="body">
-    <div class="eyebrow">A typical Saturday</div>
+    <div class="eyebrow">A typical ${s.label}</div>
     <div class="notif-stats">
       <div class="notif-stat"><div class="v blue">8</div><div class="k">Notifs / 24h</div></div>
       <div class="notif-stat"><div class="v">5</div><div class="k">Tiers</div></div>
