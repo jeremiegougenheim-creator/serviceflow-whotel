@@ -112,7 +112,7 @@ html,body{
 .kpi .v small{font-family:'Jost',sans-serif;font-size:12px;font-weight:500;color:var(--mid-grey);letter-spacing:.02em;margin:0 2px}
 .kpi .v.blue{color:var(--w-blue-dark)}.kpi .v.mag{color:var(--w-mag-dark)}.kpi .v.gn{color:var(--esg)}.kpi .v.br{color:var(--champagne-dark)}
 .kpi .d{font-size:11px;color:var(--mid-grey);margin-top:4px;line-height:1.3}
-.trend{font-size:11px;line-height:1.3;margin-top:3px;font-weight:400}
+.trend{font-size:11px;line-height:1.3;margin-top:6px;font-weight:400;color:var(--mid-grey);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .log-trend{font-size:11px;color:#6B7280;text-align:center;margin-top:6px;line-height:1.3}
 
 .score{display:flex;gap:7px}
@@ -152,8 +152,10 @@ html,body{
 .st-prep b{color:var(--w-blue-dark);font-weight:600;font-family:'Cormorant Garamond',serif;font-size:14px}
 .st-cause{font-size:11.5px;color:var(--mid-grey);margin-top:4px;line-height:1.4}
 .st-waste{font-size:10.5px;color:var(--mid-grey);margin-top:6px;letter-spacing:.04em}
-.st-pct{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:var(--charcoal);letter-spacing:-.01em;flex-shrink:0;align-self:center;min-width:54px;text-align:right}
-.st-pct.up{color:var(--esg)}.st-pct.down{color:var(--w-mag-dark)}.st-pct.flat{color:var(--mid-grey)}
+.st-pct{display:inline-block;font-family:'Jost',sans-serif;font-size:12px;font-weight:800;letter-spacing:.02em;padding:4px 10px;border-radius:7px;white-space:nowrap;flex-shrink:0;align-self:center;min-width:54px;text-align:center;line-height:1.2}
+.st-pct.up{color:#0D6B35;background:#C8F0DA}
+.st-pct.down{color:#A3003A;background:#FFD6E0}
+.st-pct.flat{color:var(--mid-grey);background:rgba(0,0,0,.04)}
 
 .esg-card{background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:16px;padding:14px 16px;margin-bottom:13px;display:flex;align-items:center;gap:13px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
 .esg-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(180deg,var(--esg),var(--champagne));border-radius:16px 0 0 16px}
@@ -223,10 +225,10 @@ html,body{
 .prow .pr b{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:var(--charcoal);letter-spacing:-.01em}
 .prow .pr small{font-size:10px;color:var(--mid-grey);display:block;margin-top:1px;letter-spacing:.04em}
 
-.delta{font-weight:600;font-size:10.5px;padding:3px 8px;border-radius:6px;white-space:nowrap;letter-spacing:.04em}
-.delta.up{color:var(--esg);background:var(--esg-pale)}
-.delta.down{color:var(--w-mag-dark);background:var(--w-mag-pale)}
-.delta.flat{color:var(--mid-grey);background:var(--marble)}
+.delta{display:inline-block;font-family:'Jost',sans-serif;font-weight:800;font-size:12px;padding:3px 9px;border-radius:6px;white-space:nowrap;letter-spacing:.02em;line-height:1.25}
+.delta.up{color:#0D6B35;background:#C8F0DA}
+.delta.down{color:#A3003A;background:#FFD6E0}
+.delta.flat{color:var(--mid-grey);background:rgba(0,0,0,.05)}
 
 .gate{display:flex;gap:14px}
 .gate .line{display:flex;flex-direction:column;align-items:center;flex:0 0 15px}
@@ -670,7 +672,7 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
     ${dayToggle()}
     ${dayStory(s)}
     <div class="kpi-grid">
-      <div class="kpi"><div class="k">Covers fcst</div><div class="v blue">${b.covers}</div><div class="trend" style="color:#16A34A">↑ +9% vs last week</div><div class="d">75% breakfast attach rate</div></div>
+      <div class="kpi"><div class="k">Covers fcst</div><div class="v blue">${b.covers}</div><div class="trend">↑ <span class="delta up">+9%</span> vs last week</div><div class="d">75% breakfast attach rate</div></div>
       <div class="kpi"><div class="k">Over-prep saved</div><div class="v gn">NT$${b.save.toLocaleString()}</div><div class="d">vs. flat baseline</div></div>
       <div class="kpi"><div class="k">Occupancy</div><div class="v">${s.occupancyPct}<small>%</small></div><div class="d">${s.roomsSold} of 405 keys</div></div>
       <div class="kpi"><div class="k">CO₂e ↓ tonight</div><div class="v br">${b.co2}<small>kg</small></div><div class="d">Serve 360-ready</div></div>
@@ -725,7 +727,7 @@ function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
     const confClr=st.confidence>0.8?'var(--esg)':st.confidence>0.65?'var(--champagne)':'#999';
     const prep='<b>'+w1+'</b> at 06:30 · <b>+'+w2k+'</b> at '+wt2+(isCoffee?'':' · <b>+'+w3k+'</b> at '+wt3);
     const wasteTag=st.wasteRatio>=0.10?'<div class="st-wastelog">Staff-logged · per station: '+st.measuredY+' kg yesterday ('+Math.round(st.wasteRatio*100)+'% ratio)</div>':'';
-    return '<div class="st-row"><div class="st-badge" style="background:'+STATION_BADGE[st.key]+'"></div><div class="st-body"><div class="st-name">'+st.label+'<span style="float:right;font-size:10px;color:'+confClr+'">'+confPct+'%</span></div><div class="st-prep">'+prep+'</div><div class="st-cause">'+st.reason+'</div>'+wasteTag+'<div class="st-waste">Yest. waste: '+st.measuredY+' kg</div></div><div class="st-pct '+cls+'">'+sg+Math.round(st.delta*100)+'%</div></div>';
+    return '<div class="st-row"><div class="st-badge" style="background:'+STATION_BADGE[st.key]+'"></div><div class="st-body"><div class="st-name">'+st.label+'<span class="delta flat" style="float:right">'+confPct+'%</span></div><div class="st-prep">'+prep+'</div><div class="st-cause">'+st.reason+'</div>'+wasteTag+'<div class="st-waste">Yest. waste: '+st.measuredY+' kg</div></div><div class="st-pct '+cls+'">'+sg+Math.round(st.delta*100)+'%</div></div>';
   }).join('');
   return `
   <div class="hero bl">
@@ -878,7 +880,7 @@ function screenEsg(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
   <div class="body">
     <div class="kpi-grid">
       <div class="kpi"><div class="k">CO₂e / guest</div><div class="v gn">0.34<small>kg ↓</small></div><div class="d">vs. ind. range 0.40–0.55 <span title="² CO₂e factors: Poore &amp; Nemecek (Science 2018) + WRAP UK. Industry range 0.40–0.55: Sustainable Hospitality Alliance benchmark" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
-      <div class="kpi"><div class="k">Waste cut</div><div class="v">28<small>%</small></div><div class="trend" style="color:#16A34A">↓ −28% · engine learning</div><div class="d">30-day rolling <span title="WRAP 2024 — 12% waste baseline; ServiceFlow pilot target 28% reduction" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
+      <div class="kpi"><div class="k">Waste cut</div><div class="v">28<small>%</small></div><div class="trend">↓ <span class="delta up">−28%</span> engine learning</div><div class="d">30-day rolling <span title="WRAP 2024 — 12% waste baseline; ServiceFlow pilot target 28% reduction" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
     </div>
     <div class="eyebrow">Frameworks</div>
     <div class="card">
@@ -909,7 +911,7 @@ function screenPortfolio(){return `
     </div>
     <div class="eyebrow">W Taipei outlets</div>
     <div class="card">
-      <div class="prow"><div><div class="nm">The Kitchen Table <span class="badge">LIVE</span></div><div class="rs">9 stations · Buffet breakfast</div></div><div class="pr"><b class="gn">−28%</b><small>waste</small></div></div>
+      <div class="prow"><div><div class="nm">The Kitchen Table <span class="badge">LIVE</span></div><div class="rs">9 stations · Buffet breakfast</div></div><div class="pr"><span class="delta up">−28%</span><small style="display:block;margin-top:2px">waste</small></div></div>
       <div class="prow"><div><div class="nm">YEN</div><div class="rs">Japanese restaurant</div></div><div class="pr"><b class="faint">—</b><small>Q3 2026</small></div></div>
       <div class="prow"><div><div class="nm">WOOBAR</div><div class="rs">Lobby lounge</div></div><div class="pr"><b class="faint">—</b><small>Q3 2026</small></div></div>
       <div class="prow"><div><div class="nm">WET DECK</div><div class="rs">Pool deck</div></div><div class="pr"><b class="faint">—</b><small>Q4 2026</small></div></div>
@@ -999,7 +1001,7 @@ function screenGap(){
     </div>
     <div class="ab-box" style="margin-top:14px">
       <div class="ab-eb">ECONOMICS · W TAIPEI PILOT · YEAR 1</div>
-      <div class="ab-h">4% today → <em>NT$867K/yr <span title="¹ Industry math: WRAP 2025 baseline (12% waste, 180 resort kitchens) applied to W Taipei volume. To be calibrated at pilot week 2." style="font-size:14px;cursor:help;font-style:normal;opacity:0.55">ⓘ</span></em></div>
+      <div class="ab-h"><span class="delta down" style="vertical-align:middle">4%</span> today → <em>NT$867K/yr <span title="¹ Industry math: WRAP 2025 baseline (12% waste, 180 resort kitchens) applied to W Taipei volume. To be calibrated at pilot week 2." style="font-size:14px;cursor:help;font-style:normal;opacity:0.55">ⓘ</span></em></div>
       <div style="position:relative;z-index:1;font-size:12px;color:rgba(245,240,232,.7);line-height:1.5">
         Current reactive trim ≈ NT$220K/yr · ServiceFlow adds 3 predictive points on top → NT$647K incremental → NT$867K total. Conservative NT$1,800/day · Realistic NT$2,400/day <span title="⁴ Realistic scenario: 65% of model savings target. Conservative NT$1,800 · Stretch NT$3,200." style="font-size:9px;cursor:help;opacity:0.55">ⓘ</span>. Every NT$ is auditable per station, per wave, per service date.
       </div>
