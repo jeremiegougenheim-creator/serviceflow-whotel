@@ -290,6 +290,14 @@ html,body{
 .vlog-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.6}
 .vlog-card{border:1px dashed rgba(255,255,255,.22);border-radius:9px;width:100%;padding:12px 14px;box-sizing:border-box;-webkit-user-select:none;user-select:none}
 .vlog-listening{border-color:rgba(212,0,75,.5)}
+.vlog-thinking{border-color:rgba(200,164,76,.35);background:rgba(200,164,76,.05);border-style:dashed}
+.vlog-think-dots{display:inline-flex;gap:3px;align-items:center}
+.vlog-think-dots span{width:4px;height:4px;border-radius:50%;background:rgba(200,164,76,.7);animation:vlogPulse 1s ease-in-out infinite}
+.vlog-think-dots span:nth-child(2){animation-delay:.2s}
+.vlog-think-dots span:nth-child(3){animation-delay:.4s}
+.vlog-answered{border-color:rgba(200,164,76,.3);background:rgba(200,164,76,.05)}
+.vlog-answer{font-family:'Jost',sans-serif;font-size:13px;font-weight:400;color:rgba(245,242,236,.85);margin:0 0 6px;line-height:1.5}
+.vlog-dismiss{font-family:'Jost',sans-serif;font-size:11px;color:rgba(245,242,236,.32);margin:0;letter-spacing:.08em;font-weight:500}
 .vlog-confirmed{border-color:rgba(66,201,126,.5)}
 .vlog-error{border-color:rgba(192,57,43,.5);cursor:pointer}
 .vlog-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}
@@ -586,6 +594,20 @@ const voiceSupported=!isIOSSafari&&(('SpeechRecognition' in window)||('webkitSpe
 // Cross-browser diagnostic — one line in DevTools console so we can see why
 // the voice button shows up on Chrome but maybe hides on Edge/Safari/etc.
 try{console.info('[ServiceFlow] voiceSupported='+voiceSupported,'· hasSR='+('SpeechRecognition' in window),'· hasWebkitSR='+('webkitSpeechRecognition' in window),'· iOSSafari='+isIOSSafari,'· UA='+navigator.userAgent);}catch(_){}
+
+// Claude intent proxy. Set this to the Cloudflare Worker URL after deploy
+// (see worker/README.md). When unset OR the proxy fails, finishVoiceLog
+// transparently falls back to the local keyword parser so the demo still works.
+const INTENT_PROXY_URL='';  // e.g. 'https://serviceflow-intent.your-subdomain.workers.dev'
+async function resolveVoiceIntent(transcript){
+  if(!INTENT_PROXY_URL)throw new Error('proxy-not-configured');
+  const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),3500);
+  try{
+    const r=await fetch(INTENT_PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transcript}),signal:ctrl.signal});
+    if(!r.ok)throw new Error('proxy-status-'+r.status);
+    return await r.json();
+  }finally{clearTimeout(to);}
+}
 const g=id=>document.getElementById(id);
 const I={
  owner:'<svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>',
@@ -1081,6 +1103,14 @@ function voiceLogTemplate(){
     +'<div class="vlog-head"><span class="vlog-pulse"></span><span class="vlog-label">Listening — tap to stop</span></div>'
     +(t?'<p class="vlog-transcript">&ldquo;'+t.replace(/</g,'&lt;')+'&rdquo;</p>':'<p class="vlog-hint">Speak now…</p>')
     +'</button>';
+  if(p==='thinking')return '<div class="vlog-card vlog-thinking">'
+    +'<div class="vlog-head"><span class="vlog-think-dots"><span></span><span></span><span></span></span><span class="vlog-label" style="color:rgba(200,164,76,.75)">Reading that…</span></div>'
+    +(t?'<p class="vlog-transcript">&ldquo;'+t.replace(/</g,'&lt;')+'&rdquo;</p>':'')
+    +'</div>';
+  if(p==='answered')return '<button class="vlog-card vlog-answered" onclick="toggleVoiceLog()" style="cursor:pointer;text-align:left;width:100%">'
+    +'<p class="vlog-answer">'+(voiceLog.result&&voiceLog.result.reply||'')+'</p>'
+    +'<p class="vlog-dismiss">tap to dismiss</p>'
+    +'</button>';
   if(p==='confirmed')return '<div class="vlog-card vlog-confirmed">'
     +'<div class="vlog-head"><span style="font-size:18px;color:#16A34A">✓</span><span class="vlog-label" style="color:#16A34A">Logged</span></div>'
     +'<p class="vlog-summary">'+(voiceLog.result&&voiceLog.result.summary||'')+'</p>'
@@ -1107,7 +1137,12 @@ function submitVoiceText(text){
 function toggleVoiceLog(){
   if(!voiceSupported)return;
   if(voiceLog.phase==='listening'){finishVoiceLog();return;}
-  if(voiceLog.phase==='confirmed')return;
+  if(voiceLog.phase==='thinking'||voiceLog.phase==='confirmed')return;
+  if(voiceLog.phase==='answered'){
+    clearTimeout(voiceLogResetTimer);
+    voiceLog={phase:'idle',transcript:'',result:null,error:''};
+    renderVoiceLog();return;
+  }
   startVoiceLog();
 }
 function startVoiceLog(){
@@ -1138,7 +1173,7 @@ function startVoiceLog(){
     voiceLogRec.start();renderVoiceLog();
   }catch(err){voiceLog.phase='error';voiceLog.error='Voice failed to start — tap to try again';renderVoiceLog();autoResetVoiceLog(4000);}
 }
-function finishVoiceLog(){
+async function finishVoiceLog(){
   if(voiceLog.phase!=='listening')return;
   clearTimeout(voiceLogSilenceTimer);
   const rec=voiceLogRec;voiceLogRec=null;
@@ -1148,6 +1183,47 @@ function finishVoiceLog(){
     voiceLog.phase='error';voiceLog.error='Nothing heard — tap to try again';
     renderVoiceLog();autoResetVoiceLog(4000);return;
   }
+  // Show "thinking" while Claude classifies. Skip the round trip entirely
+  // when no proxy is configured — fall through to the local parser.
+  if(!INTENT_PROXY_URL){voiceLog.phase='thinking';renderVoiceLog();return localParseFinish(text);}
+  voiceLog.phase='thinking';renderVoiceLog();
+  let intent=null;
+  try{intent=await resolveVoiceIntent(text);}
+  catch(err){console.warn('[ServiceFlow] intent proxy failed, falling back to local parser:',err);return localParseFinish(text);}
+  routeIntent(intent,text);
+}
+function routeIntent(intent,text){
+  if(!intent||typeof intent.intent!=='string'){return localParseFinish(text);}
+  if(intent.intent==='WASTE_LOG'){
+    // Map the spoken station name back to our canonical station label.
+    const stationKey=String(intent.station||'').toLowerCase();
+    let station=null;
+    for(const [k,v] of VOICE_STATION_MAP){if(stationKey.includes(k)){station=v;break;}}
+    let amount=parseFloat(intent.amount);
+    if(intent.unit==='g'&&amount)amount=amount/1000;
+    if(station&&amount>0&&amount<=20){
+      voiceLogEntries.push({station,type:'Over-prep',amount,unit:'kg',timestamp:new Date().toISOString(),source:'voice',raw:text});
+      voiceLog.result={isValid:true,summary:amount+'kg — '+station+' · over-prep'};
+      voiceLog.phase='confirmed';renderVoiceLog();autoResetVoiceLog(3000);return;
+    }
+    // Claude said WASTE_LOG but the entities didn't survive normalisation —
+    // try the local keyword parser as a second pass before erroring.
+    return localParseFinish(text);
+  }
+  if(intent.intent==='QUESTION'){
+    voiceLog.result={isValid:false,reply:intent.reply||"I can log waste — try a station name and amount."};
+    voiceLog.phase='answered';renderVoiceLog();autoResetVoiceLog(6000);return;
+  }
+  if(intent.intent==='CANCEL'){
+    clearTimeout(voiceLogResetTimer);
+    voiceLog={phase:'idle',transcript:'',result:null,error:''};renderVoiceLog();return;
+  }
+  // UNCLEAR (or CONFIRM in isolation, which we treat as guidance)
+  voiceLog.phase='error';
+  voiceLog.error=intent.reply||"Try: 'Japanese 2 kilos' or 'Western Hot 500g'";
+  renderVoiceLog();autoResetVoiceLog(4000);
+}
+function localParseFinish(text){
   const parsed=parseVoice(text);voiceLog.result=parsed;
   if(parsed.isValid){
     voiceLogEntries.push({station:parsed.station,type:parsed.type,amount:parsed.amount,unit:parsed.unit,timestamp:new Date().toISOString(),source:'voice',raw:parsed.raw});
