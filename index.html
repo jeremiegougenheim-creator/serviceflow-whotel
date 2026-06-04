@@ -243,6 +243,9 @@ html,body{
 
 .voice-btn{display:inline-flex;align-items:center;gap:8px;background:var(--warm-white);border:1px solid var(--marble-dark);color:var(--charcoal);padding:9px 14px;border-radius:11px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:'Jost',sans-serif;transition:all .15s;letter-spacing:.02em}
 .voice-btn:hover{border-color:var(--champagne);background:var(--champagne-pale)}
+.voice-btn.on{background:#0891B2;color:#fff;border-color:#0891B2;animation:voicePulse 1.4s ease-in-out infinite}
+.voice-btn.on svg{stroke:#fff}
+@keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 rgba(8,145,178,.45)}50%{box-shadow:0 0 0 8px rgba(8,145,178,0)}}
 .voice-btn svg{width:15px;height:15px;stroke:var(--champagne);fill:none;stroke-width:2;flex-shrink:0}
 
 #nav{position:absolute;left:0;right:0;bottom:0;height:78px;background:rgba(250,248,244,.96);backdrop-filter:blur(14px);border-top:1px solid var(--marble);display:flex;align-items:center;justify-content:space-around;padding:0 6px 14px;z-index:10}
@@ -848,7 +851,7 @@ function screenNotifs(){
         <b style="font-family:'Cormorant Garamond',serif;font-size:15px;color:#2C3E50">F&amp;B Manager</b> — email digest + push critical · mix, savings, schedule
       </div>
     </div>
-    <button class="btn" onclick="go('brief')" style="margin-top:14px">← Back to briefing</button>
+    <button class="btn" data-go="brief" onclick="go('brief')" style="margin-top:14px">← Back to briefing</button>
   </div>`;}
 
 function screenGap(){
@@ -895,30 +898,71 @@ function screenGap(){
         <b style="color:var(--charcoal)">Marriott Serve 360</b> — GRI 306 mapping · CO₂e scope 3 reporting framework
       </div>
     </div>
-    <button class="btn" onclick="go('brief')" style="margin-top:14px">← Back to briefing</button>
+    <button class="btn" data-go="brief" onclick="go('brief')" style="margin-top:14px">← Back to briefing</button>
   </div>`;}
 
-let logSel={type:'Over-prep',station:'Congee & Noodle'};
+let logSel={type:'Over-prep',station:'Congee & Noodle',transcript:'',listening:false};
+let voiceRec=null;
+function parseVoiceTranscript(text){
+  const lower=(text||'').toLowerCase();
+  const stationMap=[['dim sum','Dim Sum'],['western','Western Hot'],['congee','Congee & Noodle'],['noodle','Congee & Noodle'],['japanese','Japanese'],['korean','Korean'],['pastry','Bakery & Pastry'],['bakery','Bakery & Pastry'],['fruit','Fruit & Cold'],['cold','Fruit & Cold'],['taiwanese','Taiwanese Local'],['coffee','Coffee Bar']];
+  for(const [k,v] of stationMap){if(lower.includes(k)){logSel.station=v;break;}}
+  if(/over[- ]?prep/.test(lower))logSel.type='Over-prep';
+  else if(/spoil/.test(lower))logSel.type='Spoilage';
+  else if(/cover/.test(lower))logSel.type='Cover count';
+  else if(/incident/.test(lower))logSel.type='Incident';
+}
+function toggleVoice(){
+  if(!voiceSupported)return;
+  if(logSel.listening){if(voiceRec)voiceRec.stop();return;}
+  const Rec=window.SpeechRecognition||window.webkitSpeechRecognition;
+  try{
+    voiceRec=new Rec();
+    voiceRec.lang=(navigator.language&&navigator.language.startsWith('zh'))?'zh-CN':'en-US';
+    voiceRec.interimResults=true;
+    voiceRec.continuous=false;
+    voiceRec.onresult=e=>{
+      const txt=Array.from(e.results).map(r=>r[0].transcript).join('');
+      logSel.transcript=txt;
+      parseVoiceTranscript(txt);
+      const t=g('voiceLine');if(t)t.textContent=txt;
+      const opts=document.querySelectorAll('#sheetbg .opt');opts.forEach(o=>{
+        const v=o.textContent.trim();
+        if(v===logSel.type||v===logSel.station)o.classList.add('on');else o.classList.remove('on');
+      });
+    };
+    voiceRec.onerror=ev=>{logSel.listening=false;openLog();console.warn('Voice error:',ev.error);};
+    voiceRec.onend=()=>{logSel.listening=false;openLog();};
+    voiceRec.start();
+    logSel.listening=true;openLog();
+  }catch(err){logSel.listening=false;console.warn('Voice start failed:',err);}
+}
 function openLog(){
   const types=['Over-prep','Spoilage','Cover count','Incident'];
   const ex=g('sheetbg');if(ex)ex.remove();
   const sheet=document.createElement('div');sheet.className='sheet-bg';sheet.id='sheetbg';
   sheet.onclick=e=>{if(e.target===sheet)closeLog()};
-  const head=voiceSupported
+  const voiceState=logSel.listening?'Listening… tap to stop':'Tap to dictate (EN / 中文)';
+  const voiceBlock=voiceSupported
     ?'<h2>Log — <em style="color:var(--champagne-dark);font-style:italic">voice first</em></h2>'
-     +'<p class="sub" style="margin:5px 0 14px">Hold the voice button to dictate (English or 中文). Auto-fills the form · ~22s.</p>'
-     +'<button class="voice-btn" onclick="confirmToast()" style="width:100%;justify-content:center;padding:13px;font-size:13px">'+I.mic+'<span>Hold to dictate</span></button>'
+     +'<p class="sub" style="margin:5px 0 14px">Tap the voice button to dictate. Auto-fills the form below.</p>'
+     +'<button class="voice-btn'+(logSel.listening?' on':'')+'" onclick="toggleVoice()" style="width:100%;justify-content:center;padding:13px;font-size:13px">'+I.mic+'<span>'+voiceState+'</span></button>'
+     +'<div id="voiceLine" style="font-size:12px;color:var(--mid-grey);min-height:18px;margin:8px 2px 0;line-height:1.35;font-style:italic">'+(logSel.transcript||'')+'</div>'
     :'<h2>Log — <em style="color:var(--champagne-dark);font-style:italic">quick entry</em></h2>'
      +'<p class="sub" style="margin:5px 0 14px">Pick a type and station below, or describe the waste in one line.</p>'
-     +'<input type="text" placeholder="Describe waste · e.g. Dim Sum 2kg over-prep" style="width:100%;padding:12px 14px;border:1px solid var(--marble-dark);border-radius:11px;font-family:Jost,sans-serif;font-size:13px;color:var(--charcoal);background:var(--warm-white);margin-bottom:8px">';
-  sheet.innerHTML='<div class="sheet"><div class="grab"></div>'+head+
+     +'<input type="text" placeholder="Describe waste · e.g. Dim Sum 2kg over-prep" oninput="logSel.transcript=this.value;parseVoiceTranscript(this.value)" value="'+(logSel.transcript||'').replace(/"/g,'&quot;')+'" style="width:100%;padding:12px 14px;border:1px solid var(--marble-dark);border-radius:11px;font-family:Jost,sans-serif;font-size:13px;color:var(--charcoal);background:var(--warm-white);margin-bottom:8px">';
+  sheet.innerHTML='<div class="sheet"><div class="grab"></div>'+voiceBlock+
     '<div class="field">Type</div><div class="opts">'+types.map(t=>'<div class="opt '+(logSel.type===t?'on':'')+'" onclick="logSel.type=\''+t+'\';openLog()">'+t+'</div>').join('')+'</div>'+
     '<div class="field">Station</div><div class="opts">'+STATIONS.slice(0,6).map(st=>'<div class="opt '+(logSel.station===st.label?'on':'')+'" onclick="logSel.station=\''+st.label+'\';openLog()">'+st.label+'</div>').join('')+'</div>'+
     '<button class="btn mg" style="margin-top:20px" onclick="closeLog();confirmToast()">Confirm &amp; log</button>'+
     '<button class="btn ghost sm" style="margin-top:9px" onclick="closeLog()">Cancel</button></div>';
   document.querySelector('.phone').appendChild(sheet);
 }
-function closeLog(){const e=g('sheetbg');if(e)e.remove();}
+function closeLog(){
+  if(voiceRec&&logSel.listening){try{voiceRec.stop();}catch(_){}}
+  logSel.listening=false;logSel.transcript='';
+  const e=g('sheetbg');if(e)e.remove();
+}
 
 const TABS=[
   ['dashboard','Home','dash'],
