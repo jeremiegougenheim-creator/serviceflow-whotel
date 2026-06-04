@@ -6,7 +6,7 @@ compatibility_date = "2024-12-01"
 [ai]
 binding = "AI"
 
-# Restrict CORS to your domain after deploy. Until then, defaults to *.
-# [vars]
-# ALLOWED_ORIGIN = "https://service-flow.dev"
-# AI_MODEL = "@cf/meta/llama-3.1-8b-instruct"
+# CORS locked to the live demo origin. Override via:
+#   AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"  # if Llama 3.1 8B drifts on noisy transcripts
+[vars]
+ALLOWED_ORIGIN = "https://service-flow.dev"
