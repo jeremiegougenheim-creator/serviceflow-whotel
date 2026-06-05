@@ -461,7 +461,7 @@ const STATIONS=[
  {key:'japanese',label:'Japanese'},{key:'korean',label:'Korean'},
  {key:'western_hot',label:'Western Hot'},{key:'bakery_pastry',label:'Bakery & Pastry'},
  {key:'fruit_cold',label:'Fruit & Cold'},{key:'taiwanese_local',label:'Taiwanese Local'},
- {key:'coffee_bar',label:'Coffee Bar'}];
+ {key:'coffee_bar',label:'Coffee Bar',unit:'cups'}];
 const BASE_PARS={congee_noodle:60,dim_sum:40,japanese:45,korean:25,western_hot:70,bakery_pastry:55,fruit_cold:80,taiwanese_local:35,coffee_bar:300};
 const STATION_BADGE={congee_noodle:'#16A34A',dim_sum:'#9F174A',japanese:'#C9A97A',korean:'#BE185D',western_hot:'#7A5A32',bakery_pastry:'#B9770F',fruit_cold:'#0891B2',taiwanese_local:'#A0784A',coffee_bar:'#2C3E50'};
 const NAT_PRIORS={greaterChina:{congee_noodle:{mult:1.55,conf:0.92},dim_sum:{mult:1.50,conf:0.95},taiwanese_local:{mult:1.35,conf:0.88},western_hot:{mult:0.75,conf:0.85},bakery_pastry:{mult:0.85,conf:0.78},coffee_bar:{mult:0.90,conf:0.80}},japan:{japanese:{mult:1.85,conf:0.94},fruit_cold:{mult:1.25,conf:0.82},coffee_bar:{mult:1.10,conf:0.75},western_hot:{mult:0.75,conf:0.80}},korea:{korean:{mult:1.85,conf:0.91},congee_noodle:{mult:1.15,conf:0.70},coffee_bar:{mult:1.20,conf:0.78}},western:{western_hot:{mult:1.65,conf:0.93},bakery_pastry:{mult:1.45,conf:0.90},coffee_bar:{mult:1.40,conf:0.95},fruit_cold:{mult:1.15,conf:0.82},congee_noodle:{mult:0.65,conf:0.88},dim_sum:{mult:0.60,conf:0.85}},seasia:{congee_noodle:{mult:1.25,conf:0.75},fruit_cold:{mult:1.35,conf:0.80},western_hot:{mult:0.90,conf:0.65}},other:{}};
@@ -782,8 +782,9 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
     const confPct=Math.round(st.confidence*100);
     const confClr=st.confidence>0.8?'var(--esg)':st.confidence>0.65?'var(--champagne)':'#999';
     const prep='<b>'+w1+'</b> at 06:30 · <b>+'+w2k+'</b> at '+wt2+(isCoffee?'':' · <b>+'+w3k+'</b> at '+wt3);
-    const wasteTag=st.wasteRatio>=0.10?'<div class="st-wastelog">Staff-logged · per station: '+st.measuredY+' kg yesterday ('+Math.round(st.wasteRatio*100)+'% ratio)</div>':'';
-    return '<div class="st-row"><div class="st-badge" style="background:'+STATION_BADGE[st.key]+'"></div><div class="st-body"><div class="st-name">'+st.label+'<span class="delta flat" style="float:right">'+confPct+'%</span></div><div class="st-prep">'+prep+'</div><div class="st-cause">'+st.reason+'</div>'+wasteTag+'<div class="st-waste">Yest. waste: '+st.measuredY+' kg</div></div><div class="st-pct '+cls+'">'+sg+Math.round(st.delta*100)+'%</div></div>';
+    const unit=STATIONS.find(x=>x.key===st.key)&&STATIONS.find(x=>x.key===st.key).unit||'kg';
+    const wasteTag=st.wasteRatio>=0.10?'<div class="st-wastelog">Staff-logged · per station: '+st.measuredY+' '+unit+' yesterday ('+Math.round(st.wasteRatio*100)+'% ratio)</div>':'';
+    return '<div class="st-row"><div class="st-badge" style="background:'+STATION_BADGE[st.key]+'"></div><div class="st-body"><div class="st-name">'+st.label+'<span class="delta flat" style="float:right">'+confPct+'%</span></div><div class="st-prep">'+prep+'</div><div class="st-cause">'+st.reason+'</div>'+wasteTag+'<div class="st-waste">Yest. waste: '+st.measuredY+' '+unit+'</div></div><div class="st-pct '+cls+'">'+sg+Math.round(st.delta*100)+'%</div></div>';
   });
   const stationRows=(state.briefStationsExpanded?stationRowsAll:stationRowsAll.slice(0,3)).join('');
   const stationToggle=stationRowsAll.length>3?`<button onclick="state.briefStationsExpanded=!state.briefStationsExpanded;render()" class="btn ghost" style="font-size:11px;margin-top:8px">${state.briefStationsExpanded?'Show less ↑':'Show all '+stationRowsAll.length+' stations ›'}</button>`:'';
@@ -921,11 +922,11 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
       <svg class="strike-skyline" viewBox="0 0 195 300" width="195" height="300" aria-hidden="true"><g fill="rgba(255,255,255,0.055)"><rect x="5" y="228" width="15" height="72"/><rect x="24" y="212" width="13" height="88"/><rect x="41" y="235" width="10" height="65"/><rect x="60" y="268" width="50" height="32"/><rect x="64" y="250" width="42" height="19"/><rect x="68" y="232" width="34" height="19"/><rect x="71" y="215" width="28" height="18"/><rect x="74" y="200" width="22" height="16"/><rect x="76" y="186" width="18" height="15"/><rect x="78" y="173" width="14" height="14"/><rect x="80" y="162" width="10" height="12"/><rect x="82" y="152" width="6" height="11"/><rect x="84" y="84" width="2" height="69"/><rect x="126" y="210" width="12" height="90"/><rect x="142" y="230" width="12" height="70"/><rect x="158" y="218" width="12" height="82"/><rect x="174" y="242" width="12" height="58"/></g></svg>
       <div class="st-eb"><span>PRE-EMPTIVE STRIKE</span></div>
       <div class="st-tt">Trim ${strike.label} <em>−${pct}%</em> & hold a fast-replenish buffer.</div>
-      <div style="position:relative;z-index:1;font-size:12px;color:rgba(245,240,232,.7);line-height:1.5">${strike.reason} · save est. NT$${saving.toLocaleString()} · export to Serve 360 format.</div>
+      <div style="position:relative;z-index:1;font-size:12px;color:rgba(245,240,232,.7);line-height:1.5">${strike.reason} · save est. NT$${saving.toLocaleString()} · ${strike.key==='coffee_bar'?'calibrated against POS data at pilot week 2':'export to Serve 360 format'}.</div>
       <div class="st-grid">
         <div class="st-tile"><div class="v">${strike.waves.open_0630}</div><div class="k">06:30 opening</div></div>
         <div class="st-tile"><div class="v">+${strike.waves.wave_0800||strike.waves.wave_0745||0}</div><div class="k">${s.isWeekend?'08:00':'07:45'} wave</div></div>
-        <div class="st-tile"><div class="v">${strike.measuredY}<small style="font-size:10px;letter-spacing:.05em"> kg</small></div><div class="k">Yest. waste</div></div>
+        <div class="st-tile"><div class="v">${strike.measuredY}<small style="font-size:10px;letter-spacing:.05em"> ${(STATIONS.find(x=>x.key===strike.key)||{}).unit||'kg'}</small></div><div class="k">Yest. waste</div></div>
       </div>
       <button class="btn mg" onclick="openStrike('${strike.label}',${pct},${saving})">Done — I trimmed it</button>
     </div>`;
