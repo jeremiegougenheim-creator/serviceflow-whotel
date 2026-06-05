@@ -1140,6 +1140,7 @@ function updateVoiceSummary(){
       +'<span style="font-size:12px;color:rgba(245,242,236,.85)">'+e.station+'</span>'
       +'<span style="display:flex;gap:8px;align-items:center">'
       +'<span style="font-size:12px;font-weight:600;color:#7AB67A">'+e.amount+'kg</span>'
+      +'<button onclick="showLogImpact(\''+e.station.replace(/'/g,"\\'")+'\',' +e.amount+')" style="background:none;border:none;color:rgba(122,182,122,.6);font-size:10px;font-family:\'Jost\',sans-serif;letter-spacing:.04em;cursor:pointer;padding:0;white-space:nowrap">see impact ›</button>'
       +'<span style="font-size:10px;color:rgba(245,242,236,.45);letter-spacing:.04em">'+hm+'</span>'
       +'<button onclick="removeVoiceEntry('+i+')" style="background:none;border:none;color:rgba(245,242,236,.3);font-size:14px;cursor:pointer;padding:0 2px;line-height:1" title="Remove">×</button>'
       +'</span></div>';
@@ -1233,8 +1234,7 @@ function submitVoiceText(text){
     voiceLogEntries.push({station:parsed.station,type:parsed.type,amount:parsed.amount,unit:parsed.unit,timestamp:new Date().toISOString(),source:'text',raw:parsed.raw});
     voiceLog.undoIndex=voiceLogEntries.length-1;
     voiceLog.phase='confirmed';renderVoiceLog();updateVoiceSummary();
-    showLogImpact(parsed.station,parsed.amount);
-    autoResetVoiceLog(5000);
+    autoResetVoiceLog(8000);
   }else{
     voiceLog.phase='error';voiceLog.error='Couldn\'t find station + amount in "'+t+'"';
     renderVoiceLog();autoResetVoiceLog(4000);
@@ -1346,8 +1346,7 @@ function routeIntent(intent,text){
       voiceLog.undoIndex=voiceLogEntries.length-1;
       voiceLog.result={isValid:true,summary:amount+'kg — '+station+' · over-prep'};
       voiceLog.phase='confirmed';renderVoiceLog();updateVoiceSummary();
-      showLogImpact(station,amount);
-      autoResetVoiceLog(5000);return;
+      autoResetVoiceLog(8000);return;
     }
     // Claude said WASTE_LOG but the entities didn't survive normalisation —
     // try the local keyword parser as a second pass before erroring.
@@ -1372,8 +1371,7 @@ function localParseFinish(text){
     voiceLogEntries.push({station:parsed.station,type:parsed.type,amount:parsed.amount,unit:parsed.unit,timestamp:new Date().toISOString(),source:'voice',raw:parsed.raw});
     voiceLog.undoIndex=voiceLogEntries.length-1;
     voiceLog.phase='confirmed';renderVoiceLog();updateVoiceSummary();
-    showLogImpact(parsed.station,parsed.amount);
-    autoResetVoiceLog(5000);
+    autoResetVoiceLog(8000);
   }else{
     voiceLog.phase='error';
     voiceLog.error='Heard: "'+text+'" — say station name + amount';
@@ -1515,7 +1513,6 @@ function submitLog(){
   // Add to the session log (same store as voice/text entries) when a qty was set.
   if(logSel.qty>0){
     voiceLogEntries.push({station:logSel.station,type:logSel.type,amount:logSel.qty,unit:'kg',timestamp:new Date().toISOString(),source:'manual',raw:''});
-    showLogImpact(logSel.station,logSel.qty);
   }
   closeLog();
   updateVoiceSummary();
