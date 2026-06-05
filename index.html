@@ -928,7 +928,7 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
         <div class="st-tile"><div class="v">+${strike.waves.wave_0800||strike.waves.wave_0745||0}</div><div class="k">${s.isWeekend?'08:00':'07:45'} wave</div></div>
         <div class="st-tile"><div class="v">${strike.measuredY}<small style="font-size:10px;letter-spacing:.05em"> ${(STATIONS.find(x=>x.key===strike.key)||{}).unit||'kg'}</small></div><div class="k">Yest. waste</div></div>
       </div>
-      <button class="btn mg" onclick="openStrike('${strike.label}',${pct},${saving})">Done — I trimmed it</button>
+      <button class="btn mg" style="text-transform:none;letter-spacing:.03em" onclick="openStrike('${strike.label}',${pct},${saving})">Done — I trimmed it</button>
     </div>`;
     }).join('');
     const doneHtml=confirmedStrikes.map(c=>{
