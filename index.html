@@ -328,15 +328,19 @@ html,body{
 .vlog-hint{font-size:12px;font-weight:400;color:rgba(245,242,236,.4);margin:4px 0 0;font-style:italic}
 .vlog-summary{font-family:'Jost',sans-serif;font-size:14px;font-weight:600;color:#16A34A;margin:4px 0 0;letter-spacing:.04em}
 .vlog-summary-line{margin-top:8px;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.04em;color:rgba(245,242,236,.7);text-align:center;line-height:1.4}
-.gvb{background:rgba(15,20,35,.92);border-bottom:1px solid rgba(255,255,255,.07);padding:8px 14px;position:sticky;top:0;z-index:15}
-.gvb-mic{display:flex;align-items:center;gap:8px;cursor:pointer;font-family:'Jost',sans-serif;font-size:12px;font-weight:600;color:rgba(245,242,236,.65);letter-spacing:.04em;padding:7px 12px;border:1px dashed rgba(255,255,255,.18);border-radius:8px}
-.gvb-mic:active{background:rgba(255,255,255,.04)}
-.gvb-listening .gvb-mic{border-color:rgba(212,0,75,.5);color:rgba(212,0,75,.9)}
-.gvb-thinking .gvb-mic{border-color:rgba(200,164,76,.4);color:rgba(200,164,76,.85)}
-.gvb-confirmed .gvb-mic{border-color:rgba(66,201,126,.5);color:#42C97E}
-.gvb-error .gvb-mic{border-color:rgba(192,57,43,.5);color:#C0392B}
-.gvb-session{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}
-.gvb-chip{font-family:'Jost',sans-serif;font-size:11px;font-weight:700;background:rgba(66,201,126,.15);color:#42C97E;border:1px solid rgba(66,201,126,.25);border-radius:6px;padding:3px 9px;letter-spacing:.04em}
+.gvb{background:var(--warm-white);border-bottom:1px solid var(--marble);padding:10px 16px;position:sticky;top:0;z-index:15;display:flex;align-items:center;gap:12px}
+.gvb-mic-btn{width:38px;height:38px;border-radius:50%;background:var(--w-mag);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:transform .15s,background .2s;border:none}
+.gvb-mic-btn svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.gvb-listening .gvb-mic-btn{background:var(--w-mag);animation:gvbPulse 1s ease-in-out infinite}
+.gvb-thinking .gvb-mic-btn{background:var(--champagne)}
+.gvb-confirmed .gvb-mic-btn{background:#16A34A}
+.gvb-error .gvb-mic-btn{background:#C04848}
+@keyframes gvbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.gvb-text{flex:1;min-width:0}
+.gvb-label{font-family:'Jost',sans-serif;font-size:12px;font-weight:600;color:var(--charcoal);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gvb-sublabel{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--mid-grey);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gvb-session{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.gvb-chip{font-family:'Jost',sans-serif;font-size:10px;font-weight:700;background:#C8F0DA;color:#0D6B35;border-radius:5px;padding:2px 8px;letter-spacing:.04em}
 .voice-btn svg{width:15px;height:15px;stroke:var(--champagne);fill:none;stroke-width:2;flex-shrink:0}
 
 #nav{position:absolute;left:0;right:0;bottom:0;height:78px;background:rgba(250,248,244,.96);backdrop-filter:blur(14px);border-top:1px solid var(--marble);display:flex;align-items:center;justify-content:space-around;padding:0 6px 14px;z-index:20}
@@ -912,12 +916,16 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
         +(state.actionsOpen?'<div class="card" style="padding:0;overflow:hidden">'+aRows+'</div>':'');
     }
     body=`
-    <div id="globalVoiceBar" class="gvb">
-      <div id="gvbMic" class="gvb-mic" onclick="toggleVoiceLog()">
-        ${I.mic}<span id="gvbLabel">Tap to log any station</span>
+    <div id="globalVoiceBar" class="gvb" onclick="toggleVoiceLog()">
+      <button id="gvbMicBtn" class="gvb-mic-btn">
+        <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0M12 19v3M8 22h8"/></svg>
+      </button>
+      <div class="gvb-text">
+        <div id="gvbLabel" class="gvb-label">Tap to log any station</div>
+        <div id="gvbSub" class="gvb-sublabel">say station · type · quantity</div>
       </div>
-      <div id="gvbSession" class="gvb-session"></div>
     </div>
+    <div id="gvbSession" class="gvb-session" style="padding:0 16px 8px;background:var(--warm-white)"></div>
     ${strikeCards}
     ${doneHtml}
     <div class="sec-h"><h3>Station prep</h3><span class="sa">${s.label} · ${b.covers} covers</span></div>
@@ -1157,30 +1165,35 @@ let voiceLogSilenceTimer=null;
 let voiceLogResetTimer=null;
 const VLOG_HINTS=['Western Hot over-prep 2 kg','Dim Sum waste 1 kg','西式熱食 過量準備 2公斤'];
 let vlogHintIdx=0;
-setInterval(()=>{vlogHintIdx=(vlogHintIdx+1)%VLOG_HINTS.length;const el=document.getElementById('vlogHintSpan');if(el)el.textContent='try: "'+VLOG_HINTS[vlogHintIdx]+'"';const gb=document.getElementById('gvbLabel');if(gb&&voiceLog.phase==='idle')gb.textContent='try: "'+VLOG_HINTS[vlogHintIdx]+'"';},3000);
-const GVB_MIC='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0M12 19v3M8 22h8"/></svg>';
+setInterval(()=>{vlogHintIdx=(vlogHintIdx+1)%VLOG_HINTS.length;const el=document.getElementById('vlogHintSpan');if(el)el.textContent='try: "'+VLOG_HINTS[vlogHintIdx]+'"';const sub=document.getElementById('gvbSub');if(sub&&voiceLog.phase==='idle')sub.textContent='"'+VLOG_HINTS[vlogHintIdx]+'"';},3000);
 let voiceLogUndoTimer=null;
 function renderGlobalVoiceBar(){
   const bar=g('globalVoiceBar');if(!bar)return;
   const p=voiceLog.phase;
   bar.className='gvb'+(p==='listening'?' gvb-listening':p==='thinking'?' gvb-thinking':p==='confirmed'?' gvb-confirmed':p==='error'?' gvb-error':'');
-  const mic=g('gvbMic');
-  if(mic){
-    if(p==='confirmed'){
+  const lbl=g('gvbLabel'),sub=g('gvbSub');
+  if(lbl&&sub){
+    if(p==='idle'){
+      lbl.textContent='Tap to log any station';
+      sub.textContent=VLOG_HINTS[vlogHintIdx]?'"'+VLOG_HINTS[vlogHintIdx]+'"':'say station · type · quantity';
+    }else if(p==='listening'){
+      lbl.textContent=voiceLog.transcript||'Listening…';
+      sub.textContent='tap to stop';
+    }else if(p==='thinking'){
+      lbl.textContent='Reading that…';
+      sub.textContent='';
+    }else if(p==='confirmed'){
       const summary=voiceLog.strikeFeedback||(voiceLog.result&&voiceLog.result.summary)||'Logged';
-      mic.innerHTML=GVB_MIC+'<span style="flex:1">✓ '+summary+'</span>'
-        +'<button onclick="event.stopPropagation();undoLastVoiceLog()" style="background:none;border:1px solid rgba(66,201,126,.35);color:#42C97E;font-family:\'Jost\',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:5px;cursor:pointer;flex-shrink:0;margin-left:6px">UNDO ↩</button>';
+      lbl.textContent='✓ '+summary;
+      sub.innerHTML='<button onclick="event.stopPropagation();undoLastVoiceLog()" style="background:none;border:none;color:var(--mid-grey);font-family:\'Jost\',sans-serif;font-size:11px;font-weight:600;letter-spacing:.04em;cursor:pointer;padding:0;font-style:normal">UNDO ↩</button>';
       clearTimeout(voiceLogUndoTimer);
       voiceLogUndoTimer=setTimeout(()=>{if(voiceLog.phase==='confirmed'){voiceLog={phase:'idle',transcript:'',result:null,error:'',strikeFeedback:''};renderGlobalVoiceBar();}},5000);
-    }else{
-      let lbl;
-      if(p==='idle')lbl='Tap to log any station';
-      else if(p==='listening')lbl=voiceLog.transcript||'Listening — tap to stop';
-      else if(p==='thinking')lbl=voiceLog.transcript||'Reading that…';
-      else if(p==='answered')lbl=(voiceLog.result&&voiceLog.result.reply)||'Tap to dismiss';
-      else if(p==='error')lbl=voiceLog.error||'Try again';
-      else lbl='Tap to log any station';
-      mic.innerHTML=GVB_MIC+'<span id="gvbLabel">'+lbl+'</span>';
+    }else if(p==='answered'){
+      lbl.textContent=(voiceLog.result&&voiceLog.result.reply)||'Tap to dismiss';
+      sub.textContent='tap to dismiss';
+    }else if(p==='error'){
+      lbl.textContent=voiceLog.error||'Try again';
+      sub.textContent='tap to retry';
     }
   }
   const sess=g('gvbSession');
