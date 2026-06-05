@@ -913,7 +913,7 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
           <div class="ss-name">${strike.label}</div>
           <span class="delta down">−${pct}%</span>
           ${saving>0?`<span class="ss-save">NT$${saving.toLocaleString()}</span>`:''}
-          <button class="btn mg xs" onclick="openStrike('${strike.label}',${pct},${saving})">Done — I trimmed it</button>
+          <button class="btn mg xs" onclick="openStrike('${strike.label}',${pct},${saving})">Done ✓</button>
         </div>`;
       }
       return `<div class="strike">
@@ -1222,7 +1222,8 @@ function renderGlobalVoiceBar(){
       lbl.textContent=(voiceLog.result&&voiceLog.result.reply)||'Tap to dismiss';
       sub.textContent='tap to dismiss';
     }else if(p==='error'){
-      lbl.textContent=voiceLog.error||'Try again';
+      const errText=voiceLog.error||'Try again';
+      lbl.textContent=errText.length>40?errText.slice(0,40)+'…':errText;
       sub.textContent='tap to retry';
     }
   }
@@ -1349,7 +1350,7 @@ function submitVoiceText(text){
     autoConfirmStrikeIfMatch(parsed.station);
     autoResetVoiceLog(8000);
   }else{
-    voiceLog.phase='error';voiceLog.error='Couldn\'t find station + amount in "'+t+'"';
+    voiceLog.phase='error';voiceLog.error="Didn't catch that — say station + amount";
     renderVoiceLog();autoResetVoiceLog(4000);
   }
 }
@@ -1482,7 +1483,7 @@ function routeIntent(intent,text){
   }
   // UNCLEAR (or CONFIRM in isolation, which we treat as guidance)
   voiceLog.phase='error';
-  voiceLog.error=intent.reply||"Try: 'Japanese 2 kilos' or 'Western Hot 500g'";
+  voiceLog.error="Didn't catch that — say station + amount";
   renderVoiceLog();autoResetVoiceLog(4000);
 }
 function localParseFinish(text){
@@ -1495,7 +1496,7 @@ function localParseFinish(text){
     autoResetVoiceLog(8000);
   }else{
     voiceLog.phase='error';
-    voiceLog.error='Heard: "'+text+'" — say station name + amount';
+    voiceLog.error="Didn't catch that — say station + amount";
     renderVoiceLog();autoResetVoiceLog(4000);
   }
 }
