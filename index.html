@@ -1125,6 +1125,9 @@ let voiceLog={phase:'idle',transcript:'',result:null,error:''};
 let voiceLogRec=null;
 let voiceLogSilenceTimer=null;
 let voiceLogResetTimer=null;
+const VLOG_HINTS=['Western Hot over-prep 2 kg','Dim Sum waste 1 kg','西式熱食 過量準備 2公斤'];
+let vlogHintIdx=0;
+setInterval(()=>{vlogHintIdx=(vlogHintIdx+1)%VLOG_HINTS.length;const el=document.getElementById('vlogHintSpan');if(el)el.textContent='try: "'+VLOG_HINTS[vlogHintIdx]+'"';},3000);
 function renderVoiceLog(){const c=g('voiceLogSlot');if(c)c.innerHTML=voiceLogTemplate();updateVoiceSummary();}
 function updateVoiceSummary(){
   const s=g('voiceLogSummary');
@@ -1221,7 +1224,7 @@ function voiceLogTemplate(){
     +'<button onclick="toggleVoiceLog()" style="background:none;border:none;color:rgba(245,242,236,.55);font-family:\'Jost\',sans-serif;font-size:11px;letter-spacing:.06em;cursor:pointer;padding:4px 0;text-decoration:underline;text-underline-offset:3px">↻ Or tap to retry voice</button>'
     +'</div>';
   return '<button class="vlog-btn vlog-idle" onclick="toggleVoiceLog()">'
-    +I.mic+'<span>Voice log — tap to dictate</span></button>';
+    +I.mic+'<span id="vlogHintSpan">try: "'+VLOG_HINTS[vlogHintIdx]+'"</span></button>';
 }
 function submitVoiceText(text){
   const t=(text||'').trim();if(!t)return;
