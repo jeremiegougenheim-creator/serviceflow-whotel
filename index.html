@@ -712,6 +712,26 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
       <div class="kpi"><div class="k">Occupancy</div><div class="v">${s.occupancyPct}<small>%</small></div><div class="d">${s.roomsSold} of 405 keys</div></div>
       <div class="kpi"><div class="k">CO₂e ↓ tonight</div><div class="v br">${b.co2}<small>kg</small></div><div class="d">Serve 360-ready</div></div>
     </div>
+    <div style="margin:0 0 16px;padding:12px 14px;background:rgba(8,145,178,.06);border:1px solid rgba(8,145,178,.12);border-radius:12px">
+      <div style="font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--w-blue-dark);font-weight:700;margin-bottom:10px">How ServiceFlow talks to your team</div>
+      <div style="display:flex;align-items:center;gap:0">
+        <div style="flex:1;text-align:center">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:var(--w-blue-dark)">18:00</div>
+          <div style="font-size:9px;color:var(--mid-grey);letter-spacing:.06em;margin-top:2px">MORNING BRIEF</div>
+        </div>
+        <div style="width:20px;height:1px;background:rgba(8,145,178,.25)"></div>
+        <div style="flex:1;text-align:center">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:var(--w-blue-dark)">03:30</div>
+          <div style="font-size:9px;color:var(--mid-grey);letter-spacing:.06em;margin-top:2px">DAWN UPDATE</div>
+        </div>
+        <div style="width:20px;height:1px;background:rgba(8,145,178,.25)"></div>
+        <div style="flex:1;text-align:center">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:var(--w-blue-dark)">06:00</div>
+          <div style="font-size:9px;color:var(--mid-grey);letter-spacing:.06em;margin-top:2px">SERVICE READY</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--mid-grey);text-align:center;cursor:pointer" onclick="go('notifs')">See all 8 notifications ›</div>
+    </div>
     <div class="eyebrow">Modules</div>
     <div class="dash-tile" role="button" tabindex="0" data-go="brief" onclick="go('brief')">
       <div class="dash-i" style="background:rgba(8,145,178,.12);color:var(--w-blue-dark)">${I.brief}</div>
@@ -782,7 +802,10 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
     <!-- TODO: Phase 2 — scorecard. Re-enable once b.grades is rebuilt (grades was removed; Phase 1 shows trend indicators only). -->
 
     <div class="ab-box">
-      <div class="ab-eb">${s.label.toUpperCase()} — 3 DECISIONS FOR THIS SERVICE</div>
+      <div class="ab-eb" style="justify-content:space-between;width:100%">
+        <span>${s.label.toUpperCase()} — ${b.actions.length} DECISIONS FOR THIS SERVICE</span>
+        ${confirmedStrikes.length>0?`<span style="font-family:'Jost',sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;color:#42C97E">${confirmedStrikes.length}/${b.actions.length} ✓</span>`:''}
+      </div>
       <div class="ab-h">Trim, <em>boost,</em> hold.</div>
       <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,240,232,.45);font-weight:600;margin-top:6px">Prepared yesterday 18:00 · applies this morning</div>
       ${actionItems}
@@ -792,7 +815,7 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
       </div>
       ${wasteNote?'<div style="font-size:11px;color:rgba(245,240,232,.55);line-height:1.5;margin-top:8px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px">'+wasteNote+'</div>':''}
       <div style="font-size:10px;color:rgba(245,240,232,.35);margin-top:10px;line-height:1.5;letter-spacing:.02em">Numbers based on WRAP 2025 benchmarks applied to W Taipei volume. Replaced with live PMS data from pilot week 2.</div>
-      <button class="btn ghost" style="margin-top:10px;font-size:11px" onclick="shareBrief()">↗ Share this brief</button>
+      <button class="btn ghost" style="margin-top:10px;font-size:11px" onclick="shareBrief()">↗ Send to kitchen team</button>
     </div>
 
     <div class="sec-h"><h3>Stations · ${s.label} breakfast</h3><span class="sa">9 stations</span></div>
@@ -884,7 +907,7 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
           <div class="ss-name">${strike.label}</div>
           <span class="delta down">−${pct}%</span>
           ${saving>0?`<span class="ss-save">NT$${saving.toLocaleString()}</span>`:''}
-          <button class="btn mg xs" onclick="openStrike('${strike.label}',${pct},${saving})">CONFIRM</button>
+          <button class="btn mg xs" onclick="openStrike('${strike.label}',${pct},${saving})">Done — I trimmed it</button>
         </div>`;
       }
       return `<div class="strike">
@@ -897,7 +920,7 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
         <div class="st-tile"><div class="v">+${strike.waves.wave_0800||strike.waves.wave_0745||0}</div><div class="k">${s.isWeekend?'08:00':'07:45'} wave</div></div>
         <div class="st-tile"><div class="v">${strike.measuredY}<small style="font-size:10px;letter-spacing:.05em"> kg</small></div><div class="k">Yest. waste</div></div>
       </div>
-      <button class="btn mg" onclick="openStrike('${strike.label}',${pct},${saving})">CONFIRM &amp; LOG</button>
+      <button class="btn mg" onclick="openStrike('${strike.label}',${pct},${saving})">Done — I trimmed it</button>
     </div>`;
     }).join('');
     const doneHtml=confirmedStrikes.map(c=>{
@@ -928,7 +951,7 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
     <div id="gvbSession" class="gvb-session" style="padding:0 16px 8px;background:var(--warm-white)"></div>
     ${strikeCards}
     ${doneHtml}
-    <div class="sec-h"><h3>Station prep</h3><span class="sa">${s.label} · ${b.covers} covers</span></div>
+    <div class="sec-h"><h3>Station prep</h3><span class="sa">Opening quantities · ${b.covers} covers</span></div>
     ${cards}
     ${actionsHtml}`;
   } else {
@@ -1614,7 +1637,7 @@ function openLog(){
     +'<div class="field">Station</div><div class="opts">'+STATIONS.slice(0,6).map(st=>'<div class="opt '+(logSel.station===st.label?'on':'')+'" onclick="logSel.station=\''+st.label+'\';openLog()">'+st.label+'</div>').join('')+'</div>'
     +'<div class="field">Type</div><div class="opts">'+types.map(t=>'<div class="opt '+(logSel.type===t?'on':'')+'" onclick="logSel.type=\''+t+'\';openLog()">'+t+'</div>').join('')+'</div>'
     +discloseToggle+panel
-    +'<button class="btn mg" style="margin-top:18px" onclick="submitLog()">CONFIRM &amp; LOG</button>'
+    +'<button class="btn mg" style="margin-top:18px" onclick="submitLog()">Done — I trimmed it</button>'
     +'<button class="btn ghost sm" style="margin-top:9px" onclick="closeLog()">Cancel</button></div>';
   document.querySelector('.phone').appendChild(sheet);
 }
@@ -1689,7 +1712,7 @@ function pick(r){
 function go(t){console.log('go called:',t,'role:',state.role);closeLog();state.tab=t;render();}
 function setSc(sc){state.scenario=sc;state.strikeIndex=0;confirmedStrikes=[];state.actionsOpen=false;render();}
 function setOutlet(o){state.outlet=o;render();}
-function shareBrief(){if(navigator.share){navigator.share({title:'Morning Brief · Lauds',text:'Lauds Morning Brief for W Taipei — '+new Date().toLocaleDateString(),url:'https://service-flow.dev'});}else{navigator.clipboard&&navigator.clipboard.writeText('https://service-flow.dev');toast('Link copied to clipboard','#0891B2');}}
+function shareBrief(){if(navigator.share){navigator.share({title:'Morning Brief · ServiceFlow',text:'ServiceFlow Morning Brief for W Taipei — '+new Date().toLocaleDateString(),url:'https://service-flow.dev'});}else{navigator.clipboard&&navigator.clipboard.writeText('https://service-flow.dev');toast('Link copied to clipboard','#0891B2');}}
 function toast(msg,color){const t=document.createElement('div');t.textContent=msg;
   t.style.cssText='position:absolute;left:50%;bottom:110px;transform:translateX(-50%);background:'+color+';color:#fff;font-weight:600;padding:13px 19px;border-radius:13px;font-size:12.5px;letter-spacing:.04em;z-index:30;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:88%;text-align:center;font-family:Jost,sans-serif';
   document.querySelector('.phone').appendChild(t);setTimeout(()=>t.remove(),2200);}
