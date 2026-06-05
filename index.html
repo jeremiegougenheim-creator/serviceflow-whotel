@@ -328,6 +328,15 @@ html,body{
 .vlog-hint{font-size:12px;font-weight:400;color:rgba(245,242,236,.4);margin:4px 0 0;font-style:italic}
 .vlog-summary{font-family:'Jost',sans-serif;font-size:14px;font-weight:600;color:#16A34A;margin:4px 0 0;letter-spacing:.04em}
 .vlog-summary-line{margin-top:8px;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.04em;color:rgba(245,242,236,.7);text-align:center;line-height:1.4}
+.gvb{background:rgba(15,20,35,.97);border-bottom:1px solid rgba(255,255,255,.09);padding:10px 14px;position:sticky;top:0;z-index:15}
+.gvb-mic{display:flex;align-items:center;gap:8px;cursor:pointer;font-family:'Jost',sans-serif;font-size:13px;font-weight:600;color:rgba(245,242,236,.75);letter-spacing:.04em;padding:9px 14px;border:1px dashed rgba(255,255,255,.22);border-radius:10px;transition:border-color .2s}
+.gvb-mic:active{background:rgba(255,255,255,.04)}
+.gvb-listening .gvb-mic{border-color:rgba(212,0,75,.5);color:rgba(212,0,75,.9)}
+.gvb-thinking .gvb-mic{border-color:rgba(200,164,76,.4);color:rgba(200,164,76,.85)}
+.gvb-confirmed .gvb-mic{border-color:rgba(66,201,126,.5);color:#42C97E}
+.gvb-error .gvb-mic{border-color:rgba(192,57,43,.5);color:#C0392B}
+.gvb-session{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.gvb-chip{font-family:'Jost',sans-serif;font-size:11px;font-weight:700;background:rgba(66,201,126,.15);color:#42C97E;border:1px solid rgba(66,201,126,.25);border-radius:6px;padding:3px 9px;letter-spacing:.04em}
 .voice-btn svg{width:15px;height:15px;stroke:var(--champagne);fill:none;stroke-width:2;flex-shrink:0}
 
 #nav{position:absolute;left:0;right:0;bottom:0;height:78px;background:rgba(250,248,244,.96);backdrop-filter:blur(14px);border-top:1px solid var(--marble);display:flex;align-items:center;justify-content:space-around;padding:0 6px 14px;z-index:20}
@@ -868,8 +877,6 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
         <div class="st-tile"><div class="v">${strike.measuredY}<small style="font-size:10px;letter-spacing:.05em"> kg</small></div><div class="k">Yest. waste</div></div>
       </div>
       <button class="btn mg" onclick="openStrike('${strike.label}',${pct},${saving})">CONFIRM &amp; LOG</button>
-      <div id="voiceLogSlot" style="position:relative;z-index:1;margin-top:10px">${voiceLogTemplate()}</div>
-      <div id="voiceLogSummary" class="vlog-summary-line" style="position:relative;z-index:1"></div>
     </div>`;
     }).join('');
     const doneHtml=confirmedStrikes.map(c=>{
@@ -888,6 +895,12 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
         +(state.actionsOpen?'<div class="card" style="padding:0;overflow:hidden">'+aRows+'</div>':'');
     }
     body=`
+    <div id="globalVoiceBar" class="gvb">
+      <div id="gvbMic" class="gvb-mic" onclick="toggleVoiceLog()">
+        ${I.mic}<span id="gvbLabel">Tap to log any station</span>
+      </div>
+      <div id="gvbSession" class="gvb-session"></div>
+    </div>
     ${strikeCards}
     ${doneHtml}
     <div class="sec-h"><h3>Station prep</h3><span class="sa">${s.label} · ${b.covers} covers</span></div>
@@ -1127,8 +1140,25 @@ let voiceLogSilenceTimer=null;
 let voiceLogResetTimer=null;
 const VLOG_HINTS=['Western Hot over-prep 2 kg','Dim Sum waste 1 kg','西式熱食 過量準備 2公斤'];
 let vlogHintIdx=0;
-setInterval(()=>{vlogHintIdx=(vlogHintIdx+1)%VLOG_HINTS.length;const el=document.getElementById('vlogHintSpan');if(el)el.textContent='try: "'+VLOG_HINTS[vlogHintIdx]+'"';},3000);
-function renderVoiceLog(){const c=g('voiceLogSlot');if(c)c.innerHTML=voiceLogTemplate();updateVoiceSummary();}
+setInterval(()=>{vlogHintIdx=(vlogHintIdx+1)%VLOG_HINTS.length;const el=document.getElementById('vlogHintSpan');if(el)el.textContent='try: "'+VLOG_HINTS[vlogHintIdx]+'"';const gb=document.getElementById('gvbLabel');if(gb&&voiceLog.phase==='idle')gb.textContent='try: "'+VLOG_HINTS[vlogHintIdx]+'"';},3000);
+function renderGlobalVoiceBar(){
+  const bar=g('globalVoiceBar');
+  if(!bar)return;
+  const p=voiceLog.phase;
+  bar.className='gvb'+(p==='listening'?' gvb-listening':p==='thinking'?' gvb-thinking':p==='confirmed'?' gvb-confirmed':p==='error'?' gvb-error':'');
+  const lbl=g('gvbLabel');
+  if(lbl){
+    if(p==='idle')lbl.textContent='Tap to log any station';
+    else if(p==='listening')lbl.textContent=voiceLog.transcript||'Listening — tap to stop';
+    else if(p==='thinking')lbl.textContent=voiceLog.transcript||'Reading that…';
+    else if(p==='confirmed')lbl.textContent='✓ '+(voiceLog.result&&voiceLog.result.summary||'Logged');
+    else if(p==='answered')lbl.textContent=(voiceLog.result&&voiceLog.result.reply||'Tap to dismiss');
+    else if(p==='error')lbl.textContent=voiceLog.error||'Try again';
+  }
+  const sess=g('gvbSession');
+  if(sess){sess.innerHTML=voiceLogEntries.map(e=>'<span class="gvb-chip">'+e.station+' '+e.amount+'kg ✓</span>').join('');}
+}
+function renderVoiceLog(){renderGlobalVoiceBar();updateVoiceSummary();}
 function updateVoiceSummary(){
   const s=g('voiceLogSummary');
   if(!s)return;
@@ -1586,7 +1616,7 @@ function render(){
   screenEl.innerHTML=html;screenEl.scrollTop=0;
   // role selector has no bottom nav, so drop the reserved bottom padding
   screenEl.style.paddingBottom=state.role?'120px':'0';
-  renderNav();setSbar();updateVoiceSummary();
+  renderNav();setSbar();updateVoiceSummary();renderGlobalVoiceBar();
 }
 function pick(r){
   state.role=r;
