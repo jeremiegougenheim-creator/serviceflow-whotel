@@ -624,7 +624,7 @@ const NOTIF_TIMELINE=[
 ];
 const TIER_COLORS={blue:'var(--w-blue)',mag:'var(--w-mag)',esg:'var(--esg)',champagne:'var(--champagne)',red:'#C04848'};
 
-let state={role:null,scenario:'sat',tab:'dashboard',outlet:'kitchen',strikeIndex:0,actionsOpen:false};
+let state={role:null,scenario:'sat',tab:'dashboard',outlet:'kitchen',strikeIndex:0,actionsOpen:false,briefStationsExpanded:false};
 let confirmedStrikes=[];
 // Voice input: Cloudflare Whisper via MediaRecorder — works on iOS Safari 14.3+,
 // Chrome, Firefox, and Edge. No Web Speech API dependency.
@@ -738,16 +738,6 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
       <div class="dash-b"><div class="dash-t">Morning Brief</div><div style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--w-blue-dark);opacity:.7;margin-bottom:2px">Prepared last night · 18:00</div><div class="dash-d">9 stations · ${b.actions.length} priority actions · ${b.cooks} cooks / ${b.servers} servers</div></div>
       <div class="dash-arrow">›</div>
     </div>
-    <div class="dash-tile" role="button" tabindex="0" data-go="notifs" onclick="go('notifs')">
-      <div class="dash-i" style="background:rgba(160,120,74,.14);color:var(--champagne-dark)"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9M9 21a3 3 0 006 0"/></svg></div>
-      <div class="dash-b"><div class="dash-t">How it talks to you</div><div class="dash-d">8 notifications across 24h · 5 tiers · auto-routed to the right person</div></div>
-      <div class="dash-arrow">›</div>
-    </div>
-    <div class="dash-tile" role="button" tabindex="0" data-go="gap" onclick="go('gap')">
-      <div class="dash-i" style="background:rgba(74,143,94,.10);color:var(--esg)"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/></svg></div>
-      <div class="dash-b"><div class="dash-t">W Taipei today vs with ServiceFlow</div><div class="dash-d">8-gap analysis · NT$867K/yr opportunity · GRI 306 aligned</div></div>
-      <div class="dash-arrow">›</div>
-    </div>
     <div class="dash-tile" role="button" tabindex="0" data-go="fb" onclick="go('fb')">
       <div class="dash-i" style="background:rgba(190,24,93,.12);color:var(--w-mag-dark)">${I.fb}</div>
       <div class="dash-b"><div class="dash-t">F&amp;B Hub</div><div class="dash-d">The Kitchen Table · YEN · WOOBAR · WET DECK · W&amp;W</div></div>
@@ -756,6 +746,16 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
     <div class="dash-tile" role="button" tabindex="0" data-go="esg" onclick="go('esg')">
       <div class="dash-i" style="background:rgba(74,143,94,.12);color:var(--esg)">${I.esg}</div>
       <div class="dash-b"><div class="dash-t">ESG · Serve 360</div><div class="dash-d">${b.co2} kg CO₂e ↓ tonight · 52 kg this month · Taiwan FSC mapped</div></div>
+      <div class="dash-arrow">›</div>
+    </div>
+    <div class="dash-tile" role="button" tabindex="0" data-go="gap" onclick="go('gap')">
+      <div class="dash-i" style="background:rgba(74,143,94,.10);color:var(--esg)"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/></svg></div>
+      <div class="dash-b"><div class="dash-t">W Taipei today vs with ServiceFlow</div><div class="dash-d">8-gap analysis · NT$867K/yr opportunity · GRI 306 aligned</div></div>
+      <div class="dash-arrow">›</div>
+    </div>
+    <div class="dash-tile" role="button" tabindex="0" data-go="notifs" onclick="go('notifs')">
+      <div class="dash-i" style="background:rgba(160,120,74,.14);color:var(--champagne-dark)"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9M9 21a3 3 0 006 0"/></svg></div>
+      <div class="dash-b"><div class="dash-t">How it talks to you</div><div class="dash-d">8 notifications across 24h · 5 tiers · auto-routed to the right person</div></div>
       <div class="dash-arrow">›</div>
     </div>
     <div class="dash-tile" role="button" tabindex="0" data-go="portfolio" onclick="go('portfolio')">
@@ -771,7 +771,7 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
   const wh=b.stations.find(st=>st.key==='western_hot');
   const wasteNote=wh?'Western Hot adjusted '+Math.round(wh.delta*100)+'% based on yesterday\'s staff-logged waste ('+wh.measuredY+' kg / ~'+Math.round(BASE_PARS['western_hot']*b.scale)+' portions = waste log)':'';
   const actionItems=top.map((a,i)=>'<div class="ab-item"><div class="ab-ring">'+(i+1)+'</div><div class="ab-body"><div class="ab-tx">'+a.tx+'</div><div class="ab-meta">'+a.meta+'</div></div>'+(a.saving>0?'<div class="ab-save">NT$'+a.saving.toLocaleString()+'</div>':'<div class="ab-save zero">—</div>')+'</div>').join('');
-  const stationRows=b.stations.map(st=>{
+  const stationRowsAll=b.stations.map(st=>{
     const sg=st.delta>0?'+':'';
     const cls=st.delta>0.04?'up':st.delta<-0.04?'down':'flat';
     const isCoffee=st.key==='coffee_bar';
@@ -782,7 +782,9 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
     const prep='<b>'+w1+'</b> at 06:30 · <b>+'+w2k+'</b> at '+wt2+(isCoffee?'':' · <b>+'+w3k+'</b> at '+wt3);
     const wasteTag=st.wasteRatio>=0.10?'<div class="st-wastelog">Staff-logged · per station: '+st.measuredY+' kg yesterday ('+Math.round(st.wasteRatio*100)+'% ratio)</div>':'';
     return '<div class="st-row"><div class="st-badge" style="background:'+STATION_BADGE[st.key]+'"></div><div class="st-body"><div class="st-name">'+st.label+'<span class="delta flat" style="float:right">'+confPct+'%</span></div><div class="st-prep">'+prep+'</div><div class="st-cause">'+st.reason+'</div>'+wasteTag+'<div class="st-waste">Yest. waste: '+st.measuredY+' kg</div></div><div class="st-pct '+cls+'">'+sg+Math.round(st.delta*100)+'%</div></div>';
-  }).join('');
+  });
+  const stationRows=(state.briefStationsExpanded?stationRowsAll:stationRowsAll.slice(0,3)).join('');
+  const stationToggle=stationRowsAll.length>3?`<button onclick="state.briefStationsExpanded=!state.briefStationsExpanded;render()" class="btn ghost" style="font-size:11px;margin-top:8px">${state.briefStationsExpanded?'Show less ↑':'Show all '+stationRowsAll.length+' stations ›'}</button>`:'';
   return `
   <div class="hero bl">
     ${brandRow()}
@@ -801,6 +803,10 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
     </div>
     <!-- TODO: Phase 2 — scorecard. Re-enable once b.grades is rebuilt (grades was removed; Phase 1 shows trend indicators only). -->
 
+    <div style="text-align:right;margin-bottom:12px">
+      <button class="btn ghost" style="font-size:11px;padding:6px 12px" onclick="shareBrief()">↗ Send to kitchen team</button>
+    </div>
+
     <div class="ab-box">
       <div class="ab-eb" style="justify-content:space-between;width:100%">
         <span>${s.label.toUpperCase()} — ${b.actions.length} DECISIONS FOR THIS SERVICE</span>
@@ -815,12 +821,12 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
       </div>
       ${wasteNote?'<div style="font-size:11px;color:rgba(245,240,232,.55);line-height:1.5;margin-top:8px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px">'+wasteNote+'</div>':''}
       <div style="font-size:10px;color:rgba(245,240,232,.35);margin-top:10px;line-height:1.5;letter-spacing:.02em">Numbers based on WRAP 2025 benchmarks applied to W Taipei volume. Replaced with live PMS data from pilot week 2.</div>
-      <button class="btn ghost" style="margin-top:10px;font-size:11px" onclick="shareBrief()">↗ Send to kitchen team</button>
     </div>
 
     <div class="sec-h"><h3>Stations · ${s.label} breakfast</h3><span class="sa">9 stations</span></div>
     <div class="divider"></div>
     ${stationRows}
+    ${stationToggle}
 
     <div class="esg-card">
       <div class="ico">${I.esg}</div>
@@ -951,7 +957,7 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
     <div id="gvbSession" class="gvb-session" style="padding:0 16px 8px;background:var(--warm-white)"></div>
     ${strikeCards}
     ${doneHtml}
-    <div class="sec-h"><h3>Station prep</h3><span class="sa">Opening quantities · ${b.covers} covers</span></div>
+    <div class="sec-h"><h3>Station prep</h3><span class="sa">Set before 06:30 · ${b.covers} covers</span></div>
     ${cards}
     ${actionsHtml}`;
   } else {
@@ -982,12 +988,6 @@ function screenEsg(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
       <div class="kpi"><div class="k">CO₂e / guest</div><div class="v gn">0.34<small>kg ↓</small></div><div class="d">vs. ind. range 0.40–0.55 <span title="² CO₂e factors: Poore &amp; Nemecek (Science 2018) + WRAP UK. Industry range 0.40–0.55: Sustainable Hospitality Alliance benchmark" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
       <div class="kpi"><div class="k">Waste cut</div><div class="v">28<small>%</small></div><div class="trend">↓ <span class="delta up">−28%</span> engine learning</div><div class="d">30-day rolling <span title="WRAP 2024 — 12% waste baseline; ServiceFlow pilot target 28% reduction" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
     </div>
-    <div class="eyebrow">Frameworks</div>
-    <div class="card">
-      <div class="prow" role="button" tabindex="0" onclick="toast('Coming soon · Serve 360 export module ships Phase 2','#16A34A')" style="cursor:pointer"><div><div class="nm">Marriott Serve 360</div><div class="rs">Export-ready · GRI 306 aligned</div></div><span class="delta flat">ready</span></div>
-      <div class="prow" role="button" tabindex="0" onclick="toast('Coming soon · Taiwan FSC export ships Phase 2','#16A34A')" style="cursor:pointer"><div><div class="nm">Taiwan FSC</div><div class="rs">Draft report ready</div></div><span class="delta flat">monthly</span></div>
-      <div class="prow" role="button" tabindex="0" onclick="toast('Coming soon · GRI 306 detail view ships Phase 2','#16A34A')" style="cursor:pointer"><div><div class="nm">GRI 306 mapping</div><div class="rs">Waste, water, energy</div></div><span class="delta flat">mapped</span></div>
-    </div>
     <div class="eyebrow">This morning</div>
     <div class="card">
       <div class="prow"><span class="nm">Over-prep avoided</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#16A34A">NT$${b.save.toLocaleString()}</b></div>
@@ -995,6 +995,12 @@ function screenEsg(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
       <div class="prow"><span class="nm">Single-use bottles avoided · MTD</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#16A34A">3,140 <span title="³ Ellen MacArthur Foundation · 30g CO₂e per PET 500ml bottle (production + transport)" style="font-size:12px;cursor:help;font-weight:400;opacity:0.55;color:#6B7280">ⓘ</span></b></div>
     </div>
     <div class="card flat" style="background:#F7F4EF;border:1px solid #E5E7EB"><div style="font-size:12px;line-height:1.55;color:#6B7280"><b class="gn" style="color:#16A34A">Measured, not modelled —</b> waste → CO₂e from the staff-recorded waste log. The model only forecasts; the log audits.</div></div>
+    <div class="eyebrow">Frameworks</div>
+    <div class="card">
+      <div class="prow" role="button" tabindex="0" onclick="toast('Coming soon · Serve 360 export module ships Phase 2','#16A34A')" style="cursor:pointer"><div><div class="nm">Marriott Serve 360</div><div class="rs">Export-ready · GRI 306 aligned</div></div><span class="delta flat">ready</span></div>
+      <div class="prow" role="button" tabindex="0" onclick="toast('Coming soon · Taiwan FSC export ships Phase 2','#16A34A')" style="cursor:pointer"><div><div class="nm">Taiwan FSC</div><div class="rs">Draft report ready</div></div><span class="delta flat">monthly</span></div>
+      <div class="prow" role="button" tabindex="0" onclick="toast('Coming soon · GRI 306 detail view ships Phase 2','#16A34A')" style="cursor:pointer"><div><div class="nm">GRI 306 mapping</div><div class="rs">Waste, water, energy</div></div><span class="delta flat">mapped</span></div>
+    </div>
   </div>`;}
 
 function screenPortfolio(){return `
@@ -1099,7 +1105,8 @@ function screenGap(){
       </div>
       ${tableRows}
     </div>
-    <div class="ab-box" style="margin-top:14px">
+    <div class="eyebrow" style="margin-top:18px">Economics · Year 1</div>
+    <div class="ab-box" style="margin-top:0">
       <div class="ab-eb">ECONOMICS · W TAIPEI PILOT · YEAR 1</div>
       <div class="ab-h"><span class="delta down" style="vertical-align:middle">4%</span> today → <em>NT$867K/yr <span title="¹ Industry math: WRAP 2025 baseline (12% waste, 180 resort kitchens) applied to W Taipei volume. To be calibrated at pilot week 2." style="font-size:14px;cursor:help;font-style:normal;opacity:0.55">ⓘ</span></em></div>
       <div style="position:relative;z-index:1;font-size:12px;color:rgba(245,240,232,.7);line-height:1.5">
