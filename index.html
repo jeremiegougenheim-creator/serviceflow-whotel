@@ -670,8 +670,10 @@ function screenRole(){return `
     <div class="role-sf-watermark" aria-hidden="true">ServiceFlow</div>
     <div class="role-hero">
       <div class="role-brand"><span class="role-w">W</span><span class="role-prop">W TAIPEI · XINYI</span></div>
+      <div style="display:inline-block;background:rgba(190,24,93,.15);border:1px solid rgba(190,24,93,.3);border-radius:5px;font-family:'Jost',sans-serif;font-size:9px;font-weight:700;letter-spacing:.16em;color:rgba(190,24,93,.9);padding:3px 10px;margin-bottom:16px">LIVE DEMO · W TAIPEI</div>
       <h1 class="role-h1">The Breakfast <em>Brain.</em></h1>
       <p class="role-sub">An operating layer for <em>W Taipei</em> — Xinyi District. Choose a vantage point.</p>
+      <p style="font-family:'Jost',sans-serif;font-size:12px;color:rgba(255,255,255,.45);letter-spacing:.08em;text-transform:uppercase;margin:0 0 20px">Select your role to begin</p>
     </div>
     <div class="role-cards">
       <button class="role-card teal" onclick="pick('gm')">
@@ -820,7 +822,7 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
         <div class="ab-recap-v">NT$${b.save.toLocaleString()}</div>
       </div>
       ${wasteNote?'<div style="font-size:11px;color:rgba(245,240,232,.55);line-height:1.5;margin-top:8px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px">'+wasteNote+'</div>':''}
-      <div style="font-size:10px;color:rgba(245,240,232,.35);margin-top:10px;line-height:1.5;letter-spacing:.02em">Numbers based on WRAP 2025 benchmarks applied to W Taipei volume. Replaced with live PMS data from pilot week 2.</div>
+      <div style="font-size:10px;color:rgba(245,240,232,.25);margin-top:10px;line-height:1.5;letter-spacing:.02em">Numbers based on WRAP 2025 benchmarks applied to W Taipei volume. Replaced with live PMS data from pilot week 2.</div>
     </div>
 
     <div class="sec-h"><h3>Stations · ${s.label} breakfast</h3><span class="sa">9 stations</span></div>
@@ -853,7 +855,6 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
     </div>
     ${weekBar()}
     ${shouldShowEodButton()?'<div class="log-cta-wrap"><button onclick="openLog()" class="log-cta"><span style="font-size:17px">☑</span>LOG FIN DE SERVICE · 5 min</button><div class="log-trend">Team logging in ~5 min avg</div></div>':''}
-    <div class="sec-h"><h3>When it runs</h3><button class="sa" onclick="go('cadence')">5 gates ›</button></div>
     <button class="btn ghost" data-go="dashboard" onclick="go('dashboard')" style="margin-top:14px">← Back to home</button>
   </div>`;}
 
@@ -957,7 +958,7 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
     <div id="gvbSession" class="gvb-session" style="padding:0 16px 8px;background:var(--warm-white)"></div>
     ${strikeCards}
     ${doneHtml}
-    <div class="sec-h"><h3>Station prep</h3><span class="sa">Set before 06:30 · ${b.covers} covers</span></div>
+    <div class="sec-h"><h3>Station prep</h3><span class="sa">Opening quantities · ${b.covers} covers</span></div>
     ${cards}
     ${actionsHtml}`;
   } else {
@@ -1671,7 +1672,7 @@ function closeLog(){
 
 const TABS=[
   ['dashboard','Home','dash'],
-  ['brief','Morning Brief','brief'],
+  ['brief','Brief','brief'],
   ['fb','F&B','fb'],
   ['esg','ESG','esg']
   // TODO Phase 2 — re-add ['portfolio','Owner','portfolio'] once owner role ships
@@ -1717,7 +1718,7 @@ function pick(r){
   else state.tab='dashboard';
   closeLog();render();
 }
-function go(t){console.log('go called:',t,'role:',state.role);closeLog();state.tab=t;render();}
+function go(t){closeLog();state.tab=t;render();}
 function setSc(sc){state.scenario=sc;state.strikeIndex=0;confirmedStrikes=[];state.actionsOpen=false;render();}
 function setOutlet(o){state.outlet=o;render();}
 function shareBrief(){if(navigator.share){navigator.share({title:'Morning Brief · ServiceFlow',text:'ServiceFlow Morning Brief for W Taipei — '+new Date().toLocaleDateString(),url:'https://service-flow.dev'});}else{navigator.clipboard&&navigator.clipboard.writeText('https://service-flow.dev');toast('Link copied to clipboard','#0891B2');}}
