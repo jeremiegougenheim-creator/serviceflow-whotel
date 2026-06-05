@@ -698,7 +698,7 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
     <div class="eyebrow">Modules</div>
     <div class="dash-tile" role="button" tabindex="0" data-go="brief" onclick="go('brief')">
       <div class="dash-i" style="background:rgba(8,145,178,.12);color:var(--w-blue-dark)">${I.brief}</div>
-      <div class="dash-b"><div class="dash-t">Nightly briefing</div><div class="dash-d">9 stations · ${b.actions.length} priority actions · ${b.cooks} cooks / ${b.servers} servers</div></div>
+      <div class="dash-b"><div class="dash-t">Nightly briefing</div><div style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--w-blue-dark);opacity:.7;margin-bottom:2px">Prepared last night · 18:00</div><div class="dash-d">9 stations · ${b.actions.length} priority actions · ${b.cooks} cooks / ${b.servers} servers</div></div>
       <div class="dash-arrow">›</div>
     </div>
     <div class="dash-tile" role="button" tabindex="0" data-go="notifs" onclick="go('notifs')">
@@ -728,7 +728,8 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
     </div>
   </div>`;}
 
-function screenBrief(){const s=SCEN[state.scenario],b=computeBriefing(s);
+function screenBrief(){try{return _screenBriefInner();}catch(e){console.error('screenBrief threw:',e);toast('Brief error: '+e.message,'#C04848');return '<div class="body" style="padding:20px"><p style="color:#C04848;font-size:13px">'+e.message+'</p></div>';}}
+function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
   // TODO: Phase 2 — scorecard render. Re-enable once b.grades is back.
   // const grades=Object.entries(b.grades).map(([k,d])=>'<div class="g"><div class="v" style="color:'+gradeColor(d.v)+'">'+d.v+'</div><div class="k">'+k+'</div><div class="glabel">'+d.label+'</div><div class="gcrit">'+d.c+'</div></div>').join('');
   const top=b.actions.slice(0,3);
@@ -1510,9 +1511,12 @@ function backFromTopbar(){
 }
 function render(){
   let html;
-  if(!state.role)html=screenRole();
-  else if(state.role==='owner')html=screenPortfolio();
-  else html=({dashboard:screenDashboard,brief:screenBrief,fb:screenFB,esg:screenEsg,portfolio:screenPortfolio,cadence:screenCadence,notifs:screenNotifs,gap:screenGap}[state.tab]||screenDashboard)();
+  // No role guard exists here — all tabs (including brief) are available to all roles.
+  try{
+    if(!state.role)html=screenRole();
+    else if(state.role==='owner')html=screenPortfolio();
+    else html=({dashboard:screenDashboard,brief:screenBrief,fb:screenFB,esg:screenEsg,portfolio:screenPortfolio,cadence:screenCadence,notifs:screenNotifs,gap:screenGap}[state.tab]||screenDashboard)();
+  }catch(e){console.error('render screen threw:',e);html='<div class="body" style="padding:20px"><p style="color:#C04848;font-size:13px">'+e.message+'</p></div>';}
   const screenEl=g('screen');
   screenEl.innerHTML=html;screenEl.scrollTop=0;
   // role selector has no bottom nav, so drop the reserved bottom padding
@@ -1526,7 +1530,7 @@ function pick(r){
   else state.tab='dashboard';
   closeLog();render();
 }
-function go(t){closeLog();state.tab=t;render();}
+function go(t){console.log('go called:',t,'role:',state.role);closeLog();state.tab=t;render();}
 function setSc(sc){state.scenario=sc;state.strikeIndex=0;confirmedStrikes=[];state.actionsOpen=false;render();}
 function setOutlet(o){state.outlet=o;render();}
 function toast(msg,color){const t=document.createElement('div');t.textContent=msg;
