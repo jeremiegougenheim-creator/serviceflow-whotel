@@ -312,7 +312,7 @@ html,body{
 .vlog-summary-line{margin-top:8px;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.04em;color:rgba(245,242,236,.7);text-align:center;line-height:1.4}
 .voice-btn svg{width:15px;height:15px;stroke:var(--champagne);fill:none;stroke-width:2;flex-shrink:0}
 
-#nav{position:absolute;left:0;right:0;bottom:0;height:78px;background:rgba(250,248,244,.96);backdrop-filter:blur(14px);border-top:1px solid var(--marble);display:flex;align-items:center;justify-content:space-around;padding:0 6px 14px;z-index:10}
+#nav{position:absolute;left:0;right:0;bottom:0;height:78px;background:rgba(250,248,244,.96);backdrop-filter:blur(14px);border-top:1px solid var(--marble);display:flex;align-items:center;justify-content:space-around;padding:0 6px 14px;z-index:20}
 .nb{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:7px 5px;border:none;background:none;color:var(--mid-grey);font-family:'Jost',sans-serif;flex:1;transition:color .2s}
 .nb svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9}
 .nb span{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
@@ -822,24 +822,14 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
   if(state.outlet==='kitchen'){
     const allStrikes=[...b.stations].filter(st=>st.delta<-0.05).sort((a,c)=>a.delta-c.delta);
     if(!allStrikes.length)allStrikes.push([...b.stations].sort((a,c)=>a.delta-c.delta)[0]);
-    if(state.strikeIndex>=allStrikes.length)state.strikeIndex=0;
-    const strike=allStrikes[state.strikeIndex];
-    const strikeTotal=allStrikes.length;
-    const strikePos=state.strikeIndex+1;
-    const pct=Math.round(Math.abs(strike.delta)*100);
-    const saving=Math.round((BASE_PARS[strike.key]*b.scale-strike.total)*CPP);
     const cards=b.stations.slice(0,6).map(st=>{const cls=st.delta>0.05?'up':st.delta<-0.05?'down':'flat';const sg=st.delta>0?'+':'';
       return '<div class="card" style="padding:14px 16px"><div class="row" style="justify-content:space-between;align-items:center"><div style="flex:1"><div class="st-name">'+st.label+'</div><div class="st-cause" style="margin-top:3px">'+st.reason+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:\'Cormorant Garamond\',serif;font-size:24px;font-weight:500;letter-spacing:-.01em;color:var(--charcoal);line-height:1">'+st.total+'</div><span class="delta '+cls+'" style="margin-top:4px;display:inline-block">'+sg+Math.round(st.delta*100)+'%</span></div></div></div>';}).join('');
-    body=`
-    <div class="strike">
+    const strikeCards=allStrikes.map((strike,i)=>{
+      const pct=Math.round(Math.abs(strike.delta)*100);
+      const saving=Math.round((BASE_PARS[strike.key]*b.scale-strike.total)*CPP);
+      return `<div class="strike">
       <svg class="strike-skyline" viewBox="0 0 195 300" width="195" height="300" aria-hidden="true"><g fill="rgba(255,255,255,0.055)"><rect x="5" y="228" width="15" height="72"/><rect x="24" y="212" width="13" height="88"/><rect x="41" y="235" width="10" height="65"/><rect x="60" y="268" width="50" height="32"/><rect x="64" y="250" width="42" height="19"/><rect x="68" y="232" width="34" height="19"/><rect x="71" y="215" width="28" height="18"/><rect x="74" y="200" width="22" height="16"/><rect x="76" y="186" width="18" height="15"/><rect x="78" y="173" width="14" height="14"/><rect x="80" y="162" width="10" height="12"/><rect x="82" y="152" width="6" height="11"/><rect x="84" y="84" width="2" height="69"/><rect x="126" y="210" width="12" height="90"/><rect x="142" y="230" width="12" height="70"/><rect x="158" y="218" width="12" height="82"/><rect x="174" y="242" width="12" height="58"/></g></svg>
-      <div class="st-eb" style="justify-content:space-between;width:100%">
-        <span>PRE-EMPTIVE STRIKE</span>
-        <span style="display:flex;align-items:center;gap:10px">
-          <span style="font-family:'Jost',sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;color:rgba(245,240,232,.55)">${strikePos} of ${strikeTotal}</span>
-          ${strikeTotal>1?`<button onclick="state.strikeIndex=(state.strikeIndex+1)%${strikeTotal};render()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:rgba(255,255,255,.7);font-size:13px;cursor:pointer;padding:2px 8px;font-family:'Jost',sans-serif">›</button>`:''}
-        </span>
-      </div>
+      <div class="st-eb"><span>PRE-EMPTIVE STRIKE</span></div>
       <div class="st-tt">Trim ${strike.label} <em>−${pct}%</em> & hold a fast-replenish buffer.</div>
       <div style="position:relative;z-index:1;font-size:12px;color:rgba(245,240,232,.7);line-height:1.5">${strike.reason} · save est. NT$${saving.toLocaleString()} · export to Serve 360 format.</div>
       <div class="st-grid">
@@ -848,9 +838,11 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
         <div class="st-tile"><div class="v">${strike.measuredY}<small style="font-size:10px;letter-spacing:.05em"> kg</small></div><div class="k">Yest. waste</div></div>
       </div>
       <button class="btn mg" onclick="openStrike('${strike.label}',${pct},${saving})">CONFIRM &amp; LOG</button>
-      <div id="voiceLogSlot" style="position:relative;z-index:1;margin-top:10px">${voiceLogTemplate()}</div>
-      <div id="voiceLogSummary" class="vlog-summary-line" style="position:relative;z-index:1"></div>
-    </div>
+      ${i===0?`<div id="voiceLogSlot" style="position:relative;z-index:1;margin-top:10px">${voiceLogTemplate()}</div><div id="voiceLogSummary" class="vlog-summary-line" style="position:relative;z-index:1"></div>`:''}
+    </div>`;
+    }).join('');
+    body=`
+    ${strikeCards}
     <div class="sec-h"><h3>Station prep</h3><span class="sa">${s.label} · ${b.covers} covers</span></div>
     ${cards}`;
   } else {
@@ -1489,7 +1481,7 @@ function pick(r){
   else state.tab='dashboard';
   closeLog();render();
 }
-function go(t){state.tab=t;render();}
+function go(t){closeLog();state.tab=t;render();}
 function setSc(sc){state.scenario=sc;state.strikeIndex=0;render();}
 function setOutlet(o){state.outlet=o;render();}
 function toast(msg,color){const t=document.createElement('div');t.textContent=msg;
