@@ -246,10 +246,10 @@ html,body{
 .btn.sm{padding:10px;font-size:11.5px;border-radius:11px}
 
 /* ── ROLE SELECTOR (dedicated dark-navy layout) ─────────────────── */
-.role-screen{min-height:100%;display:flex;flex-direction:column;background:#0D1B2A;color:rgba(255,255,255,.95);padding:20px 22px 22px;position:relative;overflow:hidden}
+.role-screen{min-height:100%;display:flex;flex-direction:column;background:#0D1B2A;color:rgba(255,255,255,.95);padding:14px 22px 20px;position:relative;overflow:hidden}
 .role-sf-watermark{position:absolute;bottom:-20px;right:-10px;font-family:'Cormorant Garamond',serif;font-weight:400;font-size:88px;line-height:1;color:rgba(255,255,255,.045);pointer-events:none;-webkit-user-select:none;user-select:none;white-space:nowrap;letter-spacing:-2px;z-index:0}
 .role-hero{position:relative;z-index:1;flex-shrink:0}
-.role-brand{display:flex;align-items:center;gap:11px;margin-bottom:22px}
+.role-brand{display:flex;align-items:center;gap:11px;margin-bottom:14px}
 .role-w{width:32px;height:32px;border:1.5px solid #C9A84C;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:#C9A84C;flex-shrink:0;letter-spacing:.02em}
 .role-prop{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#C9A84C;font-weight:600}
 .role-h1{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:500;line-height:1.04;letter-spacing:-.01em;color:#fff;margin-bottom:12px}
@@ -875,9 +875,9 @@ function screenEsg(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
     </div>
     <div class="eyebrow">Frameworks</div>
     <div class="card">
-      <div class="prow"><div><div class="nm">Marriott Serve 360</div><div class="rs">Export-ready · GRI 306 aligned</div></div><span class="delta flat">ready</span></div>
-      <div class="prow"><div><div class="nm">Taiwan FSC</div><div class="rs">Draft report ready</div></div><span class="delta flat">monthly</span></div>
-      <div class="prow"><div><div class="nm">GRI 306 mapping</div><div class="rs">Waste, water, energy</div></div><span class="delta flat">mapped</span></div>
+      <div class="prow" role="button" tabindex="0" onclick="toast('Coming soon · Serve 360 export module ships Phase 2','#16A34A')" style="cursor:pointer"><div><div class="nm">Marriott Serve 360</div><div class="rs">Export-ready · GRI 306 aligned</div></div><span class="delta flat">ready</span></div>
+      <div class="prow" role="button" tabindex="0" onclick="toast('Coming soon · Taiwan FSC export ships Phase 2','#16A34A')" style="cursor:pointer"><div><div class="nm">Taiwan FSC</div><div class="rs">Draft report ready</div></div><span class="delta flat">monthly</span></div>
+      <div class="prow" role="button" tabindex="0" onclick="toast('Coming soon · GRI 306 detail view ships Phase 2','#16A34A')" style="cursor:pointer"><div><div class="nm">GRI 306 mapping</div><div class="rs">Waste, water, energy</div></div><span class="delta flat">mapped</span></div>
     </div>
     <div class="eyebrow">This morning</div>
     <div class="card">
@@ -903,9 +903,9 @@ function screenPortfolio(){return `
     <div class="eyebrow">W Taipei outlets</div>
     <div class="card">
       <div class="prow"><div><div class="nm">The Kitchen Table <span class="badge">LIVE</span></div><div class="rs">9 stations · Buffet breakfast</div></div><div class="pr"><span class="delta up">−28%</span><small style="display:block;margin-top:2px">waste</small></div></div>
-      <div class="prow"><div><div class="nm">YEN</div><div class="rs">Japanese restaurant</div></div><div class="pr"><b class="faint">—</b><small>Q3 2026</small></div></div>
-      <div class="prow"><div><div class="nm">WOOBAR</div><div class="rs">Lobby lounge</div></div><div class="pr"><b class="faint">—</b><small>Q3 2026</small></div></div>
-      <div class="prow"><div><div class="nm">WET DECK</div><div class="rs">Pool deck</div></div><div class="pr"><b class="faint">—</b><small>Q4 2026</small></div></div>
+      <div class="prow" role="button" tabindex="0" onclick="toast('YEN · Coming soon · Q3 2026','#B8962E')" style="cursor:pointer"><div><div class="nm">YEN</div><div class="rs">Japanese restaurant</div></div><div class="pr"><b class="faint">—</b><small>Q3 2026</small></div></div>
+      <div class="prow" role="button" tabindex="0" onclick="toast('WOOBAR · Coming soon · Q3 2026','#B8962E')" style="cursor:pointer"><div><div class="nm">WOOBAR</div><div class="rs">Lobby lounge</div></div><div class="pr"><b class="faint">—</b><small>Q3 2026</small></div></div>
+      <div class="prow" role="button" tabindex="0" onclick="toast('WET DECK · Coming soon · Q4 2026','#B8962E')" style="cursor:pointer"><div><div class="nm">WET DECK</div><div class="rs">Pool deck</div></div><div class="pr"><b class="faint">—</b><small>Q4 2026</small></div></div>
     </div>
     <div class="eyebrow">ESG · Serve 360</div>
     <div class="card">
