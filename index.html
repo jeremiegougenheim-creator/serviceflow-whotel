@@ -1645,7 +1645,7 @@ function openLog(){
     +'<div class="field">Station</div><div class="opts">'+STATIONS.slice(0,6).map(st=>'<div class="opt '+(logSel.station===st.label?'on':'')+'" onclick="logSel.station=\''+st.label+'\';openLog()">'+st.label+'</div>').join('')+'</div>'
     +'<div class="field">Type</div><div class="opts">'+types.map(t=>'<div class="opt '+(logSel.type===t?'on':'')+'" onclick="logSel.type=\''+t+'\';openLog()">'+t+'</div>').join('')+'</div>'
     +discloseToggle+panel
-    +'<button class="btn mg" style="margin-top:18px" onclick="submitLog()">Done — I trimmed it</button>'
+    +'<button class="btn mg" style="margin-top:18px" onclick="submitLog()">Log waste</button>'
     +'<button class="btn ghost sm" style="margin-top:9px" onclick="closeLog()">Cancel</button></div>';
   document.querySelector('.phone').appendChild(sheet);
 }
