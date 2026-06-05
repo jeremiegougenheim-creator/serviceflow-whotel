@@ -249,6 +249,19 @@ html,body{
 .strike-strip::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--w-mag)}
 .strike-strip .ss-name{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:500;color:var(--charcoal);flex:1;letter-spacing:-.005em}
 .strike-strip .ss-save{font-size:11px;font-weight:600;color:#16A34A;white-space:nowrap;letter-spacing:.02em}
+.strike-done{background:#F0FDF4;border:1px solid rgba(22,163,74,.20);border-radius:14px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;position:relative;overflow:hidden}
+.strike-done::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#16A34A}
+.strike-done .sd-check{font-size:14px;color:#16A34A;flex-shrink:0;font-weight:700}
+.strike-done .sd-body{flex:1;min-width:0}
+.strike-done .sd-nm{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:500;color:var(--charcoal);letter-spacing:-.005em}
+.strike-done .sd-lbl{font-size:11px;color:#16A34A;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strike-done .sd-time{font-size:10px;color:var(--mid-grey);white-space:nowrap;letter-spacing:.06em;font-weight:700;flex-shrink:0}
+.audit-row{display:flex;align-items:flex-start;gap:12px;padding:11px 16px;border-bottom:1px solid var(--marble)}
+.audit-row:last-child{border-bottom:none}
+.audit-time{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--mid-grey);padding-top:2px;white-space:nowrap;min-width:38px}
+.audit-body{flex:1}
+.audit-nm{font-weight:600;font-size:13px;color:var(--charcoal)}
+.audit-lbl{font-size:11.5px;color:#16A34A;margin-top:2px}
 
 /* ── ROLE SELECTOR (dedicated dark-navy layout) ─────────────────── */
 .role-screen{min-height:100%;display:flex;flex-direction:column;background:#0D1B2A;color:rgba(255,255,255,.95);padding:14px 22px 20px;position:relative;overflow:hidden}
@@ -590,7 +603,8 @@ const NOTIF_TIMELINE=[
 ];
 const TIER_COLORS={blue:'var(--w-blue)',mag:'var(--w-mag)',esg:'var(--esg)',champagne:'var(--champagne)',red:'#C04848'};
 
-let state={role:null,scenario:'sat',tab:'dashboard',outlet:'kitchen',strikeIndex:0};
+let state={role:null,scenario:'sat',tab:'dashboard',outlet:'kitchen',strikeIndex:0,actionsOpen:false};
+let confirmedStrikes=[];
 // Voice input: Web Speech API ships broken on iOS Safari (defined but silent).
 // Feature-detect AND exclude iOS Safari explicitly so we never show a dead
 // "Hold to dictate" button on Bastien's iPhone.
@@ -825,11 +839,13 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
   const tabs=Object.entries(OUTLETS).map(([k,o])=>'<button class="otab '+(state.outlet===k?'on':'')+'" onclick="setOutlet(\''+k+'\')">'+o.label+'</button>').join('');
   let body;
   if(state.outlet==='kitchen'){
-    const allStrikes=[...b.stations].filter(st=>st.delta<-0.05).sort((a,c)=>a.delta-c.delta);
+    const allStrikes=[...b.stations].filter(st=>st.delta<-0.02).sort((a,c)=>a.delta-c.delta);
     if(!allStrikes.length)allStrikes.push([...b.stations].sort((a,c)=>a.delta-c.delta)[0]);
+    const confirmedSet=new Set(confirmedStrikes.map(c=>c.station));
+    const pending=allStrikes.filter(st=>!confirmedSet.has(st.label));
     const cards=b.stations.slice(0,6).map(st=>{const cls=st.delta>0.05?'up':st.delta<-0.05?'down':'flat';const sg=st.delta>0?'+':'';
       return '<div class="card" style="padding:14px 16px"><div class="row" style="justify-content:space-between;align-items:center"><div style="flex:1"><div class="st-name">'+st.label+'</div><div class="st-cause" style="margin-top:3px">'+st.reason+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:\'Cormorant Garamond\',serif;font-size:24px;font-weight:500;letter-spacing:-.01em;color:var(--charcoal);line-height:1">'+st.total+'</div><span class="delta '+cls+'" style="margin-top:4px;display:inline-block">'+sg+Math.round(st.delta*100)+'%</span></div></div></div>';}).join('');
-    const strikeCards=allStrikes.map((strike,i)=>{
+    const strikeCards=pending.map((strike,i)=>{
       const pct=Math.round(Math.abs(strike.delta)*100);
       const saving=Math.round((BASE_PARS[strike.key]*b.scale-strike.total)*CPP);
       if(i>0)return `<div class="strike-strip">
@@ -853,10 +869,27 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
       <div id="voiceLogSummary" class="vlog-summary-line" style="position:relative;z-index:1"></div>
     </div>`;
     }).join('');
+    const doneHtml=confirmedStrikes.map(c=>{
+      const lbl=c.followed==='yes'?'Followed −'+c.pct+'%':c.followed==='modified'?'Modified −'+c.modPct+'%':'Skipped';
+      const svNote=c.saving>0?' · NT$'+c.saving.toLocaleString()+' saved':'';
+      return '<div class="strike-done"><span class="sd-check">✓</span><div class="sd-body"><div class="sd-nm">'+c.station+'</div><div class="sd-lbl">'+lbl+svNote+'</div></div><span class="sd-time">'+c.time+'</span></div>';
+    }).join('');
+    let actionsHtml='';
+    if(confirmedStrikes.length){
+      const aRows=confirmedStrikes.map(c=>{
+        const lbl=c.followed==='yes'?'Followed −'+c.pct+'%':c.followed==='modified'?'Modified −'+c.modPct+'%':'Skipped';
+        const svNote=c.saving>0?' · NT$'+c.saving.toLocaleString()+' saved':'';
+        return '<div class="audit-row"><div class="audit-time">'+c.time+'</div><div class="audit-body"><div class="audit-nm">'+c.station+'</div><div class="audit-lbl">'+lbl+svNote+'</div></div></div>';
+      }).join('');
+      actionsHtml='<div class="sec-h" style="margin-top:22px"><h3>Today\'s actions</h3><button class="sa" onclick="state.actionsOpen=!state.actionsOpen;render()">'+(state.actionsOpen?'▴ Hide':'▾ '+confirmedStrikes.length+' logged')+'</button></div>'
+        +(state.actionsOpen?'<div class="card" style="padding:0;overflow:hidden">'+aRows+'</div>':'');
+    }
     body=`
     ${strikeCards}
+    ${doneHtml}
     <div class="sec-h"><h3>Station prep</h3><span class="sa">${s.label} · ${b.covers} covers</span></div>
-    ${cards}`;
+    ${cards}
+    ${actionsHtml}`;
   } else {
     const o=OUTLETS[state.outlet];
     body=`<div class="ab-box">
@@ -1382,10 +1415,10 @@ function submitStrike(){
   const f=strikeSel.followed;
   const pct=f==='modified'?strikeSel.modPct:(f==='no'?0:strikeSel.recPct);
   const sv=f==='no'?0:Math.round(strikeSel.savings*(strikeSel.recPct?pct/strikeSel.recPct:1));
-  const lbl=f==='yes'?'Followed':f==='modified'?('Modified to −'+pct+'%'):'Skipped';
-  const tail=sv?' · NT$'+sv.toLocaleString()+' saved':'';
+  const now=new Date(),pad=n=>(''+n).padStart(2,'0');
+  confirmedStrikes.push({station:strikeSel.station,pct,saving:sv,followed:f,modPct:strikeSel.modPct,time:pad(now.getHours())+':'+pad(now.getMinutes()),note:strikeSel.note||''});
   closeLog();
-  toast('✓ Logged · '+strikeSel.station+' · '+lbl+tail+' · Model updated','#16A34A');
+  render();
 }
 // ── MODE 2 — Waste Log ─────────────────────────────────────────
 function openLog(){
@@ -1494,7 +1527,7 @@ function pick(r){
   closeLog();render();
 }
 function go(t){closeLog();state.tab=t;render();}
-function setSc(sc){state.scenario=sc;state.strikeIndex=0;render();}
+function setSc(sc){state.scenario=sc;state.strikeIndex=0;confirmedStrikes=[];state.actionsOpen=false;render();}
 function setOutlet(o){state.outlet=o;render();}
 function toast(msg,color){const t=document.createElement('div');t.textContent=msg;
   t.style.cssText='position:absolute;left:50%;bottom:110px;transform:translateX(-50%);background:'+color+';color:#fff;font-weight:600;padding:13px 19px;border-radius:13px;font-size:12.5px;letter-spacing:.04em;z-index:30;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:88%;text-align:center;font-family:Jost,sans-serif';
