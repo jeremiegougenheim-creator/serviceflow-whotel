@@ -1234,6 +1234,7 @@ function submitVoiceText(text){
     voiceLogEntries.push({station:parsed.station,type:parsed.type,amount:parsed.amount,unit:parsed.unit,timestamp:new Date().toISOString(),source:'text',raw:parsed.raw});
     voiceLog.undoIndex=voiceLogEntries.length-1;
     voiceLog.phase='confirmed';renderVoiceLog();updateVoiceSummary();
+    autoConfirmStrikeIfMatch(parsed.station);
     autoResetVoiceLog(8000);
   }else{
     voiceLog.phase='error';voiceLog.error='Couldn\'t find station + amount in "'+t+'"';
@@ -1346,6 +1347,7 @@ function routeIntent(intent,text){
       voiceLog.undoIndex=voiceLogEntries.length-1;
       voiceLog.result={isValid:true,summary:amount+'kg — '+station+' · over-prep'};
       voiceLog.phase='confirmed';renderVoiceLog();updateVoiceSummary();
+      autoConfirmStrikeIfMatch(station);
       autoResetVoiceLog(8000);return;
     }
     // Claude said WASTE_LOG but the entities didn't survive normalisation —
@@ -1371,6 +1373,7 @@ function localParseFinish(text){
     voiceLogEntries.push({station:parsed.station,type:parsed.type,amount:parsed.amount,unit:parsed.unit,timestamp:new Date().toISOString(),source:'voice',raw:parsed.raw});
     voiceLog.undoIndex=voiceLogEntries.length-1;
     voiceLog.phase='confirmed';renderVoiceLog();updateVoiceSummary();
+    autoConfirmStrikeIfMatch(parsed.station);
     autoResetVoiceLog(8000);
   }else{
     voiceLog.phase='error';
@@ -1381,6 +1384,23 @@ function localParseFinish(text){
 function autoResetVoiceLog(ms){
   clearTimeout(voiceLogResetTimer);
   voiceLogResetTimer=setTimeout(()=>{voiceLog={phase:'idle',transcript:'',result:null,error:''};renderVoiceLog();},ms);
+}
+// If the just-logged station has an active pre-emptive strike, auto-confirm it
+// so the chef never has to both speak a waste log AND tap CONFIRM & LOG.
+function autoConfirmStrikeIfMatch(stationLabel){
+  if(!stationLabel)return;
+  if(confirmedStrikes.some(c=>c.station===stationLabel))return;
+  const s=SCEN[state.scenario],b=computeBriefing(s);
+  const allStrikes=[...b.stations].filter(st=>st.delta<-0.02).sort((a,c)=>a.delta-c.delta);
+  if(!allStrikes.length)allStrikes.push([...b.stations].sort((a,c)=>a.delta-c.delta)[0]);
+  const strike=allStrikes.find(st=>st.label===stationLabel);
+  if(!strike)return;
+  const pct=Math.round(Math.abs(strike.delta)*100);
+  const saving=Math.max(0,Math.round((BASE_PARS[strike.key]*b.scale-strike.total)*CPP));
+  const now=new Date(),pad=n=>(''+n).padStart(2,'0');
+  confirmedStrikes.push({station:stationLabel,pct,saving,followed:'yes',modPct:pct,
+    time:pad(now.getHours())+':'+pad(now.getMinutes()),note:'auto-confirmed via voice log'});
+  if(state.tab==='fb'&&state.outlet==='kitchen')render();
 }
 function toggleVoice(){
   if(!voiceSupported)return;
