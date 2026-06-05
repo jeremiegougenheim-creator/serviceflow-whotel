@@ -915,7 +915,7 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
           <div class="ss-name">${strike.label}</div>
           <span class="delta down">−${pct}%</span>
           ${saving>0?`<span class="ss-save">NT$${saving.toLocaleString()}</span>`:''}
-          <button class="btn mg xs" style="text-transform:none;letter-spacing:.03em" onclick="openStrike('${strike.label}',${pct},${saving})">Trimmed ✓</button>
+          <button class="btn mg xs" style="text-transform:none;letter-spacing:.03em" onclick="openStrike('${strike.label}',${pct},${saving})">Confirm ✓</button>
         </div>`;
       }
       return `<div class="strike">
