@@ -812,7 +812,7 @@ function screenCadence(){const gates=[
   {hz:'T-10–14 DAYS',nm:'PLAN',ds:'Provisional rota + weekly dry/frozen order',c:'var(--w-blue)'},
   {hz:'T-3–5 DAYS',nm:'PROCURE',ds:'Perishable orders; confirm staffing',c:'#3E8FD0'},
   {hz:'T-1–2 DAYS',nm:'FIRM',ds:'Daily-fresh orders; station mix; weather',c:'#8A63C8'},
-  {hz:'T-0 EVENING',nm:'PRESCRIBE',ds:'The nightly briefing — highest confidence',c:'var(--w-mag)'},
+  {hz:'T-0 EVENING',nm:'PRESCRIBE',ds:'The Morning Brief — highest confidence',c:'var(--w-mag)'},
   {hz:'T-0 INTRADAY',nm:'FLEX',ds:'Throttle replenishment; capture measured waste',c:'var(--champagne)'}];
   const rows=gates.map((gt,i)=>'<div class="gate"><div class="line"><div class="node" style="background:'+gt.c+'"></div>'+(i<gates.length-1?'<div class="stem"></div>':'')+'</div><div class="body"><div class="hz">'+gt.hz+'</div><div class="nm">'+gt.nm+'</div><div class="ds">'+gt.ds+'</div></div></div>').join('');
   return `
