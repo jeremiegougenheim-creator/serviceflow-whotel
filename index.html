@@ -613,14 +613,10 @@ const TIER_COLORS={blue:'var(--w-blue)',mag:'var(--w-mag)',esg:'var(--esg)',cham
 
 let state={role:null,scenario:'sat',tab:'dashboard',outlet:'kitchen',strikeIndex:0,actionsOpen:false};
 let confirmedStrikes=[];
-// Voice input: Web Speech API ships broken on iOS Safari (defined but silent).
-// Feature-detect AND exclude iOS Safari explicitly so we never show a dead
-// "Hold to dictate" button on Bastien's iPhone.
-const isIOSSafari=/iP(ad|hone|od)/.test(navigator.userAgent)&&/Safari/.test(navigator.userAgent)&&!/CriOS|FxiOS/.test(navigator.userAgent);
-const voiceSupported=!isIOSSafari&&(('SpeechRecognition' in window)||('webkitSpeechRecognition' in window));
-// Cross-browser diagnostic — one line in DevTools console so we can see why
-// the voice button shows up on Chrome but maybe hides on Edge/Safari/etc.
-try{console.info('[ServiceFlow] voiceSupported='+voiceSupported,'· hasSR='+('SpeechRecognition' in window),'· hasWebkitSR='+('webkitSpeechRecognition' in window),'· iOSSafari='+isIOSSafari,'· UA='+navigator.userAgent);}catch(_){}
+// Voice input: Cloudflare Whisper via MediaRecorder — works on iOS Safari 14.3+,
+// Chrome, Firefox, and Edge. No Web Speech API dependency.
+const voiceSupported=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder);
+try{console.info('[ServiceFlow] voiceSupported='+voiceSupported,'· MediaRecorder='+!!window.MediaRecorder,'· getUserMedia='+!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia),'· UA='+navigator.userAgent);}catch(_){}
 
 // Claude intent proxy. Set this to the Cloudflare Worker URL after deploy
 // (see worker/README.md). When unset OR the proxy fails, finishVoiceLog
@@ -1250,7 +1246,12 @@ function undoLastVoiceEntry(index){
 }
 function toggleVoiceLog(){
   if(!voiceSupported)return;
-  if(voiceLog.phase==='listening'){finishVoiceLog();return;}
+  if(voiceLog.phase==='listening'){
+    const rec=voiceLogRec;
+    if(rec&&rec.state==='recording')rec.stop();  // onstop → finishVoiceLog(blob)
+    else{voiceLog.phase='error';voiceLog.error='Nothing recorded';renderVoiceLog();autoResetVoiceLog(3000);}
+    return;
+  }
   if(voiceLog.phase==='thinking'||voiceLog.phase==='confirmed')return;
   if(voiceLog.phase==='answered'){
     clearTimeout(voiceLogResetTimer);
@@ -1262,45 +1263,67 @@ function toggleVoiceLog(){
 function startVoiceLog(){
   clearTimeout(voiceLogSilenceTimer);
   clearTimeout(voiceLogResetTimer);
-  const Rec=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!Rec){voiceLog={phase:'error',transcript:'',result:null,error:'Speech not supported — use Chrome or Safari'};renderVoiceLog();autoResetVoiceLog(4000);return;}
-  voiceLog={phase:'listening',transcript:'',result:null,error:''};
-  try{
-    voiceLogRec=new Rec();
-    voiceLogRec.lang=(navigator.language&&navigator.language.startsWith('zh'))?'zh-CN':'en-US';
-    voiceLogRec.interimResults=true;voiceLogRec.continuous=true;
-    voiceLogRec.onresult=e=>{
-      clearTimeout(voiceLogSilenceTimer);
-      let interim='',final='';
-      for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i][0].transcript;if(e.results[i].isFinal)final+=r;else interim+=r;}
-      voiceLog.transcript=(final||interim).trim();renderVoiceLog();
-      // 2s silence → auto-stop
-      voiceLogSilenceTimer=setTimeout(()=>{if(voiceLog.phase==='listening')finishVoiceLog();},2000);
+  if(!voiceSupported){
+    voiceLog={phase:'error',transcript:'',result:null,error:'Mic not available — use text input below'};
+    renderVoiceLog();autoResetVoiceLog(4000);return;
+  }
+  voiceLog={phase:'listening',transcript:'Recording…',result:null,error:''};
+  renderVoiceLog();
+  const mimeType=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':
+                 MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':
+                 MediaRecorder.isTypeSupported('audio/mp4')?'audio/mp4':'';
+  const chunks=[];
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    if(voiceLog.phase!=='listening'){stream.getTracks().forEach(t=>t.stop());return;}
+    const mr=mimeType?new MediaRecorder(stream,{mimeType}):new MediaRecorder(stream);
+    voiceLogRec=mr;
+    mr.ondataavailable=e=>{if(e.data&&e.data.size>0)chunks.push(e.data);};
+    mr.onstop=async()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      voiceLogRec=null;
+      const blob=new Blob(chunks,{type:mimeType||'audio/webm'});
+      await finishVoiceLog(blob);
     };
-    voiceLogRec.onerror=ev=>{
-      clearTimeout(voiceLogSilenceTimer);
-      voiceLog.phase='error';
-      voiceLog.error=ev.error==='not-allowed'?'Mic blocked — allow access in browser settings':ev.error==='no-speech'?'Nothing heard — tap to try again':'Error — tap to try again';
-      renderVoiceLog();autoResetVoiceLog(4000);
-    };
-    voiceLogRec.onend=()=>{if(voiceLog.phase==='listening')finishVoiceLog();};
-    voiceLogRec.start();renderVoiceLog();
-  }catch(err){voiceLog.phase='error';voiceLog.error='Voice failed to start — tap to try again';renderVoiceLog();autoResetVoiceLog(4000);}
+    mr.start(250);  // collect chunks every 250ms
+    // 8s auto-stop
+    voiceLogSilenceTimer=setTimeout(()=>{
+      if(voiceLogRec===mr&&mr.state==='recording')mr.stop();
+    },8000);
+  }).catch(err=>{
+    voiceLog.phase='error';
+    voiceLog.error=err.name==='NotAllowedError'?'Mic blocked — allow access in browser settings':'Mic unavailable — use text input';
+    renderVoiceLog();autoResetVoiceLog(4000);
+  });
 }
-async function finishVoiceLog(){
-  if(voiceLog.phase!=='listening')return;
+async function finishVoiceLog(blob){
   clearTimeout(voiceLogSilenceTimer);
-  const rec=voiceLogRec;voiceLogRec=null;
-  if(rec){try{rec.stop();}catch(_){}}
-  const text=(voiceLog.transcript||'').trim();
+  if(voiceLog.phase!=='listening')return;
+  voiceLog.phase='thinking';voiceLog.transcript='Transcribing…';renderVoiceLog();
+  if(!blob||!blob.size){
+    voiceLog.phase='error';voiceLog.error='Nothing recorded — tap to try again';
+    renderVoiceLog();autoResetVoiceLog(4000);return;
+  }
+  // Step 1 — Whisper transcription
+  let text='';
+  if(INTENT_PROXY_URL){
+    try{
+      const res=await fetch(INTENT_PROXY_URL+'/transcribe',{method:'POST',body:blob});
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      const data=await res.json();
+      text=(data.text||'').trim();
+    }catch(err){
+      console.warn('[ServiceFlow] Whisper failed, falling back to local parser:',err);
+      voiceLog.phase='error';voiceLog.error='Transcription failed — use text input';
+      renderVoiceLog();autoResetVoiceLog(4000);return;
+    }
+  }
   if(!text){
     voiceLog.phase='error';voiceLog.error='Nothing heard — tap to try again';
     renderVoiceLog();autoResetVoiceLog(4000);return;
   }
-  // Show "thinking" while Claude classifies. Skip the round trip entirely
-  // when no proxy is configured — fall through to the local parser.
-  if(!INTENT_PROXY_URL){voiceLog.phase='thinking';renderVoiceLog();return localParseFinish(text);}
-  voiceLog.phase='thinking';renderVoiceLog();
+  voiceLog.transcript=text;renderVoiceLog();
+  // Step 2 — intent classification
+  if(!INTENT_PROXY_URL)return localParseFinish(text);
   let intent=null;
   try{intent=await resolveVoiceIntent(text);}
   catch(err){console.warn('[ServiceFlow] intent proxy failed, falling back to local parser:',err);return localParseFinish(text);}
@@ -1360,22 +1383,36 @@ function autoResetVoiceLog(ms){
 }
 function toggleVoice(){
   if(!voiceSupported)return;
-  if(logSel.listening){if(voiceRec)voiceRec.stop();return;}
-  const Rec=window.SpeechRecognition||window.webkitSpeechRecognition;
-  try{
-    voiceRec=new Rec();
-    voiceRec.lang=(navigator.language&&navigator.language.startsWith('zh'))?'zh-CN':'en-US';
-    voiceRec.interimResults=true;
-    voiceRec.continuous=false;
-    voiceRec.onresult=e=>{
-      const txt=Array.from(e.results).map(r=>r[0].transcript).join('');
-      logSel.transcript=txt;parseVoiceTranscript(txt);openLog();
+  if(logSel.listening){if(voiceRec&&voiceRec.state==='recording')voiceRec.stop();return;}
+  const mimeType=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':
+                 MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':
+                 MediaRecorder.isTypeSupported('audio/mp4')?'audio/mp4':'';
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    const mr=mimeType?new MediaRecorder(stream,{mimeType}):new MediaRecorder(stream);
+    const chunks=[];
+    voiceRec=mr;
+    mr.ondataavailable=e=>{if(e.data&&e.data.size>0)chunks.push(e.data);};
+    mr.onstop=async()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      voiceRec=null;logSel.listening=false;
+      if(!chunks.length){openLog();return;}
+      const blob=new Blob(chunks,{type:mimeType||'audio/webm'});
+      if(INTENT_PROXY_URL){
+        try{
+          const res=await fetch(INTENT_PROXY_URL+'/transcribe',{method:'POST',body:blob});
+          if(res.ok){const data=await res.json();const txt=(data.text||'').trim();if(txt){logSel.transcript=txt;parseVoiceTranscript(txt);}}
+        }catch(err){console.warn('[ServiceFlow] modal Whisper failed:',err);}
+      }
+      openLog();
     };
-    voiceRec.onerror=ev=>{logSel.listening=false;openLog();console.warn('Voice error:',ev.error);};
-    voiceRec.onend=()=>{logSel.listening=false;openLog();};
-    voiceRec.start();
+    mr.start(250);
     logSel.listening=true;openLog();
-  }catch(err){logSel.listening=false;console.warn('Voice start failed:',err);}
+    setTimeout(()=>{if(voiceRec===mr&&mr.state==='recording')mr.stop();},8000);
+  }).catch(err=>{
+    logSel.listening=false;
+    console.warn('[ServiceFlow] Modal mic failed:',err.name);
+    openLog();
+  });
 }
 // ── MODE 1 — Strike Confirm ─────────────────────────────────────
 function openStrike(station,recPct,savings){
@@ -1482,7 +1519,9 @@ function submitLog(){
   toast('✓ Logged · '+logSel.station+' '+logSel.type+q+co2+' · model updates at 18:00','#16A34A');
 }
 function closeLog(){
-  if(voiceRec&&logSel.listening){try{voiceRec.stop();}catch(_){}}
+  if(voiceRec&&voiceRec.state==='recording'){try{voiceRec.stop();}catch(_){}}
+  if(voiceLogRec&&voiceLogRec.state==='recording'){try{voiceLogRec.stop();}catch(_){}}
+  voiceLog={phase:'idle',transcript:'',result:null,error:''};
   logSel.listening=false;logSel.transcript='';logSel.expanded=false;logSel.qty=0;logSel.destination=null;logSel.photo=null;logSel.note='';
   strikeSel={station:'',recPct:0,savings:0,followed:null,modPct:0,note:''};
   const e=g('sheetbg');if(e)e.remove();

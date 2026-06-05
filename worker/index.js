@@ -58,12 +58,10 @@ Respond with JSON only. No other text.`;
 export default {
   async fetch(request, env) {
     const origin = env.ALLOWED_ORIGIN || ALLOWED_ORIGIN_DEFAULT;
+    const url = new URL(request.url);
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
-    }
-    if (request.method !== 'POST') {
-      return jsonResponse({ error: 'Method not allowed' }, 405, origin);
     }
     if (!env.AI) {
       return jsonResponse(
@@ -71,6 +69,25 @@ export default {
         500,
         origin
       );
+    }
+
+    // POST /transcribe — Cloudflare Whisper audio transcription
+    if (url.pathname === '/transcribe' && request.method === 'POST') {
+      const audioBuffer = await request.arrayBuffer();
+      const audioArray = [...new Uint8Array(audioBuffer)];
+      let whisperResult;
+      try {
+        whisperResult = await env.AI.run('@cf/openai/whisper', { audio: audioArray });
+      } catch (err) {
+        return jsonResponse({ error: 'Whisper failed', message: String(err) }, 502, origin);
+      }
+      return new Response(JSON.stringify({ text: whisperResult.text || '' }), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
+      });
+    }
+
+    if (request.method !== 'POST') {
+      return jsonResponse({ error: 'Method not allowed' }, 405, origin);
     }
 
     let body;
