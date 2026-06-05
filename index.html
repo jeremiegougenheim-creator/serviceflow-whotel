@@ -696,7 +696,7 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
   <div class="hero dk">
     ${brandRow()}
     <h1>${state.role==='chef'?'Briefing ready,':'Good morning,'} <em>${s.mixLabel.toLowerCase()} ${s.isWeekend?'weekend':'day'}.</em></h1>
-    <p class="hero-sub">${b.covers} breakfast covers forecast at The Kitchen Table — ${b.actions.length} priority actions ready for you.</p>
+    <p class="hero-sub">${b.covers} covers forecast · ${b.actions.length} decisions ready since 18:00</p>
     ${metaLine(s)}
   </div>
   <div class="body">
@@ -778,8 +778,9 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
     <!-- TODO: Phase 2 — scorecard. Re-enable once b.grades is rebuilt (grades was removed; Phase 1 shows trend indicators only). -->
 
     <div class="ab-box">
-      <div class="ab-eb">${s.label.toUpperCase()} — 3 PRIORITY ACTIONS</div>
+      <div class="ab-eb">${s.label.toUpperCase()} — 3 DECISIONS FOR THIS SERVICE</div>
       <div class="ab-h">Trim, <em>boost,</em> hold.</div>
+      <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,240,232,.45);font-weight:600;margin-top:6px">Prepared yesterday 18:00 · applies this morning</div>
       ${actionItems}
       <div class="ab-recap">
         <div class="ab-recap-l">Tonight's estimated value</div>
