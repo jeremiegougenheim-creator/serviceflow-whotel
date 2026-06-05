@@ -328,14 +328,14 @@ html,body{
 .vlog-hint{font-size:12px;font-weight:400;color:rgba(245,242,236,.4);margin:4px 0 0;font-style:italic}
 .vlog-summary{font-family:'Jost',sans-serif;font-size:14px;font-weight:600;color:#16A34A;margin:4px 0 0;letter-spacing:.04em}
 .vlog-summary-line{margin-top:8px;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.04em;color:rgba(245,242,236,.7);text-align:center;line-height:1.4}
-.gvb{background:rgba(15,20,35,.97);border-bottom:1px solid rgba(255,255,255,.09);padding:10px 14px;position:sticky;top:0;z-index:15}
-.gvb-mic{display:flex;align-items:center;gap:8px;cursor:pointer;font-family:'Jost',sans-serif;font-size:13px;font-weight:600;color:rgba(245,242,236,.75);letter-spacing:.04em;padding:9px 14px;border:1px dashed rgba(255,255,255,.22);border-radius:10px;transition:border-color .2s}
+.gvb{background:rgba(15,20,35,.92);border-bottom:1px solid rgba(255,255,255,.07);padding:8px 14px;position:sticky;top:0;z-index:15}
+.gvb-mic{display:flex;align-items:center;gap:8px;cursor:pointer;font-family:'Jost',sans-serif;font-size:12px;font-weight:600;color:rgba(245,242,236,.65);letter-spacing:.04em;padding:7px 12px;border:1px dashed rgba(255,255,255,.18);border-radius:8px}
 .gvb-mic:active{background:rgba(255,255,255,.04)}
 .gvb-listening .gvb-mic{border-color:rgba(212,0,75,.5);color:rgba(212,0,75,.9)}
 .gvb-thinking .gvb-mic{border-color:rgba(200,164,76,.4);color:rgba(200,164,76,.85)}
 .gvb-confirmed .gvb-mic{border-color:rgba(66,201,126,.5);color:#42C97E}
 .gvb-error .gvb-mic{border-color:rgba(192,57,43,.5);color:#C0392B}
-.gvb-session{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.gvb-session{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}
 .gvb-chip{font-family:'Jost',sans-serif;font-size:11px;font-weight:700;background:rgba(66,201,126,.15);color:#42C97E;border:1px solid rgba(66,201,126,.25);border-radius:6px;padding:3px 9px;letter-spacing:.04em}
 .voice-btn svg{width:15px;height:15px;stroke:var(--champagne);fill:none;stroke-width:2;flex-shrink:0}
 
@@ -445,7 +445,7 @@ html,body{
 
 <script>
 // DEV flag — set true to always show the end-of-service button regardless of time
-const DEV_FORCE_SHOW_EOD_BUTTON = false;
+const DEV_FORCE_SHOW_EOD_BUTTON = true;
 // Returns true only between 09:00 and 09:30 (30 min before breakfast shift end)
 function shouldShowEodButton(){
   if(DEV_FORCE_SHOW_EOD_BUTTON)return true;
@@ -783,10 +783,12 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
       <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,240,232,.45);font-weight:600;margin-top:6px">Prepared yesterday 18:00 · applies this morning</div>
       ${actionItems}
       <div class="ab-recap">
-        <div class="ab-recap-l">Tonight's estimated value</div>
+        <div class="ab-recap-l">This service's estimated saving</div>
         <div class="ab-recap-v">NT$${b.save.toLocaleString()}</div>
       </div>
       ${wasteNote?'<div style="font-size:11px;color:rgba(245,240,232,.55);line-height:1.5;margin-top:8px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px">'+wasteNote+'</div>':''}
+      <div style="font-size:10px;color:rgba(245,240,232,.35);margin-top:10px;line-height:1.5;letter-spacing:.02em">Numbers based on WRAP 2025 benchmarks applied to W Taipei volume. Replaced with live PMS data from pilot week 2.</div>
+      <button class="btn ghost" style="margin-top:10px;font-size:11px" onclick="shareBrief()">↗ Share this brief</button>
     </div>
 
     <div class="sec-h"><h3>Stations · ${s.label} breakfast</h3><span class="sa">9 stations</span></div>
@@ -858,15 +860,29 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
     const pending=allStrikes.filter(st=>!confirmedSet.has(st.label));
     const cards=b.stations.slice(0,6).map(st=>{const cls=st.delta>0.05?'up':st.delta<-0.05?'down':'flat';const sg=st.delta>0?'+':'';
       return '<div class="card" style="padding:14px 16px"><div class="row" style="justify-content:space-between;align-items:center"><div style="flex:1"><div class="st-name">'+st.label+'</div><div class="st-cause" style="margin-top:3px">'+st.reason+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:\'Cormorant Garamond\',serif;font-size:24px;font-weight:500;letter-spacing:-.01em;color:var(--charcoal);line-height:1">'+st.total+'</div><span class="delta '+cls+'" style="margin-top:4px;display:inline-block">'+sg+Math.round(st.delta*100)+'%</span></div></div></div>';}).join('');
-    const strikeCards=pending.map((strike,i)=>{
+    const heroStrike=pending[0];
+    const secondaryStrikes=allStrikes.filter(st=>!heroStrike||st.label!==heroStrike.label);
+    const strikeCardList=heroStrike?[heroStrike,...secondaryStrikes]:secondaryStrikes;
+    const strikeCards=strikeCardList.map((strike,i)=>{
       const pct=Math.round(Math.abs(strike.delta)*100);
       const saving=Math.round((BASE_PARS[strike.key]*b.scale-strike.total)*CPP);
-      if(i>0)return `<div class="strike-strip">
-        <div class="ss-name">${strike.label}</div>
-        <span class="delta down">−${pct}%</span>
-        ${saving>0?`<span class="ss-save">NT$${saving.toLocaleString()}</span>`:''}
-        <button class="btn mg xs" onclick="openStrike('${strike.label}',${pct},${saving})">CONFIRM</button>
-      </div>`;
+      const isConf=confirmedSet.has(strike.label);
+      if(heroStrike&&i>0||!heroStrike){
+        if(isConf){
+          const conf=confirmedStrikes.find(c=>c.station===strike.label);
+          const sv=conf&&conf.saving>0?' · NT$'+conf.saving.toLocaleString()+' saved':'';
+          return `<div class="strike-strip" style="border-color:rgba(66,201,126,.3);background:rgba(66,201,126,.06)">
+            <div class="ss-name" style="color:#16A34A">✓ ${strike.label}</div>
+            <span class="ss-save" style="color:#16A34A">Followed${sv}</span>
+          </div>`;
+        }
+        return `<div class="strike-strip">
+          <div class="ss-name">${strike.label}</div>
+          <span class="delta down">−${pct}%</span>
+          ${saving>0?`<span class="ss-save">NT$${saving.toLocaleString()}</span>`:''}
+          <button class="btn mg xs" onclick="openStrike('${strike.label}',${pct},${saving})">CONFIRM</button>
+        </div>`;
+      }
       return `<div class="strike">
       <svg class="strike-skyline" viewBox="0 0 195 300" width="195" height="300" aria-hidden="true"><g fill="rgba(255,255,255,0.055)"><rect x="5" y="228" width="15" height="72"/><rect x="24" y="212" width="13" height="88"/><rect x="41" y="235" width="10" height="65"/><rect x="60" y="268" width="50" height="32"/><rect x="64" y="250" width="42" height="19"/><rect x="68" y="232" width="34" height="19"/><rect x="71" y="215" width="28" height="18"/><rect x="74" y="200" width="22" height="16"/><rect x="76" y="186" width="18" height="15"/><rect x="78" y="173" width="14" height="14"/><rect x="80" y="162" width="10" height="12"/><rect x="82" y="152" width="6" height="11"/><rect x="84" y="84" width="2" height="69"/><rect x="126" y="210" width="12" height="90"/><rect x="142" y="230" width="12" height="70"/><rect x="158" y="218" width="12" height="82"/><rect x="174" y="242" width="12" height="58"/></g></svg>
       <div class="st-eb"><span>PRE-EMPTIVE STRIKE</span></div>
@@ -1135,29 +1151,51 @@ function parseVoiceTranscript(text){
 // No processing state — finishVoiceLog goes straight from listening to
 // confirmed/error. 2s silence auto-stops the session.
 const voiceLogEntries=[];
-let voiceLog={phase:'idle',transcript:'',result:null,error:''};
+let voiceLog={phase:'idle',transcript:'',result:null,error:'',strikeFeedback:''};
 let voiceLogRec=null;
 let voiceLogSilenceTimer=null;
 let voiceLogResetTimer=null;
 const VLOG_HINTS=['Western Hot over-prep 2 kg','Dim Sum waste 1 kg','西式熱食 過量準備 2公斤'];
 let vlogHintIdx=0;
 setInterval(()=>{vlogHintIdx=(vlogHintIdx+1)%VLOG_HINTS.length;const el=document.getElementById('vlogHintSpan');if(el)el.textContent='try: "'+VLOG_HINTS[vlogHintIdx]+'"';const gb=document.getElementById('gvbLabel');if(gb&&voiceLog.phase==='idle')gb.textContent='try: "'+VLOG_HINTS[vlogHintIdx]+'"';},3000);
+const GVB_MIC='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0M12 19v3M8 22h8"/></svg>';
+let voiceLogUndoTimer=null;
 function renderGlobalVoiceBar(){
-  const bar=g('globalVoiceBar');
-  if(!bar)return;
+  const bar=g('globalVoiceBar');if(!bar)return;
   const p=voiceLog.phase;
   bar.className='gvb'+(p==='listening'?' gvb-listening':p==='thinking'?' gvb-thinking':p==='confirmed'?' gvb-confirmed':p==='error'?' gvb-error':'');
-  const lbl=g('gvbLabel');
-  if(lbl){
-    if(p==='idle')lbl.textContent='Tap to log any station';
-    else if(p==='listening')lbl.textContent=voiceLog.transcript||'Listening — tap to stop';
-    else if(p==='thinking')lbl.textContent=voiceLog.transcript||'Reading that…';
-    else if(p==='confirmed')lbl.textContent='✓ '+(voiceLog.result&&voiceLog.result.summary||'Logged');
-    else if(p==='answered')lbl.textContent=(voiceLog.result&&voiceLog.result.reply||'Tap to dismiss');
-    else if(p==='error')lbl.textContent=voiceLog.error||'Try again';
+  const mic=g('gvbMic');
+  if(mic){
+    if(p==='confirmed'){
+      const summary=voiceLog.strikeFeedback||(voiceLog.result&&voiceLog.result.summary)||'Logged';
+      mic.innerHTML=GVB_MIC+'<span style="flex:1">✓ '+summary+'</span>'
+        +'<button onclick="event.stopPropagation();undoLastVoiceLog()" style="background:none;border:1px solid rgba(66,201,126,.35);color:#42C97E;font-family:\'Jost\',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:5px;cursor:pointer;flex-shrink:0;margin-left:6px">UNDO ↩</button>';
+      clearTimeout(voiceLogUndoTimer);
+      voiceLogUndoTimer=setTimeout(()=>{if(voiceLog.phase==='confirmed'){voiceLog={phase:'idle',transcript:'',result:null,error:'',strikeFeedback:''};renderGlobalVoiceBar();}},5000);
+    }else{
+      let lbl;
+      if(p==='idle')lbl='Tap to log any station';
+      else if(p==='listening')lbl=voiceLog.transcript||'Listening — tap to stop';
+      else if(p==='thinking')lbl=voiceLog.transcript||'Reading that…';
+      else if(p==='answered')lbl=(voiceLog.result&&voiceLog.result.reply)||'Tap to dismiss';
+      else if(p==='error')lbl=voiceLog.error||'Try again';
+      else lbl='Tap to log any station';
+      mic.innerHTML=GVB_MIC+'<span id="gvbLabel">'+lbl+'</span>';
+    }
   }
   const sess=g('gvbSession');
   if(sess){sess.innerHTML=voiceLogEntries.map(e=>'<span class="gvb-chip">'+e.station+' '+e.amount+'kg ✓</span>').join('');}
+}
+function undoLastVoiceLog(){
+  clearTimeout(voiceLogResetTimer);clearTimeout(voiceLogUndoTimer);
+  const last=voiceLogEntries.pop();
+  if(last){
+    const idx=confirmedStrikes.findIndex(c=>c.station===last.station&&c.note==='auto-confirmed via voice log');
+    if(idx!==-1)confirmedStrikes.splice(idx,1);
+  }
+  voiceLog={phase:'idle',transcript:'',result:null,error:'',strikeFeedback:''};
+  renderVoiceLog();
+  if(state.tab==='fb'&&state.outlet==='kitchen')render();
 }
 function renderVoiceLog(){renderGlobalVoiceBar();updateVoiceSummary();}
 function updateVoiceSummary(){
@@ -1275,7 +1313,7 @@ function submitVoiceText(text){
 function undoLastVoiceEntry(index){
   if(index>=0&&index<voiceLogEntries.length){voiceLogEntries.splice(index,1);}
   clearTimeout(voiceLogResetTimer);
-  voiceLog={phase:'idle',transcript:'',result:null,error:''};
+  voiceLog={phase:'idle',transcript:'',result:null,error:'',strikeFeedback:''};
   renderVoiceLog();updateVoiceSummary();
   const imp=g('logImpactLine');if(imp)imp.remove();
 }
@@ -1290,7 +1328,7 @@ function toggleVoiceLog(){
   if(voiceLog.phase==='thinking'||voiceLog.phase==='confirmed')return;
   if(voiceLog.phase==='answered'){
     clearTimeout(voiceLogResetTimer);
-    voiceLog={phase:'idle',transcript:'',result:null,error:''};
+    voiceLog={phase:'idle',transcript:'',result:null,error:'',strikeFeedback:''};
     renderVoiceLog();return;
   }
   startVoiceLog();
@@ -1312,18 +1350,24 @@ function startVoiceLog(){
     if(voiceLog.phase!=='listening'){stream.getTracks().forEach(t=>t.stop());return;}
     const mr=mimeType?new MediaRecorder(stream,{mimeType}):new MediaRecorder(stream);
     voiceLogRec=mr;
-    mr.ondataavailable=e=>{if(e.data&&e.data.size>0)chunks.push(e.data);};
+    let chunkSilenceTimer=null;
+    mr.ondataavailable=e=>{
+      if(e.data&&e.data.size>0){
+        chunks.push(e.data);
+        clearTimeout(chunkSilenceTimer);
+        chunkSilenceTimer=setTimeout(()=>{if(voiceLogRec===mr&&mr.state==='recording')mr.stop();},1500);
+      }
+    };
     mr.onstop=async()=>{
       stream.getTracks().forEach(t=>t.stop());
-      voiceLogRec=null;
+      voiceLogRec=null;clearTimeout(chunkSilenceTimer);
       const blob=new Blob(chunks,{type:mimeType||'audio/webm'});
       await finishVoiceLog(blob);
     };
-    mr.start(250);  // collect chunks every 250ms
-    // 8s auto-stop
+    mr.start(250);
     voiceLogSilenceTimer=setTimeout(()=>{
       if(voiceLogRec===mr&&mr.state==='recording')mr.stop();
-    },8000);
+    },3000);
   }).catch(err=>{
     voiceLog.phase='error';
     voiceLog.error=err.name==='NotAllowedError'?'Mic blocked — allow access in browser settings':'Mic unavailable — use text input';
@@ -1391,7 +1435,7 @@ function routeIntent(intent,text){
   }
   if(intent.intent==='CANCEL'){
     clearTimeout(voiceLogResetTimer);
-    voiceLog={phase:'idle',transcript:'',result:null,error:''};renderVoiceLog();return;
+    voiceLog={phase:'idle',transcript:'',result:null,error:'',strikeFeedback:''};renderVoiceLog();return;
   }
   // UNCLEAR (or CONFIRM in isolation, which we treat as guidance)
   voiceLog.phase='error';
@@ -1414,7 +1458,7 @@ function localParseFinish(text){
 }
 function autoResetVoiceLog(ms){
   clearTimeout(voiceLogResetTimer);
-  voiceLogResetTimer=setTimeout(()=>{voiceLog={phase:'idle',transcript:'',result:null,error:''};renderVoiceLog();},ms);
+  voiceLogResetTimer=setTimeout(()=>{voiceLog={phase:'idle',transcript:'',result:null,error:'',strikeFeedback:''};renderVoiceLog();},ms);
 }
 // If the just-logged station has an active pre-emptive strike, auto-confirm it
 // so the chef never has to both speak a waste log AND tap CONFIRM & LOG.
@@ -1431,6 +1475,9 @@ function autoConfirmStrikeIfMatch(stationLabel){
   const now=new Date(),pad=n=>(''+n).padStart(2,'0');
   confirmedStrikes.push({station:stationLabel,pct,saving,followed:'yes',modPct:pct,
     time:pad(now.getHours())+':'+pad(now.getMinutes()),note:'auto-confirmed via voice log'});
+  voiceLog.strikeFeedback='✓ '+stationLabel+' logged · strike confirmed';
+  renderGlobalVoiceBar();
+  setTimeout(()=>{voiceLog.strikeFeedback='';if(voiceLog.phase==='confirmed')renderGlobalVoiceBar();},2000);
   if(state.tab==='fb'&&state.outlet==='kitchen')render();
 }
 function toggleVoice(){
@@ -1572,7 +1619,7 @@ function submitLog(){
 function closeLog(){
   if(voiceRec&&voiceRec.state==='recording'){try{voiceRec.stop();}catch(_){}}
   if(voiceLogRec&&voiceLogRec.state==='recording'){try{voiceLogRec.stop();}catch(_){}}
-  voiceLog={phase:'idle',transcript:'',result:null,error:''};
+  voiceLog={phase:'idle',transcript:'',result:null,error:'',strikeFeedback:''};
   logSel.listening=false;logSel.transcript='';logSel.expanded=false;logSel.qty=0;logSel.destination=null;logSel.photo=null;logSel.note='';
   strikeSel={station:'',recPct:0,savings:0,followed:null,modPct:0,note:''};
   const e=g('sheetbg');if(e)e.remove();
@@ -1629,6 +1676,7 @@ function pick(r){
 function go(t){console.log('go called:',t,'role:',state.role);closeLog();state.tab=t;render();}
 function setSc(sc){state.scenario=sc;state.strikeIndex=0;confirmedStrikes=[];state.actionsOpen=false;render();}
 function setOutlet(o){state.outlet=o;render();}
+function shareBrief(){if(navigator.share){navigator.share({title:'Morning Brief · Lauds',text:'Lauds Morning Brief for W Taipei — '+new Date().toLocaleDateString(),url:'https://service-flow.dev'});}else{navigator.clipboard&&navigator.clipboard.writeText('https://service-flow.dev');toast('Link copied to clipboard','#0891B2');}}
 function toast(msg,color){const t=document.createElement('div');t.textContent=msg;
   t.style.cssText='position:absolute;left:50%;bottom:110px;transform:translateX(-50%);background:'+color+';color:#fff;font-weight:600;padding:13px 19px;border-radius:13px;font-size:12.5px;letter-spacing:.04em;z-index:30;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:88%;text-align:center;font-family:Jost,sans-serif';
   document.querySelector('.phone').appendChild(t);setTimeout(()=>t.remove(),2200);}
