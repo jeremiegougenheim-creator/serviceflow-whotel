@@ -435,6 +435,14 @@ html,body{
 </div>
 
 <script>
+// DEV flag — set true to always show the end-of-service button regardless of time
+const DEV_FORCE_SHOW_EOD_BUTTON = false;
+// Returns true only between 09:00 and 09:30 (30 min before breakfast shift end)
+function shouldShowEodButton(){
+  if(DEV_FORCE_SHOW_EOD_BUTTON)return true;
+  const n=new Date(),h=n.getHours(),m=n.getMinutes();
+  return h===9&&m<30;
+}
 const STATIONS=[
  {key:'congee_noodle',label:'Congee & Noodle'},{key:'dim_sum',label:'Dim Sum'},
  {key:'japanese',label:'Japanese'},{key:'korean',label:'Korean'},
@@ -803,7 +811,7 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
       </div>
     </div>
     ${weekBar()}
-    <div class="log-cta-wrap"><button onclick="openLog()" class="log-cta"><span style="font-size:17px">☑</span>LOG FIN DE SERVICE · 5 min</button><div class="log-trend">Team logging in ~5 min avg</div></div>
+    ${shouldShowEodButton()?'<div class="log-cta-wrap"><button onclick="openLog()" class="log-cta"><span style="font-size:17px">☑</span>LOG FIN DE SERVICE · 5 min</button><div class="log-trend">Team logging in ~5 min avg</div></div>':''}
     <div class="sec-h"><h3>When it runs</h3><button class="sa" onclick="go('cadence')">5 gates ›</button></div>
     <button class="btn ghost" data-go="dashboard" onclick="go('dashboard')" style="margin-top:14px">← Back to home</button>
   </div>`;}
