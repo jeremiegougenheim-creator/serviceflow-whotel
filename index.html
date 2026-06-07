@@ -180,9 +180,9 @@ html,body{
 .card{background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:18px;padding:16px 18px;margin-bottom:13px;box-shadow:var(--shadow-sm)}
 .card.flat{box-shadow:none;background:var(--marble);border-color:var(--marble-dark)}
 
-.rolecard{background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:18px;padding:18px;margin-bottom:11px;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow-sm);transition:transform .12s;position:relative;overflow:hidden}
+.rolecard{background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:18px;padding:18px;margin-bottom:11px;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow-sm);transition:transform 100ms ease-out,filter 100ms ease-out;position:relative;overflow:hidden}
 .rolecard::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(108deg,transparent 0,transparent 44px,rgba(160,120,74,.04) 44px,rgba(160,120,74,.04) 45px);pointer-events:none}
-.rolecard:active{transform:scale(.985)}
+.rolecard:active{transform:scale(.98);filter:brightness(.96)}
 .rolecard .ico{width:48px;height:48px;border-radius:13px;background:var(--w-blue-pale);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;z-index:1}
 .rolecard .ico svg{width:24px;height:24px;stroke:var(--w-blue-dark);fill:none;stroke-width:1.9}
 .rolecard.mg .ico{background:var(--w-mag-pale)}.rolecard.mg .ico svg{stroke:var(--w-mag-dark)}
@@ -191,8 +191,11 @@ html,body{
 .rolecard .d{font-size:11.5px;color:var(--mid-grey);margin-top:3px;position:relative;z-index:1}
 .badge{display:inline-block;font-size:8.5px;font-weight:700;letter-spacing:.18em;padding:3px 8px;border-radius:6px;background:var(--esg-pale);color:var(--esg);vertical-align:middle;text-transform:uppercase;margin-left:6px}
 
-.dash-tile{background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:16px;padding:14px 15px;margin-bottom:10px;display:flex;align-items:center;gap:13px;cursor:pointer;box-shadow:var(--shadow-sm);transition:transform .12s}
-.dash-tile:active{transform:scale(.985)}
+.dash-tile{background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:16px;padding:14px 15px;margin-bottom:10px;display:flex;align-items:center;gap:13px;cursor:pointer;box-shadow:var(--shadow-sm);transition:transform 100ms ease-out,filter 100ms ease-out}
+.dash-tile:active{transform:scale(.98);filter:brightness(.96)}
+.tap-feedback{cursor:pointer;transition:transform 100ms ease-out,filter 100ms ease-out}
+.tap-feedback:active,.btn:active,.log-cta:active{transform:scale(.98);filter:brightness(.96)}
+.btn,.log-cta{transition:transform 100ms ease-out,filter 100ms ease-out}
 .dash-i{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .dash-i svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.9}
 .dash-b{flex:1;min-width:0}
@@ -344,7 +347,7 @@ html,body{
 .voice-btn svg{width:15px;height:15px;stroke:var(--champagne);fill:none;stroke-width:2;flex-shrink:0}
 
 #nav{position:absolute;left:0;right:0;bottom:0;height:78px;background:rgba(250,248,244,.96);backdrop-filter:blur(14px);border-top:1px solid var(--marble);display:flex;align-items:center;justify-content:space-around;padding:0 6px 14px;z-index:20}
-.nb{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:7px 5px;border:none;background:none;color:var(--mid-grey);font-family:'Jost',sans-serif;flex:1;transition:color .2s}
+.nb{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:7px 5px;border:none;background:none;color:var(--mid-grey);font-family:'Jost',sans-serif;flex:1;transition:color 150ms ease-out}
 .nb svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9}
 .nb span{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
 .nb.on{color:#C9A84C}
@@ -446,12 +449,18 @@ html,body{
 
 <script>
 // DEV flag — set true to always show the end-of-service button regardless of time
-const DEV_FORCE_SHOW_EOD_BUTTON = true;
-// Returns true only between 09:00 and 09:30 (30 min before breakfast shift end)
-function shouldShowEodButton(){
-  if(DEV_FORCE_SHOW_EOD_BUTTON)return true;
+// Demo flag — in production, Infrasys signals service end (last cover + 15 min idle)
+const DEV_FORCE_SHOW_EOD=true;
+function getEodState(){
+  // TODO: 90-min and end-of-day gentle reminder hooks — not built yet
+  if(DEV_FORCE_SHOW_EOD){
+    const now=new Date(),hh=String(now.getHours()).padStart(2,'0'),mm=String(now.getMinutes()).padStart(2,'0');
+    return {show:true,time:hh+':'+mm};
+  }
   const n=new Date(),h=n.getHours(),m=n.getMinutes();
-  return h===9&&m<30;
+  if((h===10&&m>=30)||(h===11&&m<30))return {show:true,time:'10:30'};
+  return {show:false,time:null};
+  // TODO: tomorrow's Morning Brief shows "Yesterday's service not logged — confidence -3%" when EOD log is missing
 }
 const STATIONS=[
  {key:'congee_noodle',label:'Congee & Noodle'},{key:'dim_sum',label:'Dim Sum'},
@@ -606,7 +615,7 @@ function computeBriefingV3(s,history){
 function computeBriefing(s){return computeBriefingV3(s,[]);}
 
 // ============================================================
-// NOTIFICATION TIMELINE — Démo statique 24h
+// NOTIFICATION TIMELINE — static demo · 24h
 // ============================================================
 const NOTIF_TIMELINE=[
   {time:'18:00',day:'Yesterday',tier:'PRESCRIPTIVE',icon:'🌙',to:['GM','Chef','F&B'],title:'Morning Brief · Sat 14 Mar',body:'316 covers Sat. Cut Bacon -2kg, push Congee +1kg. Save NT$2,803.',metric:'NT$2,803',metricLabel:'estimated saving',color:'blue'},
@@ -789,7 +798,7 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
   <div class="hero bl">
     ${brandRow()}
     <h1>${s.label}, <em>${b.covers} covers</em></h1>
-    <p class="hero-sub">Briefing J-1 · 18:00 · 8 signals read — yesterday's station waste log weighted highest — production prescribed per station.</p>
+    <p class="hero-sub">Evening Brief · 18:00 · 8 signals read — yesterday's station waste log weighted highest — production prescribed per station.</p>
     ${metaLine(s)}
   </div>
   <div class="body">
@@ -832,8 +841,8 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
       <div class="ico">${I.esg}</div>
       <div class="esg-body">
         <div class="esg-h">SERVE 360 · TAIWAN FSC · EXPORT-READY</div>
-        <div class="esg-t">${b.co2} kg CO₂e évité ce soir · NT$${b.save.toLocaleString()} over-prep avoided</div>
-        <div class="esg-m">52 kg CO₂e cumulé ce mois · GRI 306 mapped</div>
+        <div class="esg-t">${b.co2} kg CO₂e avoided tonight · NT$${b.save.toLocaleString()} over-prep avoided</div>
+        <div class="esg-m">52 kg CO₂e cumulative this month · GRI 306 mapped</div>
       </div>
     </div>
 
@@ -852,7 +861,7 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
       </div>
     </div>
     ${weekBar()}
-    ${shouldShowEodButton()?'<div class="log-cta-wrap"><button onclick="openLog()" class="log-cta"><span style="font-size:17px">☑</span>LOG FIN DE SERVICE · 5 min</button><div class="log-trend">Team logging in ~5 min avg</div></div>':''}
+    ${(()=>{const eod=getEodState();return eod.show?'<div class="log-cta-wrap"><div style="font-style:italic;font-size:12px;color:var(--mid-grey);text-align:center;margin-bottom:8px">Service wrapped at '+eod.time+' — log when ready</div><button onclick="openLog()" class="log-cta"><span style="font-size:17px">☑</span>LOG END OF SERVICE · 5 min</button><div class="log-trend">Team logging in ~5 min avg</div></div>':''})()}
     <button class="btn ghost" data-go="dashboard" onclick="go('dashboard')" style="margin-top:14px">← Back to home</button>
   </div>`;}
 
@@ -1079,7 +1088,7 @@ function screenNotifs(){
 function screenGap(){
   const rows=[
     {dim:'Food waste tracking',a:'None · unmeasured daily',b:'Logged · per station · daily'},
-    {dim:'Cover forecasting',a:'Chef\'s gut · spreadsheet',b:'8-signal model · 18:00 J-1'},
+    {dim:'Cover forecasting',a:'Chef\'s gut · spreadsheet',b:'8-signal model · Evening Brief · 18:00'},
     {dim:'Buffet over-prep cost',a:'NT$867K / year invisible <span title="Industry math: 12% waste baseline (WRAP 2025, 180 resort kitchens) applied to W Taipei volume. To be calibrated at pilot week 2." style="font-size:9px;cursor:help;opacity:0.55">ⓘ</span>',b:'NT$2,400 / day recovered avg'},
     {dim:'ESG data quality',a:'Manual · unaudited',b:'Auto-logged · GRI 306 mapped'},
     {dim:'Serve 360 reporting',a:'Estimated · ad-hoc',b:'Export-ready · monthly'},
