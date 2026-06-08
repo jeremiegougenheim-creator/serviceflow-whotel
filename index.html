@@ -450,7 +450,7 @@ html,body{
 <script>
 // DEV flag — set true to always show the end-of-service button regardless of time
 // Demo flag — in production, Infrasys signals service end (last cover + 15 min idle)
-const DEV_FORCE_SHOW_EOD=true;
+const DEV_FORCE_SHOW_EOD=false;
 function getEodState(){
   // TODO: 90-min and end-of-day gentle reminder hooks — not built yet
   if(DEV_FORCE_SHOW_EOD){
@@ -461,7 +461,7 @@ function getEodState(){
   // Demo flag (DEV_FORCE_SHOW_EOD) bypasses this so the button stays visible on every reload.
   if(localStorage.getItem('sf_eod_logged')===new Date().toDateString())return {show:false,time:null};
   const n=new Date(),h=n.getHours(),m=n.getMinutes();
-  if((h===10&&m>=30)||(h===11&&m<30))return {show:true,time:'10:30'};
+  if(h===9&&m<30)return {show:true,time:'09:00'};
   return {show:false,time:null};
   // TODO: tomorrow's Morning Brief shows "Yesterday's service not logged — confidence -3%" when EOD log is missing
 }
