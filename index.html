@@ -618,7 +618,7 @@ function computeBriefing(s){return computeBriefingV3(s,[]);}
 // NOTIFICATION TIMELINE — static demo · 24h
 // ============================================================
 const NOTIF_TIMELINE=[
-  {time:'18:00',day:'Yesterday',tier:'PRESCRIPTIVE',icon:'🌙',to:['GM','Chef','F&B'],title:'Morning Brief · Sat 14 Mar',body:'316 covers Sat. Cut Bacon -2kg, push Congee +1kg. Save NT$2,803.',metric:'NT$2,803',metricLabel:'estimated saving',color:'blue'},
+  {time:'18:00',day:'Yesterday',tier:'PRESCRIPTIVE',icon:'🌙',to:['GM','Chef','F&B'],title:'Morning Brief · Sat 14 Mar',body:'316 covers Sat. Cut Bacon -2kg, push Congee +1kg. Save NT$2,803.',metric:'NT$2,803',metricLabel:'combined daily saving',color:'blue'},
   {time:'03:30',day:'Today',tier:'DAWN UPDATE',icon:'🌅',to:['Chef','Sous-chef'],title:'Overnight changes detected',body:'Late CN tour group +12 rooms · Weather upgrade 24°→26° · 38 early arrivals 04:30–06:00.',metric:'+18',metricLabel:'covers adjusted',color:'champagne'},
   {time:'06:00',day:'Today',tier:'SERVICE READY',icon:'🟢',to:['Chef','Service Mgr'],title:'All 9 stations confirmed open',body:'Eggs station: 8/9kg prepped. Congee replenish at 08:30. · 7 cooks · 16 servers ✓',metric:null,color:'esg'},
   {time:'07:30',day:'Today',tier:'LIVE · COVER CHECK',icon:'📊',to:['Chef'],title:'Cover count +11% above forecast',body:'142 seated vs 128 expected · System auto-adjusting Coffee +20, Congee +8.',metric:null,color:'mag'},
@@ -720,6 +720,7 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
       <div class="kpi"><div class="k">Occupancy</div><div class="v">${s.occupancyPct}<small>%</small></div><div class="d">${s.roomsSold} of 405 keys</div></div>
       <div class="kpi"><div class="k">CO₂e ↓ tonight</div><div class="v br">${b.co2}<small>kg</small></div><div class="d">Serve 360-ready</div></div>
     </div>
+    <div style="font-size:10px;font-style:italic;color:var(--mid-grey);margin-top:8px;margin-bottom:14px">ServiceFlow 75% · Winnow baseline 25% of NT$ figures shown</div>
     <div style="margin:0 0 16px;padding:12px 14px;background:rgba(8,145,178,.06);border:1px solid rgba(8,145,178,.12);border-radius:12px">
       <div style="font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--w-blue-dark);font-weight:700;margin-bottom:10px">How ServiceFlow talks to your team</div>
       <div style="display:flex;align-items:center;gap:0">
@@ -758,7 +759,7 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
     </div>
     <div class="dash-tile" role="button" tabindex="0" data-go="gap" onclick="go('gap')">
       <div class="dash-i" style="background:rgba(74,143,94,.10);color:var(--esg)"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/></svg></div>
-      <div class="dash-b"><div class="dash-t">W Taipei today vs with ServiceFlow</div><div class="dash-d">8-gap analysis · NT$867K/yr opportunity · GRI 306 aligned</div></div>
+      <div class="dash-b"><div class="dash-t">W Taipei today vs with ServiceFlow</div><div class="dash-d">8-gap analysis · NT$867K/yr combined · NT$647K via ServiceFlow</div></div>
       <div class="dash-arrow">›</div>
     </div>
     <div class="dash-tile" role="button" tabindex="0" data-go="notifs" onclick="go('notifs')">
@@ -861,7 +862,7 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
       </div>
     </div>
     ${weekBar()}
-    ${(()=>{const eod=getEodState();return eod.show?'<div class="log-cta-wrap"><div style="font-style:italic;font-size:12px;color:var(--mid-grey);text-align:center;margin-bottom:8px">Service wrapped at '+eod.time+' — log when ready</div><button onclick="openLog()" class="log-cta"><span style="font-size:17px">☑</span>LOG END OF SERVICE · 5 min</button><div class="log-trend">Team logging in ~5 min avg</div></div>':''})()}
+    ${(()=>{const eod=getEodState();return eod.show?'<div class="log-cta-wrap"><div style="background:var(--marble);padding:10px 0 0"><div style="font-style:italic;font-size:12px;color:var(--mid-grey);text-align:center;margin-bottom:8px">Service wrapped at '+eod.time+' — log when ready</div><button onclick="openLog()" class="log-cta"><span style="font-size:17px">☑</span>LOG END OF SERVICE · 5 min</button><div class="log-trend">Team logging in ~5 min avg</div></div></div>':''})()}
     <button class="btn ghost" data-go="dashboard" onclick="go('dashboard')" style="margin-top:14px">← Back to home</button>
   </div>`;}
 
@@ -1089,7 +1090,7 @@ function screenGap(){
   const rows=[
     {dim:'Food waste tracking',a:'None · unmeasured daily',b:'Logged · per station · daily'},
     {dim:'Cover forecasting',a:'Chef\'s gut · spreadsheet',b:'8-signal model · Evening Brief · 18:00'},
-    {dim:'Buffet over-prep cost',a:'NT$867K / year invisible <span title="Industry math: 12% waste baseline (WRAP 2025, 180 resort kitchens) applied to W Taipei volume. To be calibrated at pilot week 2." style="font-size:9px;cursor:help;opacity:0.55">ⓘ</span>',b:'NT$2,400 / day recovered avg'},
+    {dim:'Buffet over-prep cost',a:'NT$867K/yr invisible · NT$647K via ServiceFlow <span title="Industry math: 12% waste baseline (WRAP 2025, 180 resort kitchens) applied to W Taipei volume. To be calibrated at pilot week 2." style="font-size:9px;cursor:help;opacity:0.55">ⓘ</span>',b:'NT$2,400 / day recovered avg'},
     {dim:'ESG data quality',a:'Manual · unaudited',b:'Auto-logged · GRI 306 mapped'},
     {dim:'Serve 360 reporting',a:'Estimated · ad-hoc',b:'Export-ready · monthly'},
     {dim:'Chef planning time',a:'30+ min / day',b:'5 min / service · 0 planning'},
