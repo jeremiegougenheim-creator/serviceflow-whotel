@@ -1,13 +1,13 @@
 // Cloudflare Worker — voice intent classifier for ServiceFlow.
 //
-// Now powered by Cloudflare Workers AI (Llama 3.1 8B Instruct) via the AI
+// Now powered by Cloudflare Workers AI (Qwen3 30B A3B FP8) via the AI
 // binding declared in wrangler.toml. No external API, no API keys, no secret
 // management — just a native env.AI.run call. Free tier covers ~10k requests/day.
 //
 // Browser POSTs { transcript: string }. Worker returns the parsed intent JSON.
 
 const ALLOWED_ORIGIN_DEFAULT = '*';
-const MODEL_DEFAULT = '@cf/meta/llama-3.1-8b-instruct';
+const MODEL_DEFAULT = '@cf/qwen/qwen3-30b-a3b-fp8';
 
 function corsHeaders(origin) {
   return {
@@ -26,33 +26,25 @@ function jsonResponse(obj, status, origin) {
 }
 
 function buildPrompt(transcript) {
-  return `You are a hotel kitchen assistant voice parser.
-The user said: "${transcript}"
+  return `You are a kitchen waste logging assistant for a hotel breakfast operation in Taipei. Staff speak a mix of Mandarin Chinese and English.
 
-Classify this into exactly one of these intents and respond ONLY with valid JSON:
+Classify the input into exactly one of: WASTE_LOG | QUESTION | CONFIRM | CANCEL | UNCLEAR
 
-1. WASTE_LOG — user is logging food waste, e.g. "Japanese 2 kilos", "western hot overprep 500g"
-2. QUESTION — user asked a question, e.g. "how much did we waste yesterday", "what's the forecast"
-3. CONFIRM — user said yes/confirm/ok/log it after seeing a suggestion
-4. CANCEL — user said no/cancel/never mind/stop
-5. UNCLEAR — anything else
+A WASTE_LOG contains: a food item name (in any language), optionally a quantity, optionally a reason.
+Examples of WASTE_LOG: "炒蛋剩 2 公斤", "Dim sum over-prep 1.5 kg", "congee overcooked", "蒸籠包 3 份沒人拿"
 
-For WASTE_LOG respond:
-{"intent":"WASTE_LOG","station":"[station name as spoken]","amount":[number],"unit":"kg or g","confidence":"high|medium|low"}
-
-For QUESTION respond:
-{"intent":"QUESTION","reply":"[a short, direct answer in 1 sentence if you can answer from context, otherwise say what you cannot do]"}
-
-For CONFIRM respond:
+Return ONLY valid JSON — no explanation, no markdown:
+{"intent":"WASTE_LOG","item":"...","quantity":null,"unit":null,"reason":null}
+or
+{"intent":"QUESTION"}
+or
 {"intent":"CONFIRM"}
-
-For CANCEL respond:
+or
 {"intent":"CANCEL"}
+or
+{"intent":"UNCLEAR"}
 
-For UNCLEAR respond:
-{"intent":"UNCLEAR","reply":"I can log waste — try saying a station name and amount, like 'Japanese 2 kilos'."}
-
-Respond with JSON only. No other text.`;
+User said: "${transcript}"`;
 }
 
 export default {
@@ -77,7 +69,11 @@ export default {
       const audioArray = [...new Uint8Array(audioBuffer)];
       let whisperResult;
       try {
-        whisperResult = await env.AI.run('@cf/openai/whisper', { audio: audioArray });
+        whisperResult = await env.AI.run('@cf/openai/whisper-large-v3-turbo', {
+          audio: audioArray,
+          no_speech_threshold: 0.5,
+          condition_on_previous_text: false,
+        });
       } catch (err) {
         return jsonResponse({ error: 'Whisper failed', message: String(err) }, 502, origin);
       }
