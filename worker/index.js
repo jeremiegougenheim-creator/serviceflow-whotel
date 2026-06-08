@@ -73,6 +73,7 @@ export default {
           audio: audioArray,
           no_speech_threshold: 0.5,
           condition_on_previous_text: false,
+          initial_prompt: 'Kitchen waste log. Items: dim sum, congee, scrambled eggs, noodle, wonton, pastry, coffee, croissant, over-prep, leftover. Units: kg, grams, portions.',
         });
       } catch (err) {
         return jsonResponse({ error: 'Whisper failed', message: String(err) }, 502, origin);
