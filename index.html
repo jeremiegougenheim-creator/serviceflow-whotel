@@ -6,62 +6,62 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
 <title>ServiceFlow · W Taipei</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230891B2'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='-apple-system,Segoe UI,sans-serif' font-size='14' font-weight='700' fill='white'%3ESF%3C/text%3E%3C/svg%3E">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23152A37'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='-apple-system,Segoe UI,sans-serif' font-size='14' font-weight='700' fill='white'%3ESF%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  /* Palette v8 — slate/teal/white per brief Fix #3.
-     Champagne retained as legacy W-Hotels accent (brief silent on it). */
-  --champagne:#A0784A; --champagne-light:#C9A97A; --champagne-dark:#7A5A32; --champagne-pale:#F0E8DA;
-  --bronze:#A0784A; --bronze-light:#C9A97A; --bronze-dark:#7A5A32; --bronze-pale:#F0E8DA;
+  /* ServiceFlow palette — aligned on the product screens (petrol + bronze). */
+  --champagne:#B98A4A; --champagne-light:#D1AF7E; --champagne-dark:#7E5C2E; --champagne-pale:#F2EADD;
+  --bronze:#B98A4A; --bronze-light:#D1AF7E; --bronze-dark:#7E5C2E; --bronze-pale:#F2EADD;
   --ivory:#FFFFFF; --warm-white:#FFFFFF; --marble:#F7F4EF; --marble-dark:#E5E7EB;
-  --charcoal:#2C3E50; --mid-grey:#6B7280; --light-grey:#9CA3AF;
-  --blue:#0891B2; --blue-dark:#0E7490; --blue-pale:#CFFAFE;
-  --w-blue:#0891B2; --w-blue-dark:#0E7490; --w-blue-pale:#CFFAFE;
-  --mag:#BE185D; --w-mag:#BE185D; --w-mag-dark:#9F174A; --w-mag-pale:#FCE7F3;
-  --esg:#16A34A; --esg-pale:#DCFCE7; --amber:#B9770F; --amber-pale:#FBF1E2; --red-alert:#BE185D;
-  --green:#15803D; --green-pale:#DCFCE7;
-  --shadow:0 8px 32px rgba(44,62,80,0.10); --shadow-sm:0 2px 10px rgba(44,62,80,0.07);
+  --charcoal:#152A37; --mid-grey:#6B7280; --light-grey:#9CA3AF;
+  --blue:#23475A; --blue-dark:#152A37; --blue-pale:#E4EBEE;
+  --w-blue:#23475A; --w-blue-dark:#152A37; --w-blue-pale:#E4EBEE;
+  --mag:#9A7038; --w-mag:#9A7038; --w-mag-dark:#7E5C2E; --w-mag-pale:#F2EADD;
+  --esg:#3F7A73; --esg-pale:#E3EFED; --amber:#B9770F; --amber-pale:#FBF1E2; --red-alert:#B5545A;
+  --green:#3F7A73; --green-pale:#E3EFED;
+  --shadow:0 8px 32px rgba(21,42,55,0.10); --shadow-sm:0 2px 10px rgba(21,42,55,0.07);
 }
 *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 html,body{
-  background:#0F1B2A;font-family:'Jost',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:#0A151C;font-family:'Jost',-apple-system,BlinkMacSystemFont,sans-serif;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
-  background-image:radial-gradient(ellipse at 20% 80%,rgba(8,145,178,.16) 0%,transparent 50%),
-                   radial-gradient(ellipse at 80% 20%,rgba(190,24,93,.10) 0%,transparent 45%);
+  background-image:radial-gradient(ellipse at 20% 80%,rgba(35,71,90,.16) 0%,transparent 50%),
+                   radial-gradient(ellipse at 80% 20%,rgba(154,112,56,.10) 0%,transparent 45%);
   min-height:100vh;display:flex;align-items:center;justify-content:center;color:var(--charcoal);
 }
 .phone{
   width:390px;height:844px;background:var(--marble);border-radius:48px;overflow:hidden;
   position:relative;flex-shrink:0;font-size:14px;display:flex;flex-direction:column;
-  box-shadow:0 48px 120px rgba(0,0,0,.6),0 0 0 1px rgba(8,145,178,.18);
+  box-shadow:0 48px 120px rgba(0,0,0,.6),0 0 0 1px rgba(35,71,90,.18);
 }
 @media(max-width:440px){body{padding:0}.phone{width:100vw;height:100vh;border-radius:0;box-shadow:none}}
 
 #loader{position:absolute;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:linear-gradient(160deg,var(--charcoal) 0%,#1F2937 60%,#0F1B2A 100%);transition:opacity .9s ease;overflow:hidden}
+  background:linear-gradient(160deg,var(--charcoal) 0%,#152A37 60%,#0A151C 100%);transition:opacity .9s ease;overflow:hidden}
 #loader.hide{opacity:0;pointer-events:none}
-.ld-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(201,169,122,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(201,169,122,.04) 1px,transparent 1px);background-size:44px 44px}
-.ld-glow{position:absolute;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(8,145,178,.10) 0%,transparent 70%);animation:glowPulse 3s ease-in-out infinite}
+.ld-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(209,175,126,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(209,175,126,.04) 1px,transparent 1px);background-size:44px 44px}
+.ld-glow{position:absolute;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(35,71,90,.10) 0%,transparent 70%);animation:glowPulse 3s ease-in-out infinite}
 @keyframes glowPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.15);opacity:1}}
 .ld-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;width:100%;text-align:center;padding:0 30px}
 .ld-mark{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:500;letter-spacing:.26em;text-transform:uppercase;color:var(--ivory)}
 .ld-rule{width:0;height:1px;background:linear-gradient(90deg,transparent,var(--champagne-light),transparent);margin:14px auto 10px;animation:ruleIn .7s ease .4s forwards}
 @keyframes ruleIn{to{width:110px}}
-.ld-sub{font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(201,169,122,.75)}
-.ld-bar-wrap{width:220px;height:2px;background:rgba(201,169,122,.12);border-radius:2px;overflow:hidden;margin-top:44px}
-.ld-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--champagne-dark),var(--champagne-light),#E8D090);background-size:200% 100%;animation:shimmer 1.8s linear infinite;box-shadow:0 0 10px rgba(201,169,122,.4);transition:width .25s ease;width:0}
+.ld-sub{font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(209,175,126,.75)}
+.ld-bar-wrap{width:220px;height:2px;background:rgba(209,175,126,.12);border-radius:2px;overflow:hidden;margin-top:44px}
+.ld-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--champagne-dark),var(--champagne-light),#D9B98A);background-size:200% 100%;animation:shimmer 1.8s linear infinite;box-shadow:0 0 10px rgba(209,175,126,.4);transition:width .25s ease;width:0}
 @keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
 .ld-pct{margin-top:12px;font-size:13px;color:var(--champagne-light);font-family:monospace;letter-spacing:.14em}
 .ld-foot{position:absolute;bottom:28px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(245,240,232,.50);text-align:center;width:100%;padding:0 20px}
 
 .sbar{height:44px;padding:0 12px 0 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:5;color:var(--ivory)}
-.sbar.dk{background:var(--charcoal)}
-.sbar.role{background:#0D1B2A;color:rgba(255,255,255,.95)}
-.sbar.bl{background:var(--w-blue-dark)}
-.sbar.mg{background:var(--w-mag-dark)}
-.sbar.gn{background:#1B3725}
-.sbar.br{background:var(--champagne-dark)}
+.sbar.dk{background:#0D1C25}
+.sbar.role{background:#0D1C25;color:rgba(255,255,255,.95)}
+.sbar.bl{background:#0D1C25}
+.sbar.mg{background:#0D1C25}
+.sbar.gn{background:#0D1C25}
+.sbar.br{background:#0D1C25}
 .stime{font-weight:600;font-size:14px;letter-spacing:.02em}
 .sicons{display:flex;align-items:center;gap:8px;opacity:.85}
 .sicons .sig{display:flex;gap:2px;align-items:flex-end}
@@ -75,18 +75,21 @@ html,body{
 #screen::-webkit-scrollbar{display:none}
 
 .hero{padding:16px 20px 22px;position:relative;overflow:hidden;color:var(--ivory);margin-bottom:18px}
-.hero.dk{background:linear-gradient(170deg,var(--charcoal) 0%,#1F2937 100%)}
-.hero.bl{background:linear-gradient(170deg,var(--w-blue-dark) 0%,var(--w-blue) 100%)}
-.hero.mg{background:linear-gradient(170deg,var(--w-mag-dark) 0%,var(--w-mag) 100%)}
-.hero.gn{background:linear-gradient(170deg,#1B3725 0%,var(--esg) 100%)}
-.hero.br{background:linear-gradient(170deg,var(--champagne-dark) 0%,var(--champagne) 100%)}
+.hero.dk{background:linear-gradient(170deg,#0D1C25 0%,#152A37 100%)}
+.hero.bl{background:linear-gradient(170deg,#0D1C25 0%,#152A37 100%)}
+.hero.mg{background:linear-gradient(170deg,#0D1C25 0%,#152A37 100%)}
+.hero.gn{background:linear-gradient(170deg,#0D1C25 0%,#152A37 100%)}
+.hero.br{background:linear-gradient(170deg,#0D1C25 0%,#152A37 100%)}
 .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:rgba(255,255,255,.10)}
 
+.sf-lock{flex:1;display:flex;flex-direction:column;gap:3px}
+.sf-word{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:#fff;line-height:1;letter-spacing:.005em}
+.sf-lock .brand-name{font-size:9.5px;letter-spacing:.22em;flex:none}
 .brand-row{position:relative;z-index:1;display:flex;align-items:center;gap:11px;margin-bottom:14px}
 .w-mono{width:30px;height:30px;border:1px solid rgba(255,255,255,.35);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Jost',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,.95);flex-shrink:0;letter-spacing:.02em}
-.brand-name{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#B8962E;font-weight:600;flex:1}
-.live-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(8,145,178,.12);border:1px solid rgba(8,145,178,.32);padding:4px 9px;border-radius:18px;font-size:11px;color:var(--w-blue);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
-.live-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--w-blue);animation:pulse 2s infinite;box-shadow:0 0 6px rgba(8,145,178,.6)}
+.brand-name{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#B98A4A;font-weight:600;flex:1}
+.live-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(185,138,74,.10);border:1px solid rgba(185,138,74,.45);padding:4px 9px;border-radius:18px;font-size:10px;color:#D1AF7E;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.live-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--w-blue);animation:pulse 2s infinite;box-shadow:0 0 6px rgba(35,71,90,.6)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 
 .hero h1{position:relative;z-index:1;font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:500;line-height:1.05;margin:8px 0 8px;letter-spacing:-.005em;color:var(--ivory)}
@@ -123,24 +126,24 @@ html,body{
 .score .gcrit{font-size:9px;color:var(--mid-grey);margin-top:3px;line-height:1.35;padding:0 2px;opacity:.78}
 
 .log-cta-wrap{position:sticky;bottom:0;z-index:5;padding:10px 0 14px;background:linear-gradient(to top,var(--marble) 0%,var(--marble) 70%,rgba(247,244,239,0) 100%);margin:4px -2px 0}
-.log-cta{width:100%;min-height:48px;background:#0891B2;color:#fff;border:none;border-radius:16px;padding:12px 18px;font-family:'Jost',sans-serif;font-size:14px;font-weight:700;letter-spacing:.06em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 18px rgba(8,145,178,.28)}
-.log-cta:active{background:#0E7490}
+.log-cta{width:100%;min-height:48px;background:#23475A;color:#fff;border:none;border-radius:16px;padding:12px 18px;font-family:'Jost',sans-serif;font-size:14px;font-weight:700;letter-spacing:.06em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 18px rgba(35,71,90,.28)}
+.log-cta:active{background:#152A37}
 
 .ab-box{background:var(--charcoal);border-radius:18px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;color:var(--ivory);box-shadow:var(--shadow)}
-.ab-box::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(108deg,transparent 0,transparent 44px,rgba(201,169,122,.04) 44px,rgba(201,169,122,.04) 45px);pointer-events:none}
+.ab-box::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(108deg,transparent 0,transparent 44px,rgba(209,175,126,.04) 44px,rgba(209,175,126,.04) 45px);pointer-events:none}
 .ab-eb{position:relative;z-index:1;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--champagne-light);font-weight:600;display:flex;align-items:center;gap:9px;margin-bottom:14px}
 .ab-eb::before{content:'';display:inline-block;width:6px;height:6px;background:var(--champagne-light)}
 .ab-h{position:relative;z-index:1;font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:var(--ivory);line-height:1.2;margin-bottom:14px;letter-spacing:-.005em}
 .ab-h em{font-style:italic;color:var(--champagne-light);font-weight:400}
-.ab-item{position:relative;z-index:1;display:flex;gap:13px;padding:11px 0;border-bottom:1px solid rgba(201,169,122,.08);align-items:flex-start}
+.ab-item{position:relative;z-index:1;display:flex;gap:13px;padding:11px 0;border-bottom:1px solid rgba(209,175,126,.08);align-items:flex-start}
 .ab-item:last-of-type{border-bottom:none}
 .ab-ring{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--champagne);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:500;color:var(--champagne-light);flex-shrink:0;margin-top:1px}
 .ab-body{flex:1}
 .ab-tx{font-size:13.5px;line-height:1.45;color:var(--ivory);font-weight:500}
 .ab-meta{font-size:11.5px;color:rgba(245,240,232,.55);margin-top:4px;line-height:1.4}
-.ab-save{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:#7AB67A;text-align:right;flex-shrink:0;align-self:center;letter-spacing:-.005em;min-width:78px}
+.ab-save{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:#65938F;text-align:right;flex-shrink:0;align-self:center;letter-spacing:-.005em;min-width:78px}
 .ab-save.zero{color:rgba(245,240,232,.65);font-size:14px}
-.ab-recap{position:relative;z-index:1;margin-top:14px;padding-top:14px;border-top:1px solid rgba(201,169,122,.2);display:flex;justify-content:space-between;align-items:baseline}
+.ab-recap{position:relative;z-index:1;margin-top:14px;padding-top:14px;border-top:1px solid rgba(209,175,126,.2);display:flex;justify-content:space-between;align-items:baseline}
 .ab-recap-l{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(245,240,232,.6);font-weight:600}
 .ab-recap-v{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:var(--champagne-light);letter-spacing:-.005em}
 
@@ -153,13 +156,13 @@ html,body{
 .st-cause{font-size:11.5px;color:var(--mid-grey);margin-top:4px;line-height:1.4}
 .st-waste{font-size:10.5px;color:var(--mid-grey);margin-top:6px;letter-spacing:.04em}
 .st-pct{display:inline-block;font-family:'Jost',sans-serif;font-size:12px;font-weight:800;letter-spacing:.02em;padding:4px 10px;border-radius:7px;white-space:nowrap;flex-shrink:0;align-self:center;min-width:54px;text-align:center;line-height:1.2}
-.st-pct.up{color:#0D6B35;background:#C8F0DA}
-.st-pct.down{color:#A3003A;background:#FFD6E0}
+.st-pct.up{color:#2F5F59;background:#D5E6E3}
+.st-pct.down{color:#7E5C2E;background:#F2EADD}
 .st-pct.flat{color:var(--mid-grey);background:rgba(0,0,0,.04)}
 
 .esg-card{background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:16px;padding:14px 16px;margin-bottom:13px;display:flex;align-items:center;gap:13px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
 .esg-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(180deg,var(--esg),var(--champagne));border-radius:16px 0 0 16px}
-.esg-card .ico{width:38px;height:38px;border-radius:11px;background:rgba(74,143,94,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.esg-card .ico{width:38px;height:38px;border-radius:11px;background:rgba(63,122,115,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .esg-card .ico svg{width:19px;height:19px;stroke:var(--esg);fill:none;stroke-width:1.9}
 .esg-card .esg-body{flex:1}
 .esg-card .esg-h{font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--champagne-dark);font-weight:700}
@@ -168,7 +171,7 @@ html,body{
 
 .day-toggle{display:flex;background:#E5E7EB;border-radius:22px;padding:3px;gap:0;margin-bottom:10px}
 .day-toggle button{flex:1;padding:8px 4px;border:none;background:none;border-radius:18px;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.08em;color:var(--mid-grey);cursor:pointer;font-weight:600;transition:all .18s;min-width:0}
-.day-toggle button.on{background:var(--w-blue);color:#fff;box-shadow:0 2px 8px rgba(8,145,178,.3);font-weight:700}
+.day-toggle button.on{background:var(--w-blue);color:#fff;box-shadow:0 2px 8px rgba(35,71,90,.3);font-weight:700}
 .day-story{font-size:11.5px;color:var(--mid-grey);margin-bottom:14px;line-height:1.35;padding:0 4px}
 .day-story b{color:var(--charcoal);font-weight:600}
 .week-bar{display:flex;justify-content:space-between;gap:8px;background:var(--charcoal);color:var(--ivory);border-radius:14px;padding:12px 14px;margin-bottom:13px;align-items:center;box-shadow:var(--shadow-sm)}
@@ -181,7 +184,7 @@ html,body{
 .card.flat{box-shadow:none;background:var(--marble);border-color:var(--marble-dark)}
 
 .rolecard{background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:18px;padding:18px;margin-bottom:11px;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow-sm);transition:transform 100ms ease-out,filter 100ms ease-out;position:relative;overflow:hidden}
-.rolecard::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(108deg,transparent 0,transparent 44px,rgba(160,120,74,.04) 44px,rgba(160,120,74,.04) 45px);pointer-events:none}
+.rolecard::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(108deg,transparent 0,transparent 44px,rgba(185,138,74,.04) 44px,rgba(185,138,74,.04) 45px);pointer-events:none}
 .rolecard:active{transform:scale(.98);filter:brightness(.96)}
 .rolecard .ico{width:48px;height:48px;border-radius:13px;background:var(--w-blue-pale);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;z-index:1}
 .rolecard .ico svg{width:24px;height:24px;stroke:var(--w-blue-dark);fill:none;stroke-width:1.9}
@@ -208,8 +211,8 @@ html,body{
 .otab{padding:11px 13px;font-size:11.5px;letter-spacing:.04em;font-family:'Jost',sans-serif;font-weight:500;cursor:pointer;border:none;background:none;color:var(--mid-grey);border-bottom:2px solid transparent;white-space:nowrap;flex-shrink:0;transition:all .2s}
 .otab.on{color:var(--w-mag-dark);border-bottom-color:var(--w-mag)}
 
-.strike{background:linear-gradient(170deg,#1F2937 0%,var(--charcoal) 100%);color:var(--ivory);border-radius:20px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;border:1px solid rgba(190,24,93,.25)}
-.strike::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(108deg,transparent 0,transparent 44px,rgba(201,169,122,.04) 44px,rgba(201,169,122,.04) 45px);pointer-events:none}
+.strike{background:linear-gradient(170deg,#152A37 0%,var(--charcoal) 100%);color:var(--ivory);border-radius:20px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;border:1px solid rgba(154,112,56,.25)}
+.strike::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(108deg,transparent 0,transparent 44px,rgba(209,175,126,.04) 44px,rgba(209,175,126,.04) 45px);pointer-events:none}
 .strike .strike-skyline{position:absolute;right:0;bottom:0;pointer-events:none;z-index:0}
 .strike .st-eb{position:relative;z-index:1;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--w-mag);font-weight:600;display:flex;align-items:center;gap:9px;margin-bottom:10px}
 .strike .st-eb::before{content:'';display:inline-block;width:6px;height:6px;background:var(--w-mag)}
@@ -229,8 +232,8 @@ html,body{
 .prow .pr small{font-size:10px;color:var(--mid-grey);display:block;margin-top:1px;letter-spacing:.04em}
 
 .delta{display:inline-block;font-family:'Jost',sans-serif;font-weight:800;font-size:12px;padding:3px 9px;border-radius:6px;white-space:nowrap;letter-spacing:.02em;line-height:1.25}
-.delta.up{color:#0D6B35;background:#C8F0DA}
-.delta.down{color:#A3003A;background:#FFD6E0}
+.delta.up{color:#2F5F59;background:#D5E6E3}
+.delta.down{color:#7E5C2E;background:#F2EADD}
 .delta.flat{color:var(--mid-grey);background:rgba(0,0,0,.05)}
 
 .gate{display:flex;gap:14px}
@@ -242,115 +245,115 @@ html,body{
 .gate .nm{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:19px;margin:3px 0 4px;letter-spacing:-.005em;color:var(--charcoal)}
 .gate .ds{font-size:12px;color:var(--mid-grey);line-height:1.45}
 
-.btn{display:block;width:100%;text-align:center;background:var(--w-blue);color:var(--ivory);font-family:'Jost',sans-serif;font-weight:600;border:none;border-radius:14px;padding:14px;font-size:13.5px;cursor:pointer;letter-spacing:.04em;box-shadow:0 6px 16px rgba(8,145,178,.25);text-transform:uppercase}
-.btn.mg{background:var(--w-mag);box-shadow:0 6px 16px rgba(190,24,93,.25)}
-.btn.br{background:var(--champagne);box-shadow:0 6px 16px rgba(160,120,74,.25)}
+.btn{display:block;width:100%;text-align:center;background:var(--w-blue);color:var(--ivory);font-family:'Jost',sans-serif;font-weight:600;border:none;border-radius:14px;padding:14px;font-size:13.5px;cursor:pointer;letter-spacing:.04em;box-shadow:0 6px 16px rgba(35,71,90,.25);text-transform:uppercase}
+.btn.mg{background:var(--w-mag);box-shadow:0 6px 16px rgba(154,112,56,.25)}
+.btn.br{background:var(--champagne);box-shadow:0 6px 16px rgba(185,138,74,.25)}
 .btn.ghost{background:var(--warm-white);border:1px solid var(--marble-dark);color:var(--charcoal);box-shadow:none}
 .btn.sm{padding:10px;font-size:11.5px;border-radius:11px}
 .btn.xs{display:inline-block;width:auto;padding:6px 11px;font-size:10px;letter-spacing:.1em;border-radius:9px;box-shadow:none}
-.strike-strip{background:var(--warm-white);border:1px solid rgba(190,24,93,.15);border-radius:14px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;position:relative;overflow:hidden}
+.strike-strip{background:var(--warm-white);border:1px solid rgba(154,112,56,.15);border-radius:14px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;position:relative;overflow:hidden}
 .strike-strip::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--w-mag)}
 .strike-strip .ss-name{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:500;color:var(--charcoal);flex:1;letter-spacing:-.005em}
-.strike-strip .ss-save{font-size:11px;font-weight:600;color:#16A34A;white-space:nowrap;letter-spacing:.02em}
-.strike-done{background:#F0FDF4;border:1px solid rgba(22,163,74,.20);border-radius:14px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;position:relative;overflow:hidden}
-.strike-done::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#16A34A}
-.strike-done .sd-check{font-size:14px;color:#16A34A;flex-shrink:0;font-weight:700}
+.strike-strip .ss-save{font-size:11px;font-weight:600;color:#3F7A73;white-space:nowrap;letter-spacing:.02em}
+.strike-done{background:#F1F7F6;border:1px solid rgba(63,122,115,.20);border-radius:14px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;position:relative;overflow:hidden}
+.strike-done::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#3F7A73}
+.strike-done .sd-check{font-size:14px;color:#3F7A73;flex-shrink:0;font-weight:700}
 .strike-done .sd-body{flex:1;min-width:0}
 .strike-done .sd-nm{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:500;color:var(--charcoal);letter-spacing:-.005em}
-.strike-done .sd-lbl{font-size:11px;color:#16A34A;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strike-done .sd-lbl{font-size:11px;color:#3F7A73;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .strike-done .sd-time{font-size:10px;color:var(--mid-grey);white-space:nowrap;letter-spacing:.06em;font-weight:700;flex-shrink:0}
 .audit-row{display:flex;align-items:flex-start;gap:12px;padding:11px 16px;border-bottom:1px solid var(--marble)}
 .audit-row:last-child{border-bottom:none}
 .audit-time{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--mid-grey);padding-top:2px;white-space:nowrap;min-width:38px}
 .audit-body{flex:1}
 .audit-nm{font-weight:600;font-size:13px;color:var(--charcoal)}
-.audit-lbl{font-size:11.5px;color:#16A34A;margin-top:2px}
+.audit-lbl{font-size:11.5px;color:#3F7A73;margin-top:2px}
 
 /* ── ROLE SELECTOR (dedicated dark-navy layout) ─────────────────── */
-.role-screen{min-height:100%;display:flex;flex-direction:column;background:#0D1B2A;color:rgba(255,255,255,.95);padding:14px 22px 20px;position:relative;overflow:hidden}
+.role-screen{min-height:100%;display:flex;flex-direction:column;background:#0D1C25;color:rgba(255,255,255,.95);padding:14px 22px 20px;position:relative;overflow:hidden}
 .role-sf-watermark{position:absolute;top:50%;left:50%;transform:translateX(-50%) translateY(-50%);font-family:'Cormorant Garamond',serif;font-weight:400;font-size:88px;line-height:1;color:rgba(255,255,255,.045);pointer-events:none;-webkit-user-select:none;user-select:none;white-space:nowrap;letter-spacing:-2px;z-index:0}
 .role-hero{position:relative;z-index:1;flex-shrink:0}
 .role-brand{display:flex;align-items:center;gap:11px;margin-bottom:14px}
-.role-w{width:32px;height:32px;border:1.5px solid #C9A84C;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:#C9A84C;flex-shrink:0;letter-spacing:.02em}
-.role-prop{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#C9A84C;font-weight:600}
+.role-w{width:32px;height:32px;border:1.5px solid #B98A4A;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:#B98A4A;flex-shrink:0;letter-spacing:.02em}
+.role-prop{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#B98A4A;font-weight:600}
 .role-h1{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:500;line-height:1.04;letter-spacing:-.01em;color:#fff;margin-bottom:12px}
-.role-h1 em{font-style:italic;color:#C8A44C;font-weight:400}
+.role-h1 em{font-style:italic;color:#B98A4A;font-weight:400}
 .role-sub{font-size:13px;line-height:1.5;color:rgba(255,255,255,.6);max-width:94%}
 .role-sub em{font-style:italic;color:rgba(255,255,255,.85);font-weight:400}
 .role-cards{position:relative;z-index:1;display:flex;flex-direction:column;gap:14px;margin-top:20px;flex:0 0 auto;justify-content:flex-start}
 .role-card{position:relative;text-align:left;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:18px 18px 16px;cursor:pointer;font-family:'Jost',sans-serif;color:inherit;transition:all .15s;overflow:hidden}
 .role-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
-.role-card.teal::before{background:#0EA5E9}
-.role-card.mag::before{background:#C4427A}
+.role-card.teal::before{background:#65938F}
+.role-card.mag::before{background:#B98A4A}
 .role-card:hover{background:rgba(255,255,255,.07);transform:translateY(-1px)}
 .role-card:active{transform:translateY(0)}
 .role-arrow{position:absolute;right:18px;top:24px;font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:rgba(255,255,255,.35);line-height:1;pointer-events:none}
-.role-card.teal .role-arrow{color:rgba(14,165,233,.55)}
-.role-card.mag  .role-arrow{color:rgba(196,66,122,.55)}
+.role-card.teal .role-arrow{color:rgba(101,147,143,.75)}
+.role-card.mag  .role-arrow{color:rgba(185,138,74,.55)}
 .role-card-head{display:flex;align-items:center;gap:13px;margin-bottom:8px}
 .role-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.role-icon.teal{background:rgba(14,165,233,.14)}
-.role-icon.teal svg{stroke:#0EA5E9;fill:none;stroke-width:1.9;width:22px;height:22px}
-.role-icon.mag{background:rgba(196,66,122,.14)}
-.role-icon.mag svg{stroke:#C4427A;fill:none;stroke-width:1.9;width:22px;height:22px}
+.role-icon.teal{background:rgba(101,147,143,.16)}
+.role-icon.teal svg{stroke:#8FB5B1;fill:none;stroke-width:1.9;width:22px;height:22px}
+.role-icon.mag{background:rgba(185,138,74,.14)}
+.role-icon.mag svg{stroke:#B98A4A;fill:none;stroke-width:1.9;width:22px;height:22px}
 .role-card-title{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:500;color:#fff;letter-spacing:-.005em;line-height:1.15;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.role-live{font-family:'Jost',sans-serif;font-size:8.5px;font-weight:700;letter-spacing:.18em;background:rgba(14,165,233,.18);color:#0EA5E9;padding:3px 8px;border-radius:5px;text-transform:uppercase}
+.role-live{font-family:'Jost',sans-serif;font-size:8.5px;font-weight:700;letter-spacing:.18em;background:rgba(35,71,90,.18);color:#23475A;padding:3px 8px;border-radius:5px;text-transform:uppercase}
 .role-card-sub{font-size:11.5px;color:rgba(255,255,255,.55);margin:0 0 12px 55px;line-height:1.4}
 .role-chips{display:flex;flex-wrap:wrap;gap:6px;margin-left:55px}
 .role-chip{font-size:10px;font-weight:500;letter-spacing:.04em;padding:5px 9px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);color:rgba(255,255,255,.78)}
-.role-card.teal .role-chip{border-color:rgba(14,165,233,.22);background:rgba(14,165,233,.06)}
-.role-card.mag  .role-chip{border-color:rgba(196,66,122,.22);background:rgba(196,66,122,.06)}
+.role-card.teal .role-chip{border-color:rgba(101,147,143,.30);background:rgba(101,147,143,.08)}
+.role-card.mag  .role-chip{border-color:rgba(185,138,74,.22);background:rgba(185,138,74,.06)}
 .role-foot{position:relative;z-index:1;text-align:center;font-size:10px;color:rgba(255,255,255,.32);margin-top:auto;padding-top:24px;letter-spacing:.04em}
 
 .voice-btn{display:inline-flex;align-items:center;gap:8px;background:var(--warm-white);border:1px solid var(--marble-dark);color:var(--charcoal);padding:9px 14px;border-radius:11px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:'Jost',sans-serif;transition:all .15s;letter-spacing:.02em}
 .voice-btn:hover{border-color:var(--champagne);background:var(--champagne-pale)}
-.voice-btn.on{background:#0891B2;color:#fff;border-color:#0891B2;animation:voicePulse 1.4s ease-in-out infinite}
+.voice-btn.on{background:#23475A;color:#fff;border-color:#23475A;animation:voicePulse 1.4s ease-in-out infinite}
 .voice-btn.on svg{stroke:#fff}
-@keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 rgba(8,145,178,.45)}50%{box-shadow:0 0 0 8px rgba(8,145,178,0)}}
+@keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 rgba(35,71,90,.45)}50%{box-shadow:0 0 0 8px rgba(35,71,90,0)}}
 
 /* Press-and-hold voice log (F&B card) */
 .vlog-btn{background:transparent;border:1px dashed rgba(255,255,255,.18);border-radius:9px;width:100%;padding:11px;font-family:'Jost',sans-serif;font-size:12px;font-weight:400;color:rgba(245,242,236,.45);display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .vlog-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.6}
 .vlog-card{border:1px dashed rgba(255,255,255,.22);border-radius:9px;width:100%;padding:12px 14px;box-sizing:border-box;-webkit-user-select:none;user-select:none}
-.vlog-listening{border-color:rgba(212,0,75,.5)}
-.vlog-thinking{border-color:rgba(200,164,76,.35);background:rgba(200,164,76,.05);border-style:dashed}
+.vlog-listening{border-color:rgba(154,112,56,.5)}
+.vlog-thinking{border-color:rgba(185,138,74,.35);background:rgba(185,138,74,.05);border-style:dashed}
 .vlog-think-dots{display:inline-flex;gap:3px;align-items:center}
-.vlog-think-dots span{width:4px;height:4px;border-radius:50%;background:rgba(200,164,76,.7);animation:vlogPulse 1s ease-in-out infinite}
+.vlog-think-dots span{width:4px;height:4px;border-radius:50%;background:rgba(185,138,74,.7);animation:vlogPulse 1s ease-in-out infinite}
 .vlog-think-dots span:nth-child(2){animation-delay:.2s}
 .vlog-think-dots span:nth-child(3){animation-delay:.4s}
-.vlog-answered{border-color:rgba(200,164,76,.3);background:rgba(200,164,76,.05)}
+.vlog-answered{border-color:rgba(185,138,74,.3);background:rgba(185,138,74,.05)}
 .vlog-answer{font-family:'Jost',sans-serif;font-size:13px;font-weight:400;color:rgba(245,242,236,.85);margin:0 0 6px;line-height:1.5}
 .vlog-dismiss{font-family:'Jost',sans-serif;font-size:11px;color:rgba(245,242,236,.32);margin:0;letter-spacing:.08em;font-weight:500}
-.vlog-confirmed{border-color:rgba(66,201,126,.5)}
-.vlog-error{border-color:rgba(192,57,43,.5);cursor:pointer}
+.vlog-confirmed{border-color:rgba(101,147,143,.5)}
+.vlog-error{border-color:rgba(181,84,90,.5);cursor:pointer}
 .vlog-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .vlog-label{font-family:'Jost',sans-serif;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,242,236,.7)}
-.vlog-pulse{width:8px;height:8px;border-radius:50%;background:#D4004B;flex-shrink:0;animation:vlogPulse 1s ease-in-out infinite}
+.vlog-pulse{width:8px;height:8px;border-radius:50%;background:#9A7038;flex-shrink:0;animation:vlogPulse 1s ease-in-out infinite}
 @keyframes vlogPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
 .vlog-transcript{font-size:13px;font-weight:400;color:rgba(245,242,236,.9);margin:6px 0 0;font-style:italic;line-height:1.45}
 .vlog-hint{font-size:12px;font-weight:400;color:rgba(245,242,236,.4);margin:4px 0 0;font-style:italic}
-.vlog-summary{font-family:'Jost',sans-serif;font-size:14px;font-weight:600;color:#16A34A;margin:4px 0 0;letter-spacing:.04em}
+.vlog-summary{font-family:'Jost',sans-serif;font-size:14px;font-weight:600;color:#3F7A73;margin:4px 0 0;letter-spacing:.04em}
 .vlog-summary-line{margin-top:8px;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.04em;color:rgba(245,242,236,.7);text-align:center;line-height:1.4}
 .gvb{background:var(--warm-white);border-bottom:1px solid var(--marble);padding:10px 16px;position:sticky;top:0;z-index:15;display:flex;align-items:center;gap:12px}
 .gvb-mic-btn{width:38px;height:38px;border-radius:50%;background:var(--w-mag);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:transform .15s,background .2s;border:none}
 .gvb-mic-btn svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .gvb-listening .gvb-mic-btn{background:var(--w-mag);animation:gvbPulse 1s ease-in-out infinite}
 .gvb-thinking .gvb-mic-btn{background:var(--champagne)}
-.gvb-confirmed .gvb-mic-btn{background:#16A34A}
-.gvb-error .gvb-mic-btn{background:#C04848}
+.gvb-confirmed .gvb-mic-btn{background:#3F7A73}
+.gvb-error .gvb-mic-btn{background:#B5545A}
 @keyframes gvbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
 .gvb-text{flex:1;min-width:0}
 .gvb-label{font-family:'Jost',sans-serif;font-size:12px;font-weight:600;color:var(--charcoal);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gvb-sublabel{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--mid-grey);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gvb-session{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
-.gvb-chip{font-family:'Jost',sans-serif;font-size:10px;font-weight:700;background:#C8F0DA;color:#0D6B35;border-radius:5px;padding:2px 8px;letter-spacing:.04em}
+.gvb-chip{font-family:'Jost',sans-serif;font-size:10px;font-weight:700;background:#D5E6E3;color:#2F5F59;border-radius:5px;padding:2px 8px;letter-spacing:.04em}
 .voice-btn svg{width:15px;height:15px;stroke:var(--champagne);fill:none;stroke-width:2;flex-shrink:0}
 
 #nav{position:absolute;left:0;right:0;bottom:0;height:78px;background:rgba(250,248,244,.96);backdrop-filter:blur(14px);border-top:1px solid var(--marble);display:flex;align-items:center;justify-content:space-around;padding:0 6px 14px;z-index:20}
 .nb{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:7px 5px;border:none;background:none;color:var(--mid-grey);font-family:'Jost',sans-serif;flex:1;transition:color 150ms ease-out}
 .nb svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9}
 .nb span{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
-.nb.on{color:#C9A84C}
+.nb.on{color:#B98A4A}
 .nb.on span{font-weight:600}
 
 .sheet-bg{position:absolute;inset:0;background:rgba(20,20,25,.45);z-index:15;display:flex;align-items:flex-end}
@@ -365,10 +368,10 @@ html,body{
 /* Strike confirm modal (Mode 1) */
 .strike-opt{flex:1;padding:13px 8px;border:1px solid var(--marble-dark);background:var(--warm-white);border-radius:12px;font-family:'Jost',sans-serif;font-size:12.5px;font-weight:600;color:var(--charcoal);cursor:pointer;letter-spacing:.02em;transition:all .15s}
 .strike-opt.mini{flex:0 0 50px;font-size:20px;color:var(--mid-grey)}
-.strike-opt.on.yes{background:#DCFCE7;border-color:#16A34A;color:#16A34A}
-.strike-opt.on.mod{background:#FEF3C7;border-color:#B8962E;color:#7A5A32}
-.strike-opt.on.no{background:#FCE7F3;border-color:#BE185D;color:#BE185D}
-.heard-line{font-size:11px;color:#16A34A;margin-top:4px;line-height:1.35;font-weight:500}
+.strike-opt.on.yes{background:#E3EFED;border-color:#3F7A73;color:#3F7A73}
+.strike-opt.on.mod{background:#FEF3C7;border-color:#B98A4A;color:#7A5A32}
+.strike-opt.on.no{background:#F2EADD;border-color:#9A7038;color:#9A7038}
+.heard-line{font-size:11px;color:#3F7A73;margin-top:4px;line-height:1.35;font-weight:500}
 .disclose-btn{background:none;border:none;font-family:'Jost',sans-serif;font-size:12px;color:#6B7280;cursor:pointer;padding:14px 0 6px;font-weight:600;letter-spacing:.02em;width:100%;text-align:left}
 .disclose-panel{background:#F7F4EF;border:1px solid #E5E7EB;border-radius:14px;padding:14px;margin-top:4px}
 .disclose-panel .field{margin-top:0}
@@ -382,11 +385,11 @@ html,body{
 .silhouette{position:absolute;right:-20px;bottom:-10px;width:140px;height:120px;opacity:.18;pointer-events:none;z-index:0}
 .silhouette svg{width:100%;height:100%;fill:var(--champagne-light)}
 /* Gap comparison table */
-.winn-head{display:grid;grid-template-columns:30% 28% 42%;background:var(--charcoal);padding:10px 14px;gap:8px}
+.winn-head{display:grid;grid-template-columns:minmax(0,30fr) minmax(0,28fr) minmax(0,42fr);background:var(--charcoal);padding:10px 14px;gap:8px}
 .winn-dim-h{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(245,240,232,.65);white-space:nowrap}
 .winn-col-a{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(245,240,232,.65);white-space:nowrap}
 .winn-col-b{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--champagne-light);white-space:nowrap}
-.winn-row{display:grid;grid-template-columns:30% 28% 42%;padding:11px 14px;gap:8px;border-top:1px solid var(--marble)}
+.winn-row{display:grid;grid-template-columns:minmax(0,30fr) minmax(0,28fr) minmax(0,42fr);padding:11px 14px;gap:8px;border-top:1px solid var(--marble)}
 .winn-row:nth-child(even){background:rgba(237,233,224,.35)}
 .winn-dim{font-size:10.5px;font-weight:700;color:var(--charcoal);letter-spacing:.04em;line-height:1.35}
 .winn-a{font-size:11px;color:var(--mid-grey);line-height:1.4}
@@ -397,7 +400,7 @@ html,body{
 .notif-timeline::before{content:'';position:absolute;left:5px;top:8px;bottom:8px;width:1px;background:linear-gradient(180deg,var(--marble-dark),var(--champagne-light),var(--marble-dark))}
 .notif-card{position:relative;background:var(--warm-white);border:1px solid var(--marble-dark);border-radius:14px;padding:13px 14px 13px 16px;margin-bottom:10px;box-shadow:var(--shadow-sm)}
 .notif-card::before{content:'';position:absolute;left:-13px;top:18px;width:9px;height:9px;border-radius:50%;background:var(--warm-white);border:2px solid currentColor}
-.notif-card.blue::before{color:var(--w-blue)}.notif-card.mag::before{color:var(--w-mag)}.notif-card.esg::before{color:var(--esg)}.notif-card.champagne::before{color:var(--champagne)}.notif-card.red::before{color:#C04848}
+.notif-card.blue::before{color:var(--w-blue)}.notif-card.mag::before{color:var(--w-mag)}.notif-card.esg::before{color:var(--esg)}.notif-card.champagne::before{color:var(--champagne)}.notif-card.red::before{color:#B5545A}
 .notif-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
 .notif-tier{font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:5px}
 .notif-tier.blue{background:var(--w-blue-pale);color:var(--w-blue-dark)}.notif-tier.mag{background:var(--w-mag-pale);color:var(--w-mag-dark)}.notif-tier.esg{background:var(--esg-pale);color:var(--esg)}.notif-tier.champagne{background:var(--champagne-pale);color:var(--champagne-dark)}.notif-tier.red{background:#FBE4E4;color:#8B3A3A}
@@ -426,9 +429,9 @@ html,body{
     <div class="ld-grid"></div>
     <div class="ld-glow"></div>
     <div class="ld-content">
-      <div class="ld-mark">W&nbsp;TAIPEI</div>
+      <div class="ld-mark">ServiceFlow</div>
       <div class="ld-rule"></div>
-      <div class="ld-sub">ServiceFlow · W Taipei Pilot</div>
+      <div class="ld-sub">W Taipei · Pilot preview</div>
       <div class="ld-bar-wrap"><div class="ld-bar-fill" id="ldFill"></div></div>
       <div class="ld-pct" id="ldPct">0%</div>
     </div>
@@ -472,7 +475,7 @@ const STATIONS=[
  {key:'fruit_cold',label:'Fruit & Cold'},{key:'taiwanese_local',label:'Taiwanese Local'},
  {key:'coffee_bar',label:'Coffee Bar',unit:'cups'}];
 const BASE_PARS={congee_noodle:60,dim_sum:40,japanese:45,korean:25,western_hot:70,bakery_pastry:55,fruit_cold:80,taiwanese_local:35,coffee_bar:300};
-const STATION_BADGE={congee_noodle:'#16A34A',dim_sum:'#9F174A',japanese:'#C9A97A',korean:'#BE185D',western_hot:'#7A5A32',bakery_pastry:'#B9770F',fruit_cold:'#0891B2',taiwanese_local:'#A0784A',coffee_bar:'#2C3E50'};
+const STATION_BADGE={congee_noodle:'#3F7A73',dim_sum:'#7E5C2E',japanese:'#C9A97A',korean:'#9A7038',western_hot:'#7A5A32',bakery_pastry:'#B9770F',fruit_cold:'#23475A',taiwanese_local:'#A0784A',coffee_bar:'#152A37'};
 const NAT_PRIORS={greaterChina:{congee_noodle:{mult:1.55,conf:0.92},dim_sum:{mult:1.50,conf:0.95},taiwanese_local:{mult:1.35,conf:0.88},western_hot:{mult:0.75,conf:0.85},bakery_pastry:{mult:0.85,conf:0.78},coffee_bar:{mult:0.90,conf:0.80}},japan:{japanese:{mult:1.85,conf:0.94},fruit_cold:{mult:1.25,conf:0.82},coffee_bar:{mult:1.10,conf:0.75},western_hot:{mult:0.75,conf:0.80}},korea:{korean:{mult:1.85,conf:0.91},congee_noodle:{mult:1.15,conf:0.70},coffee_bar:{mult:1.20,conf:0.78}},western:{western_hot:{mult:1.65,conf:0.93},bakery_pastry:{mult:1.45,conf:0.90},coffee_bar:{mult:1.40,conf:0.95},fruit_cold:{mult:1.15,conf:0.82},congee_noodle:{mult:0.65,conf:0.88},dim_sum:{mult:0.60,conf:0.85}},seasia:{congee_noodle:{mult:1.25,conf:0.75},fruit_cold:{mult:1.35,conf:0.80},western_hot:{mult:0.90,conf:0.65}},other:{}};
 const P={leisure:.70,business:.50,group:.60}, CPP=45, CO2=0.35;
 const ROOM_TYPES={standard:{attach:0.72,weight:1.00},premium:{attach:0.78,weight:1.10},marvelous:{attach:0.85,weight:1.25},wow:{attach:0.92,weight:1.45},extreme_wow:{attach:0.95,weight:1.80}};
@@ -481,13 +484,17 @@ const EVENT_IMPACT={taipei101_corporate:{occupancy_lift:0.05},computex_week:{occ
 const SCEN={
  // Confidence calibrated to Day-1 model state: 6 signals live, 8-signal full activation Week 4. Higher on stable weekdays, lower on event-heavy days.
  mon:{code:'MON',label:'Monday',mixLabel:'Business',story:'Western corp · early arrivals',targetCovers:188,targetSaved:1640,confidence:71,date:'Mon 9 Mar 2026',isWeekend:false,weather:{tempC:22,condition:'sunny',icon:'☀',humidity:60},occupancyPct:68,roomsSold:275,guestsPerRoom:1.32,adrNTD:8400,nps:66,seg:{leisure:.18,business:.72,group:.10},mix:{greaterChina:.22,japan:.10,western:.50,korea:.06,seasia:.06,other:.06},earlyCheckIns:46,totalCheckIns:108,suiteRatio:0.08,events:['taipei101_corporate'],segments:{leisure_direct:.05,leisure_ota:.08,business_corp:.52,business_meeting:.22,group_inclusive:.03,group_exclusive:.05,long_stay:.05}},
- tue:{code:'TUE',label:'Tuesday',mixLabel:'Business',story:'Western · Computex week',targetCovers:221,targetSaved:2180,confidence:73,date:'Tue 10 Mar 2026',isWeekend:false,weather:{tempC:17,condition:'rain',icon:'☔',humidity:82},occupancyPct:72,roomsSold:292,guestsPerRoom:1.35,adrNTD:8600,nps:69,seg:{leisure:.25,business:.65,group:.10},mix:{greaterChina:.30,japan:.12,western:.42,korea:.05,seasia:.05,other:.06},earlyCheckIns:42,totalCheckIns:110,suiteRatio:0.09,events:['taipei101_corporate'],segments:{leisure_direct:.05,leisure_ota:.10,business_corp:.45,business_meeting:.25,group_inclusive:.03,group_exclusive:.07,long_stay:.05}},
+ tue:{code:'TUE',label:'Tuesday',mixLabel:'Business',story:'Western · trade-show week',targetCovers:221,targetSaved:2180,confidence:73,date:'Tue 10 Mar 2026',isWeekend:false,weather:{tempC:17,condition:'rain',icon:'☔',humidity:82},occupancyPct:72,roomsSold:292,guestsPerRoom:1.35,adrNTD:8600,nps:69,seg:{leisure:.25,business:.65,group:.10},mix:{greaterChina:.30,japan:.12,western:.42,korea:.05,seasia:.05,other:.06},earlyCheckIns:42,totalCheckIns:110,suiteRatio:0.09,events:['taipei101_corporate'],segments:{leisure_direct:.05,leisure_ota:.10,business_corp:.45,business_meeting:.25,group_inclusive:.03,group_exclusive:.07,long_stay:.05}},
  wed:{code:'WED',label:'Wednesday',mixLabel:'Mixed',story:'CN/JP corporate event',targetCovers:198,targetSaved:1920,confidence:75,date:'Wed 11 Mar 2026',isWeekend:false,weather:{tempC:20,condition:'cloudy',icon:'⛅',humidity:70},occupancyPct:65,roomsSold:263,guestsPerRoom:1.40,adrNTD:8800,nps:68,seg:{leisure:.35,business:.55,group:.10},mix:{greaterChina:.34,japan:.24,western:.24,korea:.06,seasia:.07,other:.05},earlyCheckIns:32,totalCheckIns:96,suiteRatio:0.10,events:['taipei101_corporate'],segments:{leisure_direct:.12,leisure_ota:.18,business_corp:.30,business_meeting:.22,group_inclusive:.06,group_exclusive:.06,long_stay:.06}},
  thu:{code:'THU',label:'Thursday',mixLabel:'Business',story:'Korean conference incoming',targetCovers:215,targetSaved:2050,confidence:70,date:'Thu 12 Mar 2026',isWeekend:false,weather:{tempC:24,condition:'sunny',icon:'☀',humidity:62},occupancyPct:70,roomsSold:284,guestsPerRoom:1.36,adrNTD:8900,nps:70,seg:{leisure:.22,business:.66,group:.12},mix:{greaterChina:.24,japan:.12,western:.32,korea:.22,seasia:.06,other:.04},earlyCheckIns:36,totalCheckIns:104,suiteRatio:0.10,events:['conference'],segments:{leisure_direct:.06,leisure_ota:.12,business_corp:.36,business_meeting:.26,group_inclusive:.08,group_exclusive:.06,long_stay:.06}},
  fri:{code:'FRI',label:'Friday',mixLabel:'Mixed',story:'Weekend transition · late peak',targetCovers:248,targetSaved:2340,confidence:74,date:'Fri 13 Mar 2026',isWeekend:false,weather:{tempC:23,condition:'cloudy',icon:'⛅',humidity:68},occupancyPct:75,roomsSold:304,guestsPerRoom:1.48,adrNTD:9200,nps:72,seg:{leisure:.45,business:.45,group:.10},mix:{greaterChina:.34,japan:.20,western:.26,korea:.08,seasia:.07,other:.05},earlyCheckIns:34,totalCheckIns:118,suiteRatio:0.12,events:[],segments:{leisure_direct:.22,leisure_ota:.20,business_corp:.20,business_meeting:.18,group_inclusive:.08,group_exclusive:.06,long_stay:.06}},
  sat:{code:'SAT',label:'Saturday',mixLabel:'Leisure',story:'CN/JP heavy · indulgence',targetCovers:316,targetSaved:2803,confidence:78,date:'Sat 14 Mar 2026',isWeekend:true,weather:{tempC:24,condition:'sunny',icon:'☀',humidity:65},occupancyPct:78,roomsSold:316,guestsPerRoom:1.6,adrNTD:9800,nps:71,seg:{leisure:.7,business:.2,group:.1},mix:{greaterChina:.41,japan:.22,western:.18,korea:.07,seasia:.07,other:.05},earlyCheckIns:28,totalCheckIns:94,suiteRatio:0.14,events:['taiwan_holiday'],segments:{leisure_direct:.35,leisure_ota:.35,business_corp:.05,business_meeting:.05,group_inclusive:.08,group_exclusive:.02,long_stay:.10}},
  sun:{code:'SUN',label:'Sunday',mixLabel:'Leisure',story:'Late peak · families',targetCovers:298,targetSaved:2610,confidence:76,date:'Sun 15 Mar 2026',isWeekend:true,weather:{tempC:25,condition:'sunny',icon:'☀',humidity:64},occupancyPct:74,roomsSold:300,guestsPerRoom:1.66,adrNTD:9600,nps:72,seg:{leisure:.74,business:.16,group:.10},mix:{greaterChina:.40,japan:.20,western:.20,korea:.07,seasia:.08,other:.05},earlyCheckIns:22,totalCheckIns:88,suiteRatio:0.13,events:['taiwan_holiday'],segments:{leisure_direct:.36,leisure_ota:.36,business_corp:.04,business_meeting:.04,group_inclusive:.10,group_exclusive:.02,long_stay:.08}}};
 const WEEK_DAYS=['mon','tue','wed','thu','fri','sat','sun'];
+(function(){const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+ const t=new Date();t.setHours(12,0,0,0);
+ WEEK_DAYS.forEach((k,i)=>{const dow=(i+1)%7;const d=new Date(t);d.setDate(t.getDate()+((dow-t.getDay()+7)%7));
+   SCEN[k].date=DN[d.getDay()]+' '+d.getDate()+' '+MN[d.getMonth()]+' '+d.getFullYear();});})();
 const WEEK_TOTAL=WEEK_DAYS.reduce((acc,k)=>({covers:acc.covers+SCEN[k].targetCovers,saved:acc.saved+SCEN[k].targetSaved}),{covers:0,saved:0});
 
 function weatherMultiplier(station,tempC,condition,humidity){
@@ -539,7 +546,7 @@ function computeEventLift(events){
   return events.reduce((m,e)=>m*(1+((EVENT_IMPACT[e]&&EVENT_IMPACT[e].occupancy_lift)||0)),1.0);
 }
 function explainReason(natMult,weaMult,dayMult,suiteMult,learning,s){
-  const lead=s.mix.western>0.35?'Western':(s.mix.greaterChina>0.35?'Greater-China':'Asian');
+  const LB={greaterChina:'CN',japan:'JP',korea:'KR',seasia:'SEA'};const lead=s.mix.western>0.35?'Western':Object.keys(LB).sort((a,b)=>s.mix[b]-s.mix[a]).slice(0,2).map(k=>LB[k]).join('/');
   const c=[[Math.abs(natMult-1),natMult>1?'more '+lead+' guests':'fewer '+lead+' guests'],
     [Math.abs(weaMult-1),weaMult>1?(s.weather.tempC<18?'cool morning':'warm morning'):'warm → lighter'],
     [Math.abs(dayMult-1),dayMult>1?(s.isWeekend?'weekend indulgence':'weekday coffee rush'):(s.isWeekend?'weekend, less coffee':'weekday, less pastry')],
@@ -547,7 +554,7 @@ function explainReason(natMult,weaMult,dayMult,suiteMult,learning,s){
   c.sort((a,b)=>b[0]-a[0]);
   return c[0][0]<0.03?'on baseline':c[0][1];
 }
-function gradeColor(v){return v==='A'||v==='A-'?'#0891B2':v==='B+'||v==='B'?'#8C6A14':'#BE185D';}
+function gradeColor(v){return v==='A'||v==='A-'?'#23475A':v==='B+'||v==='B'?'#8C6A14':'#B5545A';}
 function buildAction(st){
   const pct=Math.round(Math.abs(st.delta)*100);
   const w2k=st.waves.wave_0800||st.waves.wave_0745||0;
@@ -617,22 +624,23 @@ function computeBriefingV3(s,history){
     waveTime:s.isWeekend?'08:00':'07:45'};
 }
 function computeBriefing(s){return computeBriefingV3(s,[]);}
+function attachPct(s,b){return Math.round(b.covers/(s.roomsSold*s.guestsPerRoom)*100);}
 
 // ============================================================
 // NOTIFICATION TIMELINE — static demo · 24h
 // ============================================================
 const NOTIF_TIMELINE=[
-  {time:'18:00',day:'Yesterday',tier:'PRESCRIPTIVE',icon:'🌙',to:['GM','Chef','F&B'],title:'Evening Brief · Sat 14 Mar',body:'316 covers Sat. Cut Bacon -2kg, push Congee +1kg. Save NT$2,803.',metric:'NT$2,803',metricLabel:'combined daily saving',color:'blue'},
+  {time:'18:00',day:'Yesterday',tier:'PRESCRIPTIVE',icon:'🌙',to:['GM','Chef','F&B'],title:'Evening Brief · {SAT}',body:'316 covers Sat. Cut Bacon -2kg, push Congee +1kg. Save NT$2,803.',metric:'NT$2,803',metricLabel:'planned daily saving',color:'blue'},
   {time:'03:30',day:'Today',tier:'DAWN UPDATE',icon:'🌅',to:['Chef','Sous-chef'],title:'Overnight changes detected',body:'Late CN tour group +12 rooms · Weather upgrade 24°→26° · 38 early arrivals 04:30–06:00.',metric:'+18',metricLabel:'covers adjusted',color:'champagne'},
   {time:'06:00',day:'Today',tier:'MORNING BRIEF',icon:'🟢',to:['Chef','Service Mgr'],title:'All 9 stations confirmed open',body:'Eggs station: 8/9kg prepped. Congee replenish at 08:30. · 7 cooks · 16 servers ✓',metric:null,color:'esg'},
   {time:'07:30',day:'Today',tier:'LIVE · COVER CHECK',icon:'📊',to:['Chef'],title:'Cover count +11% above forecast',body:'142 seated vs 128 expected · System auto-adjusting Coffee +20, Congee +8.',metric:null,color:'mag'},
   {time:'08:12',day:'Today',tier:'LIVE · CONSUMPTION',icon:'⚡',to:['Chef'],title:'Dim Sum running fast — 73% consumed',body:'Dim Sum +20% faster. Bring 08:30 wave forward 15 min. Add +6 portions (CN group still seated).',metric:null,color:'mag'},
   {time:'09:30',day:'Today',tier:'WASTE PREVENT',icon:'⏱',to:['Chef','F&B'],title:'2 stations at over-stock risk',body:'Western Hot: 11 portions risk · Bakery croissants: 5 risk · Recommend: stop replenish, prepare donation box.',metric:'NT$680',metricLabel:'saved if approved',color:'esg'},
   {time:'10:30',day:'Today',tier:'CLOSE THE LOOP',icon:'🍳',to:['Chef'],title:'Breakfast done · 347 covers',body:'3 stations had pre-emptive strikes but weren\'t confirmed. Tap to log — 90 sec total.',metric:'3',metricLabel:'pending strike confirms',color:'champagne'},
-  {time:'12:30',day:'Today',tier:'LEARN',icon:'📚',to:['Chef','F&B','GM'],title:'Service debrief · 347 covers (+9.8%)',body:'347 covers (+9.8%). Korea×Coffee coef updated. · CO₂e 5.1kg logged.',metric:'NT$3,420',metricLabel:'captured · CO₂e 5.1kg',color:'blue'},
+  {time:'12:30',day:'Today',tier:'LEARN',icon:'📚',to:['Chef','F&B','GM'],title:'Service debrief · 347 covers (+9.8%)',body:'347 covers (+9.8%). Korea×Coffee coef updated. · CO₂e 5.1kg logged.',metric:'NT$3,483',metricLabel:'captured (2,803 + 680) · CO₂e 5.1kg',color:'blue'},
   {time:'Anytime',day:'Event-driven',tier:'EXCEPTION',icon:'🚨',to:['Chef','F&B','GM'],title:'Group booking +18 rooms · 22h to check-in',body:'Re-forecast running · Impact: +24 covers · Dim Sum +8 · Congee +6 · Notify procurement.',metric:null,color:'red'}
 ];
-const TIER_COLORS={blue:'var(--w-blue)',mag:'var(--w-mag)',esg:'var(--esg)',champagne:'var(--champagne)',red:'#C04848'};
+const TIER_COLORS={blue:'var(--w-blue)',mag:'var(--w-mag)',esg:'var(--esg)',champagne:'var(--champagne)',red:'#B5545A'};
 
 let state={role:null,scenario:'sat',tab:'dashboard',outlet:'kitchen',strikeIndex:0,actionsOpen:false,briefStationsExpanded:false};
 let confirmedStrikes=[];
@@ -669,18 +677,18 @@ const I={
 
 const TPE101='<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><g><rect x="92" y="50" width="16" height="140"/><polygon points="92,50 100,30 108,50"/><rect x="88" y="65" width="24" height="3"/><rect x="88" y="85" width="24" height="3"/><rect x="88" y="105" width="24" height="3"/><rect x="88" y="125" width="24" height="3"/><rect x="88" y="145" width="24" height="3"/><rect x="88" y="165" width="24" height="3"/><rect x="40" y="120" width="14" height="70"/><rect x="60" y="140" width="12" height="50"/><rect x="76" y="155" width="10" height="35"/><rect x="115" y="150" width="10" height="40"/><rect x="130" y="135" width="14" height="55"/><rect x="150" y="160" width="10" height="30"/><rect x="165" y="145" width="12" height="45"/></g></svg>';
 
-function brandRow(){return '<div class="brand-row"><div class="w-mono">W</div><div class="brand-name">W TAIPEI · XINYI</div><div class="live-pill"><span class="dot"></span>LIVE</div></div>';}
+function brandRow(){return '<div class="brand-row"><div class="sf-lock"><div class="sf-word">ServiceFlow</div><div class="brand-name">W TAIPEI · XINYI</div></div><div class="live-pill">PILOT VIEW</div></div>';}
 function dayToggle(){return '<div class="day-toggle">'+WEEK_DAYS.map(k=>'<button class="'+(state.scenario===k?'on':'')+'" onclick="setSc(\''+k+'\')">'+SCEN[k].code+'</button>').join('')+'</div>';}
 function dayStory(s){return '<div class="day-story"><b>'+s.mixLabel+'</b> · '+s.occupancyPct+'% occ · '+s.weather.icon+' '+s.weather.tempC+'°C · '+s.story+'</div>';}
-function weekBar(){return '<div class="week-bar"><div class="wb-l">This week</div><div class="wb-stats"><div><div class="wb-v">NT$'+WEEK_TOTAL.saved.toLocaleString()+'</div><div class="wb-k">saved (combined)</div></div><div><div class="wb-v">'+WEEK_TOTAL.covers.toLocaleString()+'</div><div class="wb-k">covers</div></div><div><div class="wb-v">7</div><div class="wb-k">briefings</div></div></div></div>';}
+function weekBar(){return '<div class="week-bar"><div class="wb-l">This week</div><div class="wb-stats"><div><div class="wb-v">NT$'+WEEK_TOTAL.saved.toLocaleString()+'</div><div class="wb-k">saved (plan)</div></div><div><div class="wb-v">'+WEEK_TOTAL.covers.toLocaleString()+'</div><div class="wb-k">covers</div></div><div><div class="wb-v">7</div><div class="wb-k">briefings</div></div></div></div>';}
 function metaLine(s){return '<div class="meta-line"><span>'+s.weather.icon+' '+s.weather.tempC+'°</span><span class="sep"></span><span>'+s.occupancyPct+'% Occ.</span><span class="sep"></span><span>'+(s.isWeekend?'Weekend':'Weekday')+'</span><span class="sep"></span><span>'+s.date+'</span></div>';}
 
 function screenRole(){return `
   <div class="role-screen">
     <div class="role-sf-watermark" aria-hidden="true">ServiceFlow</div>
     <div class="role-hero">
-      <div class="role-brand"><span class="role-w">W</span><span class="role-prop">W TAIPEI · XINYI</span></div>
-      <div style="display:inline-block;background:rgba(190,24,93,.15);border:1px solid rgba(190,24,93,.3);border-radius:5px;font-family:'Jost',sans-serif;font-size:9px;font-weight:700;letter-spacing:.16em;color:rgba(190,24,93,.9);padding:3px 10px;margin-bottom:16px">LIVE DEMO · W TAIPEI</div>
+      <div class="role-brand"><div class="sf-lock"><div class="sf-word" style="font-size:26px">ServiceFlow</div><div class="brand-name" style="color:#B98A4A">W TAIPEI · XINYI</div></div></div>
+      <div style="display:inline-block;background:rgba(154,112,56,.15);border:1px solid rgba(154,112,56,.3);border-radius:5px;font-family:'Jost',sans-serif;font-size:9px;font-weight:700;letter-spacing:.16em;color:rgba(154,112,56,.9);padding:3px 10px;margin-bottom:16px">PILOT PREVIEW · W TAIPEI</div>
       <h1 class="role-h1">The Breakfast <em>Brain.</em></h1>
       <p class="role-sub">An operating layer for <em>W Taipei</em> — Xinyi District. Choose a vantage point.</p>
       <p style="font-family:'Jost',sans-serif;font-size:12px;color:rgba(255,255,255,.45);letter-spacing:.08em;text-transform:uppercase;margin:0 0 20px">Select your role to begin</p>
@@ -690,7 +698,7 @@ function screenRole(){return `
         <span class="role-arrow">›</span>
         <div class="role-card-head">
           <div class="role-icon teal">${I.gm}</div>
-          <div class="role-card-title"><span>General Manager</span><span class="role-live">LIVE</span></div>
+          <div class="role-card-title"><span>General Manager</span></div>
         </div>
         <div class="role-card-sub">Strategy · performance · ESG reporting</div>
         <div class="role-chips"><span class="role-chip">P&amp;L view</span><span class="role-chip">ESG</span><span class="role-chip">NT$ savings</span></div>
@@ -705,7 +713,7 @@ function screenRole(){return `
         <div class="role-chips"><span class="role-chip">Pars</span><span class="role-chip">Replenishment</span><span class="role-chip">Waste log</span></div>
       </button>
     </div>
-    <p class="role-foot">Concept prototype · figures illustrative until calibrated</p>
+    <p class="role-foot">Concept prototype by SparkEdge · figures illustrative until calibrated · not affiliated with Marriott International</p>
   </div>`;}
 
 function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
@@ -719,66 +727,66 @@ function screenDashboard(){const s=SCEN[state.scenario],b=computeBriefing(s);ret
     ${dayToggle()}
     ${dayStory(s)}
     <div class="kpi-grid">
-      <div class="kpi"><div class="k">Covers fcst</div><div class="v blue">${b.covers}</div><div class="trend">↑ <span class="delta up">+9%</span> vs last week</div><div class="d">75% breakfast attach rate</div></div>
+      <div class="kpi"><div class="k">Covers fcst</div><div class="v blue">${b.covers}</div><div class="d">${attachPct(s,b)}% breakfast attach rate</div></div>
       <div class="kpi"><div class="k">Over-prep saved</div><div class="v gn">NT$${b.save.toLocaleString()}</div><div class="d">vs. flat baseline</div></div>
       <div class="kpi"><div class="k">Occupancy</div><div class="v">${s.occupancyPct}<small>%</small></div><div class="d">${s.roomsSold} of 405 keys</div></div>
-      <div class="kpi"><div class="k">CO₂e ↓ tonight</div><div class="v br">${b.co2}<small>kg</small></div><div class="d">Serve 360-ready</div></div>
+      <div class="kpi"><div class="k">CO₂e ↓ today</div><div class="v br">${b.co2}<small>kg</small></div><div class="d">Serve 360-ready</div></div>
     </div>
-    <div style="font-size:10px;font-style:italic;color:var(--mid-grey);margin-top:8px;margin-bottom:14px">ServiceFlow 75% · Winnow baseline 25% of NT$ figures shown</div>
-    <div style="margin:0 0 16px;padding:12px 14px;background:rgba(8,145,178,.06);border:1px solid rgba(8,145,178,.12);border-radius:12px">
+    <div style="margin-bottom:14px"></div>
+    <div style="margin:0 0 16px;padding:12px 14px;background:rgba(35,71,90,.06);border:1px solid rgba(35,71,90,.12);border-radius:12px">
       <div style="font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--w-blue-dark);font-weight:700;margin-bottom:10px">How ServiceFlow talks to your team</div>
       <div style="display:flex;align-items:center;gap:0">
         <div style="flex:1;text-align:center">
           <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:var(--w-blue-dark)">18:00</div>
           <div style="font-size:9px;color:var(--mid-grey);letter-spacing:.06em;margin-top:2px">EVENING BRIEF</div>
         </div>
-        <div style="width:20px;height:1px;background:rgba(8,145,178,.25)"></div>
+        <div style="width:20px;height:1px;background:rgba(35,71,90,.25)"></div>
         <div style="flex:1;text-align:center">
           <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:var(--w-blue-dark)">03:30</div>
           <div style="font-size:9px;color:var(--mid-grey);letter-spacing:.06em;margin-top:2px">DAWN UPDATE</div>
         </div>
-        <div style="width:20px;height:1px;background:rgba(8,145,178,.25)"></div>
+        <div style="width:20px;height:1px;background:rgba(35,71,90,.25)"></div>
         <div style="flex:1;text-align:center">
           <div style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:var(--w-blue-dark)">06:00</div>
           <div style="font-size:9px;color:var(--mid-grey);letter-spacing:.06em;margin-top:2px">MORNING BRIEF</div>
         </div>
       </div>
-      <div style="margin-top:8px;font-size:10px;color:var(--mid-grey);text-align:center;cursor:pointer" onclick="go('notifs')">See all 8 notifications ›</div>
+      <div style="margin-top:8px;font-size:10px;color:var(--mid-grey);text-align:center;cursor:pointer" onclick="go('notifs')">See all ${NOTIF_TIMELINE.length} notifications ›</div>
     </div>
     <div class="eyebrow">Modules</div>
     <div class="dash-tile" role="button" tabindex="0" data-go="brief" onclick="go('brief')">
-      <div class="dash-i" style="background:rgba(8,145,178,.12);color:var(--w-blue-dark)">${I.brief}</div>
+      <div class="dash-i" style="background:rgba(35,71,90,.12);color:var(--w-blue-dark)">${I.brief}</div>
       <div class="dash-b"><div class="dash-t">Morning Brief</div><div style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--w-blue-dark);opacity:.7;margin-bottom:2px">Prepared last night · 18:00</div><div class="dash-d">9 stations · ${b.actions.length} priority actions · ${b.cooks} cooks / ${b.servers} servers</div></div>
       <div class="dash-arrow">›</div>
     </div>
     <div class="dash-tile" role="button" tabindex="0" data-go="fb" onclick="go('fb')">
-      <div class="dash-i" style="background:rgba(190,24,93,.12);color:var(--w-mag-dark)">${I.fb}</div>
+      <div class="dash-i" style="background:rgba(154,112,56,.12);color:var(--w-mag-dark)">${I.fb}</div>
       <div class="dash-b"><div class="dash-t">F&amp;B Hub</div><div class="dash-d">The Kitchen Table · YEN · WOOBAR · WET DECK · W&amp;W</div></div>
       <div class="dash-arrow">›</div>
     </div>
     <div class="dash-tile" role="button" tabindex="0" data-go="esg" onclick="go('esg')">
-      <div class="dash-i" style="background:rgba(74,143,94,.12);color:var(--esg)">${I.esg}</div>
-      <div class="dash-b"><div class="dash-t">ESG · Serve 360</div><div class="dash-d">${b.co2} kg CO₂e ↓ tonight · 52 kg this month · Taiwan FSC mapped</div></div>
+      <div class="dash-i" style="background:rgba(63,122,115,.12);color:var(--esg)">${I.esg}</div>
+      <div class="dash-b"><div class="dash-t">ESG · Serve 360</div><div class="dash-d">${b.co2} kg CO₂e ↓ today · 52 kg this month · Taiwan FSC mapped</div></div>
       <div class="dash-arrow">›</div>
     </div>
     <div class="dash-tile" role="button" tabindex="0" data-go="gap" onclick="go('gap')">
-      <div class="dash-i" style="background:rgba(74,143,94,.10);color:var(--esg)"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/></svg></div>
-      <div class="dash-b"><div class="dash-t">W Taipei today vs with ServiceFlow</div><div class="dash-d">8-gap analysis · NT$867K/yr combined · NT$647K via ServiceFlow</div></div>
+      <div class="dash-i" style="background:rgba(63,122,115,.10);color:var(--esg)"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/></svg></div>
+      <div class="dash-b"><div class="dash-t">W Taipei today vs with ServiceFlow</div><div class="dash-d">8-gap analysis · NT$867K/yr at stake</div></div>
       <div class="dash-arrow">›</div>
     </div>
     <div class="dash-tile" role="button" tabindex="0" data-go="notifs" onclick="go('notifs')">
-      <div class="dash-i" style="background:rgba(160,120,74,.14);color:var(--champagne-dark)"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9M9 21a3 3 0 006 0"/></svg></div>
+      <div class="dash-i" style="background:rgba(185,138,74,.14);color:var(--champagne-dark)"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9M9 21a3 3 0 006 0"/></svg></div>
       <div class="dash-b"><div class="dash-t">How it talks to you</div><div class="dash-d">8 notifications across 24h · 5 tiers · auto-routed to the right person</div></div>
       <div class="dash-arrow">›</div>
     </div>
     <div class="dash-tile" role="button" tabindex="0" data-go="portfolio" onclick="go('portfolio')">
-      <div class="dash-i" style="background:rgba(160,120,74,.14);color:var(--champagne-dark)">${I.portfolio}</div>
+      <div class="dash-i" style="background:rgba(185,138,74,.14);color:var(--champagne-dark)">${I.portfolio}</div>
       <div class="dash-b"><div class="dash-t">W Taipei · Xinyi</div><div class="dash-d">The Kitchen Table · NT$1.9M Yr-1 uplift · 4 outlets scoped</div></div>
       <div class="dash-arrow">›</div>
     </div>
   </div>`;}
 
-function screenBrief(){try{return _screenBriefInner();}catch(e){console.error('screenBrief threw:',e);toast('Brief error: '+e.message,'#C04848');return '<div class="body" style="padding:20px"><p style="color:#C04848;font-size:13px">'+e.message+'</p></div>';}}
+function screenBrief(){try{return _screenBriefInner();}catch(e){console.error('screenBrief threw:',e);toast('Brief error: '+e.message,'#B5545A');return '<div class="body" style="padding:20px"><p style="color:#B5545A;font-size:13px">'+e.message+'</p></div>';}}
 function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
   const top=b.actions.slice(0,3);
   const wh=b.stations.find(st=>st.key==='western_hot');
@@ -812,7 +820,7 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
     ${dayStory(s)}
     <div class="kpi-grid">
       <div class="kpi"><div class="k">Occupancy</div><div class="v">${s.occupancyPct}<small>%</small></div><div class="d">${s.roomsSold} of 405 keys</div></div>
-      <div class="kpi"><div class="k">Covers fcst</div><div class="v blue">${b.covers}</div><div class="d">75% breakfast attach rate</div></div>
+      <div class="kpi"><div class="k">Covers fcst</div><div class="v blue">${b.covers}</div><div class="d">${attachPct(s,b)}% breakfast attach rate</div></div>
       <div class="kpi"><div class="k">ADR</div><div class="v br"><small>NT$</small>${s.adrNTD.toLocaleString()}</div><div class="d">Tonight's rate</div></div>
       <div class="kpi"><div class="k">NPS · 7d</div><div class="v gn">${s.nps}</div><div class="d">Breakfast contribution +6</div></div>
     </div>
@@ -834,7 +842,6 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
         <div class="ab-recap-l">This service's estimated saving</div>
         <div style="text-align:right">
           <div class="ab-recap-v">NT$${b.save.toLocaleString()}</div>
-          <div style="font-size:10px;font-style:italic;color:rgba(245,240,232,.55);margin-top:3px">ServiceFlow NT$${Math.round(b.save*.75).toLocaleString()} · Winnow NT$${Math.round(b.save*.25).toLocaleString()}</div>
         </div>
       </div>
       ${wasteNote?'<div style="font-size:11px;color:rgba(245,240,232,.55);line-height:1.5;margin-top:8px;border-top:1px solid rgba(255,255,255,.08);padding-top:8px">'+wasteNote+'</div>':''}
@@ -856,8 +863,8 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
     </div>
 
     <div class="card flat" style="background:#F7F4EF;border:1px solid #E5E7EB"><div class="row" style="justify-content:space-between;align-items:flex-start">
-      <div><div class="eyebrow" style="margin:0">OPEN TIMES</div><div style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:18px;margin-top:6px;color:#2C3E50;line-height:1.25">${b.openLine1}<br><span style="font-size:13px;color:#6B7280;font-weight:400">${b.openLine2}</span></div></div>
-      <div style="text-align:right"><div class="eyebrow" style="margin:0;justify-content:flex-end">STAFFING</div><div style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:18px;margin-top:6px;color:#2C3E50;line-height:1.25">${b.cooks} cooks<br><span style="font-size:13px;color:#6B7280;font-weight:400">${b.servers} servers</span></div></div>
+      <div><div class="eyebrow" style="margin:0">OPEN TIMES</div><div style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:18px;margin-top:6px;color:#152A37;line-height:1.25">${b.openLine1}<br><span style="font-size:13px;color:#6B7280;font-weight:400">${b.openLine2}</span></div></div>
+      <div style="text-align:right"><div class="eyebrow" style="margin:0;justify-content:flex-end">STAFFING</div><div style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:18px;margin-top:6px;color:#152A37;line-height:1.25">${b.cooks} cooks<br><span style="font-size:13px;color:#6B7280;font-weight:400">${b.servers} servers</span></div></div>
     </div></div>
 
     <div class="card flat">
@@ -866,12 +873,12 @@ function _screenBriefInner(){const s=SCEN[state.scenario],b=computeBriefing(s);
         WRAP 2025 — hotel F&amp;B waste 12% of food cost · 180 resort kitchens globally<br>
         SHA / Cornell 2023 — $7 saved per $1 invested in food waste reduction<br>
         Ellen MacArthur Foundation — food waste underestimated by 2× at baselining · 30g CO₂e per PET bottle<br>
-        Marriott Serve 360 — GRI 306 mapping · CO₂e scope 3 reporting · Export-ready
+        Serve 360 — GRI 306 mapping · CO₂e scope 3 reporting · Export-ready
       </div>
     </div>
     ${weekBar()}
     ${(()=>{const eod=getEodState();return eod.show?'<div class="log-cta-wrap"><div style="background:var(--marble);padding:10px 0 0"><div style="font-style:italic;font-size:12px;color:var(--mid-grey);text-align:center;margin-bottom:8px">Service wrapped at '+eod.time+' — log when ready</div><button onclick="openLog()" class="log-cta"><span style="font-size:17px">☑</span>LOG END OF SERVICE · 5 min</button><div class="log-trend">Team logging in ~5 min avg</div></div></div>':''})()}
-    <div style="font-size:10px;font-style:italic;color:var(--mid-grey);margin-top:14px;margin-bottom:4px">ServiceFlow 75% · Winnow baseline 25% of NT$ figures shown</div>
+    
     <button class="btn ghost" data-go="dashboard" onclick="go('dashboard')" style="margin-top:14px">← Back to home</button>
   </div>`;}
 
@@ -922,9 +929,9 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
         if(isConf){
           const conf=confirmedStrikes.find(c=>c.station===strike.label);
           const sv=conf&&conf.saving>0?' · NT$'+conf.saving.toLocaleString()+' saved':'';
-          return `<div class="strike-strip" style="border-color:rgba(66,201,126,.3);background:rgba(66,201,126,.06)">
-            <div class="ss-name" style="color:#16A34A">✓ ${strike.label}</div>
-            <span class="ss-save" style="color:#16A34A">Followed${sv}</span>
+          return `<div class="strike-strip" style="border-color:rgba(101,147,143,.3);background:rgba(101,147,143,.06)">
+            <div class="ss-name" style="color:#3F7A73">✓ ${strike.label}</div>
+            <span class="ss-save" style="color:#3F7A73">Followed${sv}</span>
           </div>`;
         }
         return `<div class="strike-strip">
@@ -938,7 +945,7 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
       <svg class="strike-skyline" viewBox="0 0 195 300" width="195" height="300" aria-hidden="true"><g fill="rgba(255,255,255,0.055)"><rect x="5" y="228" width="15" height="72"/><rect x="24" y="212" width="13" height="88"/><rect x="41" y="235" width="10" height="65"/><rect x="60" y="268" width="50" height="32"/><rect x="64" y="250" width="42" height="19"/><rect x="68" y="232" width="34" height="19"/><rect x="71" y="215" width="28" height="18"/><rect x="74" y="200" width="22" height="16"/><rect x="76" y="186" width="18" height="15"/><rect x="78" y="173" width="14" height="14"/><rect x="80" y="162" width="10" height="12"/><rect x="82" y="152" width="6" height="11"/><rect x="84" y="84" width="2" height="69"/><rect x="126" y="210" width="12" height="90"/><rect x="142" y="230" width="12" height="70"/><rect x="158" y="218" width="12" height="82"/><rect x="174" y="242" width="12" height="58"/></g></svg>
       <div class="st-eb"><span>PRE-EMPTIVE STRIKE</span></div>
       <div class="st-tt">Trim ${strike.label} <em>−${pct}%</em> & hold a fast-replenish buffer.</div>
-      <div style="position:relative;z-index:1;font-size:12px;color:rgba(245,240,232,.7);line-height:1.5">${strike.reason} · save est. NT$${saving.toLocaleString()}<span onclick="event.stopPropagation();toast('Saving = (base par × occupancy scale − forecast total) × NT$220 per portion. Calibrated at pilot week 2.','#0891B2')" style="cursor:pointer;opacity:.5;font-size:11px;margin-left:3px">ⓘ</span> · ${strike.key==='coffee_bar'?'calibrated against POS data at pilot week 2':'export to Serve 360 format'}.</div>
+      <div style="position:relative;z-index:1;font-size:12px;color:rgba(245,240,232,.7);line-height:1.5">${strike.reason} · save est. NT$${saving.toLocaleString()}<span onclick="event.stopPropagation();toast('Saving = (base par × occupancy scale − forecast total) × NT$220 per portion. Calibrated at pilot week 2.','#23475A')" style="cursor:pointer;opacity:.5;font-size:11px;margin-left:3px">ⓘ</span> · ${strike.key==='coffee_bar'?'calibrated against POS data at pilot week 2':'export to Serve 360 format'}.</div>
       <div class="st-grid">
         <div class="st-tile"><div class="v">${strike.waves.open_0630}</div><div class="k">06:30 opening</div></div>
         <div class="st-tile"><div class="v">+${strike.waves.wave_0800||strike.waves.wave_0745||0}</div><div class="k">${s.isWeekend?'08:00':'07:45'} wave</div></div>
@@ -981,7 +988,7 @@ function screenFB(){const s=SCEN[state.scenario],b=computeBriefing(s);
   } else {
     const o=OUTLETS[state.outlet];
     body=`<div class="ab-box">
-      <div class="ab-eb" style="justify-content:space-between;width:100%"><span>${o.kind.toUpperCase()}</span><span style="display:inline-block;background:rgba(200,164,76,.18);color:#C8A44C;font-family:'Jost',sans-serif;font-size:10px;font-weight:700;letter-spacing:.18em;padding:3px 10px;border-radius:5px">COMING SOON</span></div>
+      <div class="ab-eb" style="justify-content:space-between;width:100%"><span>${o.kind.toUpperCase()}</span><span style="display:inline-block;background:rgba(185,138,74,.18);color:#B98A4A;font-family:'Jost',sans-serif;font-size:10px;font-weight:700;letter-spacing:.18em;padding:3px 10px;border-radius:5px">COMING SOON</span></div>
       <div class="ab-h">${o.label}.</div>
       <p style="position:relative;z-index:1;font-size:12.5px;line-height:1.55;color:rgba(245,240,232,.65)">${o.sub}. Live ops dashboard wires into PMS, POS and ServiceFlow waste log — module ships with the rollout. The Kitchen Table tab is live today.</p>
       <div class="ab-recap"><div class="ab-recap-l">Covers tonight</div><div class="ab-recap-v">—</div></div>
@@ -1004,20 +1011,20 @@ function screenEsg(){const s=SCEN[state.scenario],b=computeBriefing(s);return `
   <div class="body">
     <div class="kpi-grid">
       <div class="kpi"><div class="k">CO₂e / guest</div><div class="v gn">0.34<small>kg ↓</small></div><div class="d">vs. ind. range 0.40–0.55 <span title="² CO₂e factors: Poore &amp; Nemecek (Science 2018) + WRAP UK. Industry range 0.40–0.55: Sustainable Hospitality Alliance benchmark" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
-      <div class="kpi"><div class="k">Waste cut</div><div class="v">28<small>%</small></div><div class="trend">↓ <span class="delta up">−28%</span> engine learning</div><div class="d">30-day rolling <span title="WRAP 2024 — 12% waste baseline; ServiceFlow pilot target 28% reduction" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
+      <div class="kpi"><div class="k">Waste cut</div><div class="v">28<small>%</small></div><div class="trend"><span class="delta up">pilot target</span> week 8</div><div class="d">30-day rolling <span title="WRAP 2024 — 12% waste baseline; ServiceFlow pilot target 28% reduction" style="font-size:10px;cursor:help;opacity:0.55">ⓘ</span></div></div>
     </div>
     <div class="eyebrow">This morning</div>
     <div class="card">
-      <div class="prow"><span class="nm">Over-prep avoided</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#16A34A">NT$${b.save.toLocaleString()}</b></div>
-      <div class="prow"><span class="nm">CO₂e reduced</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#16A34A">${b.co2} kg</b></div>
-      <div class="prow"><span class="nm">Single-use bottles avoided · MTD</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#16A34A">3,140 <span title="³ Ellen MacArthur Foundation · 30g CO₂e per PET 500ml bottle (production + transport)" style="font-size:12px;cursor:help;font-weight:400;opacity:0.55;color:#6B7280">ⓘ</span></b></div>
+      <div class="prow"><span class="nm">Over-prep avoided</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#3F7A73">NT$${b.save.toLocaleString()}</b></div>
+      <div class="prow"><span class="nm">CO₂e reduced</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#3F7A73">${b.co2} kg</b></div>
+      <div class="prow"><span class="nm">Single-use bottles avoided · MTD</span><b style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#3F7A73">3,140 <span title="³ Ellen MacArthur Foundation · 30g CO₂e per PET 500ml bottle (production + transport)" style="font-size:12px;cursor:help;font-weight:400;opacity:0.55;color:#6B7280">ⓘ</span></b></div>
     </div>
-    <div class="card flat" style="background:#F7F4EF;border:1px solid #E5E7EB"><div style="font-size:12px;line-height:1.55;color:#6B7280"><b class="gn" style="color:#16A34A">Measured, not modelled —</b> waste → CO₂e from the staff-recorded waste log. The model only forecasts; the log audits.</div></div>
+    <div class="card flat" style="background:#F7F4EF;border:1px solid #E5E7EB"><div style="font-size:12px;line-height:1.55;color:#6B7280"><b class="gn" style="color:#3F7A73">Measured, not modelled —</b> waste → CO₂e from the staff-recorded waste log. The model only forecasts; the log audits.</div></div>
     <div class="eyebrow">Frameworks</div>
     <div class="card">
-      <div class="prow" role="button" tabindex="0" onclick="toast('Coming soon · Serve 360 export module ships Phase 2','#16A34A')" style="cursor:pointer"><div><div class="nm">Marriott Serve 360</div><div class="rs">Export-ready · GRI 306 aligned</div></div><span class="delta flat">ready</span></div>
-      <div class="prow" role="button" tabindex="0" onclick="toast('Coming soon · Taiwan FSC export ships Phase 2','#16A34A')" style="cursor:pointer"><div><div class="nm">Taiwan FSC</div><div class="rs">Draft report ready</div></div><span class="delta flat">monthly</span></div>
-      <div class="prow" role="button" tabindex="0" onclick="toast('Coming soon · GRI 306 detail view ships Phase 2','#16A34A')" style="cursor:pointer"><div><div class="nm">GRI 306 mapping</div><div class="rs">Waste, water, energy</div></div><span class="delta flat">mapped</span></div>
+      <div class="prow" role="button" tabindex="0" onclick="toast('Coming soon · Serve 360 export module ships Phase 2','#3F7A73')" style="cursor:pointer"><div><div class="nm">Serve 360</div><div class="rs">Export-ready · GRI 306 aligned</div></div><span class="delta flat">ready</span></div>
+      <div class="prow" role="button" tabindex="0" onclick="toast('Coming soon · Taiwan FSC export ships Phase 2','#3F7A73')" style="cursor:pointer"><div><div class="nm">Taiwan FSC</div><div class="rs">Draft report ready</div></div><span class="delta flat">monthly</span></div>
+      <div class="prow" role="button" tabindex="0" onclick="toast('Coming soon · GRI 306 detail view ships Phase 2','#3F7A73')" style="cursor:pointer"><div><div class="nm">GRI 306 mapping</div><div class="rs">Waste, water, energy</div></div><span class="delta flat">mapped</span></div>
     </div>
   </div>`;}
 
@@ -1035,10 +1042,10 @@ function screenPortfolio(){return `
     </div>
     <div class="eyebrow">W Taipei outlets</div>
     <div class="card">
-      <div class="prow"><div><div class="nm">The Kitchen Table <span class="badge">LIVE</span></div><div class="rs">9 stations · Buffet breakfast</div></div><div class="pr"><span class="delta up">−28%</span><small style="display:block;margin-top:2px">waste</small></div></div>
-      <div class="prow" role="button" tabindex="0" onclick="toast('YEN · Coming soon · Q3 2026','#B8962E')" style="cursor:pointer"><div><div class="nm">YEN</div><div class="rs">Japanese restaurant</div></div><div class="pr"><b class="faint">—</b><small>Q3 2026</small></div></div>
-      <div class="prow" role="button" tabindex="0" onclick="toast('WOOBAR · Coming soon · Q3 2026','#B8962E')" style="cursor:pointer"><div><div class="nm">WOOBAR</div><div class="rs">Lobby lounge</div></div><div class="pr"><b class="faint">—</b><small>Q3 2026</small></div></div>
-      <div class="prow" role="button" tabindex="0" onclick="toast('WET DECK · Coming soon · Q4 2026','#B8962E')" style="cursor:pointer"><div><div class="nm">WET DECK</div><div class="rs">Pool deck</div></div><div class="pr"><b class="faint">—</b><small>Q4 2026</small></div></div>
+      <div class="prow"><div><div class="nm">The Kitchen Table <span class="badge">PILOT</span></div><div class="rs">9 stations · Buffet breakfast</div></div><div class="pr"><span class="delta up">−28%</span><small style="display:block;margin-top:2px">target</small></div></div>
+      <div class="prow" role="button" tabindex="0" onclick="toast('YEN · Coming soon · Phase 2','#B98A4A')" style="cursor:pointer"><div><div class="nm">YEN</div><div class="rs">Japanese restaurant</div></div><div class="pr"><b class="faint">—</b><small>Phase 2</small></div></div>
+      <div class="prow" role="button" tabindex="0" onclick="toast('WOOBAR · Coming soon · Phase 2','#B98A4A')" style="cursor:pointer"><div><div class="nm">WOOBAR</div><div class="rs">Lobby lounge</div></div><div class="pr"><b class="faint">—</b><small>Phase 2</small></div></div>
+      <div class="prow" role="button" tabindex="0" onclick="toast('WET DECK · Coming soon · Q4 2026','#B98A4A')" style="cursor:pointer"><div><div class="nm">WET DECK</div><div class="rs">Pool deck</div></div><div class="pr"><b class="faint">—</b><small>Q4 2026</small></div></div>
     </div>
     <div class="eyebrow">ESG · Serve 360</div>
     <div class="card">
@@ -1059,7 +1066,7 @@ function screenNotifs(){
           <div><div class="notif-time">${n.time}</div><div class="notif-day">${n.day}</div></div>
           <span class="notif-tier ${n.color}">${n.tier}</span>
         </div>
-        <div class="notif-title"><span class="ic">${n.icon}</span>${n.title}</div>
+        <div class="notif-title"><span class="ic">${n.icon}</span>${n.title.replace('{SAT}',SCEN.sat.date.replace(/ \d{4}$/,''))}</div>
         <div class="notif-body">${n.body}</div>
         <div class="notif-foot"><div class="notif-to">${toPills}</div>${metric}</div>
       </div>`;
@@ -1071,15 +1078,15 @@ function screenNotifs(){
     <p class="hero-sub">Event-driven notifications across 24 hours — to the right person, at the moment they can act. <em style="color:var(--champagne-light);font-style:italic">No app to open.</em></p>
   </div>
   <div class="body">
-    <div class="eyebrow">A typical ${s.label}</div>
+    <div class="eyebrow">A typical Saturday · illustrative</div>
     <div class="notif-stats">
-      <div class="notif-stat"><div class="v blue">9</div><div class="k">Notifs / 24h</div></div>
+      <div class="notif-stat"><div class="v blue">${NOTIF_TIMELINE.length}</div><div class="k">Notifs / 24h</div></div>
       <div class="notif-stat"><div class="v">5</div><div class="k">Tiers</div></div>
-      <div class="notif-stat"><div class="v esg">NT$3,420</div><div class="k">Captured</div></div>
+      <div class="notif-stat"><div class="v esg">NT$3,483</div><div class="k">Captured</div></div>
     </div>
     <div class="card flat" style="margin-bottom:14px;background:#F7F4EF;border:1px solid #E5E7EB">
       <div style="font-size:12px;line-height:1.55;color:#6B7280">
-        <b class="br" style="color:#B8962E">5 tiers · 1 logic —</b> <b style="color:#2C3E50">Prescriptive</b> plans the night before · <b style="color:#2C3E50">Pre-emptive</b> adjusts at dawn · <b style="color:#2C3E50">Live Flex</b> reacts during service · <b style="color:#2C3E50">Waste Prevent</b> closes the loop · <b style="color:#2C3E50">Learn</b> teaches the next forecast.
+        <b class="br" style="color:#B98A4A">5 tiers · 1 logic —</b> <b style="color:#152A37">Prescriptive</b> plans the night before · <b style="color:#152A37">Pre-emptive</b> adjusts at dawn · <b style="color:#152A37">Live Flex</b> reacts during service · <b style="color:#152A37">Waste Prevent</b> closes the loop · <b style="color:#152A37">Learn</b> teaches the next forecast.
       </div>
     </div>
     <div class="eyebrow">24-hour timeline</div>
@@ -1087,9 +1094,9 @@ function screenNotifs(){
     <div class="card flat" style="background:#F7F4EF;border:1px solid #E5E7EB">
       <div class="eyebrow" style="margin:0 0 8px">Channels per recipient</div>
       <div style="font-size:12.5px;line-height:1.85;color:#6B7280">
-        <b style="font-family:'Cormorant Garamond',serif;font-size:15px;color:#2C3E50">GM</b> — daily push + nightly WhatsApp summary · business KPIs only<br>
-        <b style="font-family:'Cormorant Garamond',serif;font-size:15px;color:#2C3E50">Chef</b> — kitchen screen + push · portions, timing, stations<br>
-        <b style="font-family:'Cormorant Garamond',serif;font-size:15px;color:#2C3E50">F&amp;B Manager</b> — email digest + push critical · mix, savings, schedule
+        <b style="font-family:'Cormorant Garamond',serif;font-size:15px;color:#152A37">GM</b> — daily push + nightly WhatsApp summary · business KPIs only<br>
+        <b style="font-family:'Cormorant Garamond',serif;font-size:15px;color:#152A37">Chef</b> — kitchen screen + push · portions, timing, stations<br>
+        <b style="font-family:'Cormorant Garamond',serif;font-size:15px;color:#152A37">F&amp;B Manager</b> — email digest + push critical · mix, savings, schedule
       </div>
     </div>
     <button class="btn ghost" data-go="dashboard" onclick="go('dashboard')" style="margin-top:14px">← Back to home</button>
@@ -1099,10 +1106,10 @@ function screenGap(){
   const rows=[
     {dim:'Food waste tracking',a:'None · unmeasured daily',b:'Logged · per station · daily'},
     {dim:'Cover forecasting',a:'Chef\'s gut · spreadsheet',b:'8-signal model · Evening Brief · 18:00'},
-    {dim:'Buffet over-prep cost',a:'NT$867K/yr invisible · NT$647K via ServiceFlow <span title="Industry math: 12% waste baseline (WRAP 2025, 180 resort kitchens) applied to W Taipei volume. To be calibrated at pilot week 2." style="font-size:9px;cursor:help;opacity:0.55">ⓘ</span>',b:'NT$2,400 / day recovered avg'},
+    {dim:'Buffet over-prep cost',a:'NT$867K/yr invisible <span title="Industry math: 12% waste baseline (WRAP 2025, 180 resort kitchens) applied to W Taipei volume. To be calibrated at pilot week 2." style="font-size:9px;cursor:help;opacity:0.55">ⓘ</span>',b:'NT$'+Math.round(WEEK_TOTAL.saved/7).toLocaleString()+' / day recovered avg'},
     {dim:'ESG data quality',a:'Manual · unaudited',b:'Auto-logged · GRI 306 mapped'},
     {dim:'Serve 360 reporting',a:'Estimated · ad-hoc',b:'Export-ready · monthly'},
-    {dim:'Chef planning time',a:'30+ min / day',b:'5 min / service · 0 planning'},
+    {dim:'Chef planning time',a:'30+ min / day',b:'5 min / service · prep plan automated'},
     {dim:'Data sovereignty',a:'No system = no policy',b:'APAC-hosted · Full data ownership'},
     {dim:'Shiji POS integration',a:'Covers only · no forecast feed',b:'Shiji Infrasys POS · auto cover count via API'}
   ];
@@ -1137,7 +1144,7 @@ function screenGap(){
         <b style="color:var(--charcoal)">WRAP 2025</b> — hotel F&amp;B waste 12% of food cost · 180 resort kitchens globally<br>
         <b style="color:var(--charcoal)">SHA / Cornell 2023</b> — $7 saved per $1 invested in food waste reduction<br>
         <b style="color:var(--charcoal)">Ellen MacArthur Foundation</b> — food waste underestimated by 2× at baselining<br>
-        <b style="color:var(--charcoal)">Marriott Serve 360</b> — GRI 306 mapping · CO₂e scope 3 reporting framework
+        <b style="color:var(--charcoal)">Serve 360</b> — GRI 306 mapping · CO₂e scope 3 reporting framework
       </div>
     </div>
     <button class="btn ghost" data-go="dashboard" onclick="go('dashboard')" style="margin-top:14px">← Back to home</button>
@@ -1270,8 +1277,8 @@ function updateVoiceSummary(){
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07);font-family:\'Jost\',sans-serif">'
       +'<span style="font-size:12px;color:rgba(245,242,236,.85)">'+e.station+'</span>'
       +'<span style="display:flex;gap:8px;align-items:center">'
-      +'<span style="font-size:12px;font-weight:600;color:#7AB67A">'+e.amount+'kg</span>'
-      +'<button onclick="showLogImpact(\''+e.station.replace(/'/g,"\\'")+'\',' +e.amount+')" style="background:none;border:none;color:rgba(122,182,122,.6);font-size:10px;font-family:\'Jost\',sans-serif;letter-spacing:.04em;cursor:pointer;padding:0;white-space:nowrap">see impact ›</button>'
+      +'<span style="font-size:12px;font-weight:600;color:#65938F">'+e.amount+'kg</span>'
+      +'<button onclick="showLogImpact(\''+e.station.replace(/'/g,"\\'")+'\',' +e.amount+')" style="background:none;border:none;color:rgba(101,147,143,.6);font-size:10px;font-family:\'Jost\',sans-serif;letter-spacing:.04em;cursor:pointer;padding:0;white-space:nowrap">see impact ›</button>'
       +'<span style="font-size:10px;color:rgba(245,242,236,.45);letter-spacing:.04em">'+hm+'</span>'
       +'<button onclick="removeVoiceEntry('+i+')" style="background:none;border:none;color:rgba(245,242,236,.3);font-size:14px;cursor:pointer;padding:0 2px;line-height:1" title="Remove">×</button>'
       +'</span></div>';
@@ -1302,7 +1309,7 @@ function showLogImpact(station,wasteKg){
   const old=g('logImpactLine');if(old)old.remove();
   const div=document.createElement('div');
   div.id='logImpactLine';
-  div.style.cssText='margin-top:8px;padding:8px 10px;background:rgba(122,182,122,.12);border:1px solid rgba(122,182,122,.25);border-radius:8px;font-family:\'Jost\',sans-serif;font-size:12px;color:#7AB67A;line-height:1.45;position:relative;z-index:1';
+  div.style.cssText='margin-top:8px;padding:8px 10px;background:rgba(101,147,143,.12);border:1px solid rgba(101,147,143,.25);border-radius:8px;font-family:\'Jost\',sans-serif;font-size:12px;color:#65938F;line-height:1.45;position:relative;z-index:1';
   div.innerHTML='<b style="font-weight:700">Tomorrow · '+station+':</b> par adjusted '+st.total+' → '+adjustedTotal+' portions (−'+diff+')';
   container.parentNode.insertBefore(div,container.nextSibling);
   setTimeout(()=>{const el=g('logImpactLine');if(el)el.remove();},8000);
@@ -1316,13 +1323,13 @@ function voiceLogTemplate(){
     if(p==='confirmed'){
       const undoIdx=voiceLog.undoIndex!=null?voiceLog.undoIndex:-1;
       return '<div class="vlog-card vlog-confirmed" style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
-        +'<div><div class="vlog-head"><span style="font-size:16px;color:#16A34A">✓</span><span class="vlog-label" style="color:#16A34A">Logged</span></div>'
+        +'<div><div class="vlog-head"><span style="font-size:16px;color:#3F7A73">✓</span><span class="vlog-label" style="color:#3F7A73">Logged</span></div>'
         +'<p class="vlog-summary" style="margin:2px 0 0;font-size:12px">'+(voiceLog.result&&voiceLog.result.summary||'')+'</p></div>'
         +(undoIdx>=0?'<button onclick="undoLastVoiceEntry('+undoIdx+')" style="flex-shrink:0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:8px;color:rgba(245,242,236,.75);font-family:\'Jost\',sans-serif;font-size:11px;font-weight:600;letter-spacing:.08em;padding:7px 12px;cursor:pointer">UNDO ↩</button>':'')
         +'</div>';
     }
     if(p==='error')return '<div class="vlog-card vlog-error">'
-      +'<p class="vlog-label" style="color:#C0392B;margin-bottom:8px">'+(voiceLog.error||'Try again')+'</p>'
+      +'<p class="vlog-label" style="color:#B5545A;margin-bottom:8px">'+(voiceLog.error||'Try again')+'</p>'
       +'<input type="text" placeholder="e.g. Japanese overprep 2 kilos" onfocus="clearTimeout(voiceLogResetTimer)" onkeypress="if(event.key===\'Enter\')submitVoiceText(this.value)" style="width:100%;padding:9px 11px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:transparent;color:rgba(245,242,236,.9);font-family:\'Jost\',sans-serif;font-size:13px;box-sizing:border-box">'
       +'</div>';
     return '<div class="vlog-card vlog-idle">'
@@ -1335,7 +1342,7 @@ function voiceLogTemplate(){
     +(t?'<p class="vlog-transcript">&ldquo;'+t.replace(/</g,'&lt;')+'&rdquo;</p>':'<p class="vlog-hint">Speak now…</p>')
     +'</button>';
   if(p==='thinking')return '<div class="vlog-card vlog-thinking">'
-    +'<div class="vlog-head"><span class="vlog-think-dots"><span></span><span></span><span></span></span><span class="vlog-label" style="color:rgba(200,164,76,.75)">Reading that…</span></div>'
+    +'<div class="vlog-head"><span class="vlog-think-dots"><span></span><span></span><span></span></span><span class="vlog-label" style="color:rgba(185,138,74,.75)">Reading that…</span></div>'
     +(t?'<p class="vlog-transcript">&ldquo;'+t.replace(/</g,'&lt;')+'&rdquo;</p>':'')
     +'</div>';
   if(p==='answered')return '<button class="vlog-card vlog-answered" onclick="toggleVoiceLog()" style="cursor:pointer;text-align:left;width:100%">'
@@ -1345,13 +1352,13 @@ function voiceLogTemplate(){
   if(p==='confirmed'){
     const undoIdx=voiceLog.undoIndex!=null?voiceLog.undoIndex:-1;
     return '<div class="vlog-card vlog-confirmed" style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
-      +'<div><div class="vlog-head"><span style="font-size:16px;color:#16A34A">✓</span><span class="vlog-label" style="color:#16A34A">Logged</span></div>'
+      +'<div><div class="vlog-head"><span style="font-size:16px;color:#3F7A73">✓</span><span class="vlog-label" style="color:#3F7A73">Logged</span></div>'
       +'<p class="vlog-summary" style="margin:2px 0 0;font-size:12px">'+(voiceLog.result&&voiceLog.result.summary||'')+'</p></div>'
       +(undoIdx>=0?'<button onclick="undoLastVoiceEntry('+undoIdx+')" style="flex-shrink:0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:8px;color:rgba(245,242,236,.75);font-family:\'Jost\',sans-serif;font-size:11px;font-weight:600;letter-spacing:.08em;padding:7px 12px;cursor:pointer">UNDO ↩</button>':'')
       +'</div>';
   }
   if(p==='error')return '<div class="vlog-card vlog-error">'
-    +'<p class="vlog-label" style="color:#C0392B;margin-bottom:8px">'+(voiceLog.error||'Voice failed')+'</p>'
+    +'<p class="vlog-label" style="color:#B5545A;margin-bottom:8px">'+(voiceLog.error||'Voice failed')+'</p>'
     +'<input type="text" placeholder="Type instead · e.g. Japanese overprep 2 kilos" onfocus="clearTimeout(voiceLogResetTimer)" onkeypress="if(event.key===\'Enter\')submitVoiceText(this.value)" style="width:100%;padding:9px 11px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:transparent;color:rgba(245,242,236,.9);font-family:\'Jost\',sans-serif;font-size:13px;box-sizing:border-box;margin-bottom:8px">'
     +'<button onclick="toggleVoiceLog()" style="background:none;border:none;color:rgba(245,242,236,.55);font-family:\'Jost\',sans-serif;font-size:11px;letter-spacing:.06em;cursor:pointer;padding:4px 0;text-decoration:underline;text-underline-offset:3px">↻ Or tap to retry voice</button>'
     +'</div>';
@@ -1592,8 +1599,8 @@ function renderStrike(){
   const modBlock=sel==='modified'
     ?'<div class="field">Reduction applied</div>'
      +'<div style="display:flex;align-items:center;gap:14px">'
-     +'<input type="range" min="0" max="30" value="'+strikeSel.modPct+'" oninput="strikeSel.modPct=parseInt(this.value);g(\'strikeModVal\').textContent=\'−\'+this.value+\'%\'" style="flex:1;accent-color:#0891B2">'
-     +'<span id="strikeModVal" style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:500;color:#2C3E50;min-width:62px;text-align:right">−'+strikeSel.modPct+'%</span>'
+     +'<input type="range" min="0" max="30" value="'+strikeSel.modPct+'" oninput="strikeSel.modPct=parseInt(this.value);g(\'strikeModVal\').textContent=\'−\'+this.value+\'%\'" style="flex:1;accent-color:#23475A">'
+     +'<span id="strikeModVal" style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:500;color:#152A37;min-width:62px;text-align:right">−'+strikeSel.modPct+'%</span>'
      +'</div>'
     :'';
   const noteBlock=sel==='no'
@@ -1601,9 +1608,9 @@ function renderStrike(){
     :'';
   sheet.innerHTML='<div class="sheet"><div class="grab"></div>'
     +'<div style="display:flex;align-items:center;gap:9px;font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#6B7280;margin-bottom:14px">'
-    +'<span style="width:8px;height:8px;background:#BE185D;display:inline-block"></span>'+strikeSel.station+' · '+code+' · '+stamp+'</div>'
-    +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:500;color:#2C3E50;line-height:1.2;margin-bottom:6px">Recommended: <em style="color:#0891B2;font-style:italic">Trim −'+strikeSel.recPct+'%</em></div>'
-    +'<div style="font-size:12.5px;color:#6B7280;margin-bottom:18px">Est. savings: <b style="color:#16A34A;font-weight:600">NT$'+strikeSel.savings.toLocaleString()+'</b></div>'
+    +'<span style="width:8px;height:8px;background:#9A7038;display:inline-block"></span>'+strikeSel.station+' · '+code+' · '+stamp+'</div>'
+    +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:500;color:#152A37;line-height:1.2;margin-bottom:6px">Recommended: <em style="color:#23475A;font-style:italic">Trim −'+strikeSel.recPct+'%</em></div>'
+    +'<div style="font-size:12.5px;color:#6B7280;margin-bottom:18px">Est. savings: <b style="color:#3F7A73;font-weight:600">NT$'+strikeSel.savings.toLocaleString()+'</b></div>'
     +'<div class="field" style="margin-top:0">What did you do?</div>'
     +'<div style="display:flex;gap:8px;margin-bottom:14px">'
     +'<button class="strike-opt'+(sel==='yes'?' on yes':'')+'" onclick="pickStrike(\'yes\')">✓ Followed</button>'
@@ -1611,7 +1618,7 @@ function renderStrike(){
     +'<button class="strike-opt mini'+(sel==='no'?' on no':'')+'" onclick="pickStrike(\'no\')" title="Skipped">×</button>'
     +'</div>'
     +modBlock+noteBlock
-    +'<button class="btn" '+(sel?'':'style="opacity:.35;pointer-events:none;margin-top:18px;background:#0891B2"')+(sel?'style="margin-top:18px;background:#0891B2"':'')+' onclick="submitStrike()">CONFIRM</button>'
+    +'<button class="btn" '+(sel?'':'style="opacity:.35;pointer-events:none;margin-top:18px;background:#23475A"')+(sel?'style="margin-top:18px;background:#23475A"':'')+' onclick="submitStrike()">CONFIRM</button>'
     +'<button class="btn ghost sm" style="margin-top:9px" onclick="closeLog()">Cancel</button></div>';
   document.querySelector('.phone').appendChild(sheet);
 }
@@ -1650,8 +1657,8 @@ function openLog(){
   const panel=logSel.expanded?'<div class="disclose-panel">'
     +'<div class="field" style="margin-top:0">Quantity</div>'
     +'<div style="display:flex;align-items:center;gap:14px">'
-    +'<input type="range" min="0" max="20" step="0.5" value="'+logSel.qty+'" oninput="logSel.qty=parseFloat(this.value);g(\'logQtyVal\').textContent=this.value+\'kg\'" style="flex:1;accent-color:#0891B2">'
-    +'<span id="logQtyVal" style="font-family:\'Cormorant Garamond\',serif;font-size:18px;font-weight:500;color:#2C3E50;min-width:56px;text-align:right">'+logSel.qty+'kg</span>'
+    +'<input type="range" min="0" max="20" step="0.5" value="'+logSel.qty+'" oninput="logSel.qty=parseFloat(this.value);g(\'logQtyVal\').textContent=this.value+\'kg\'" style="flex:1;accent-color:#23475A">'
+    +'<span id="logQtyVal" style="font-family:\'Cormorant Garamond\',serif;font-size:18px;font-weight:500;color:#152A37;min-width:56px;text-align:right">'+logSel.qty+'kg</span>'
     +'</div>'
     +'<div class="field">Destination</div><div class="opts">'+dests.map(d=>'<div class="opt '+(logSel.destination===d?'on':'')+'" onclick="logSel.destination=\''+d+'\';openLog()">'+d+'</div>').join('')+'</div>'
     +'<div class="field">Photo</div>'
@@ -1677,7 +1684,7 @@ function submitLog(){
   closeLog();
   localStorage.setItem('sf_eod_logged',new Date().toDateString());
   render();
-  toast('✓ Logged · '+logSel.station+' '+logSel.type+q+co2+' · model updates at 18:00','#16A34A');
+  toast('✓ Logged · '+logSel.station+' '+logSel.type+q+co2+' · model updates at 18:00','#3F7A73');
 }
 function closeLog(){
   if(voiceRec&&voiceRec.state==='recording'){try{voiceRec.stop();}catch(_){}}
@@ -1722,7 +1729,7 @@ function render(){
     if(!state.role)html=screenRole();
     else if(state.role==='owner')html=screenPortfolio();
     else html=({dashboard:screenDashboard,brief:screenBrief,fb:screenFB,esg:screenEsg,portfolio:screenPortfolio,cadence:screenCadence,notifs:screenNotifs,gap:screenGap}[state.tab]||screenDashboard)();
-  }catch(e){console.error('render screen threw:',e);html='<div class="body" style="padding:20px"><p style="color:#C04848;font-size:13px">'+e.message+'</p></div>';}
+  }catch(e){console.error('render screen threw:',e);html='<div class="body" style="padding:20px"><p style="color:#B5545A;font-size:13px">'+e.message+'</p></div>';}
   const screenEl=g('screen');
   screenEl.innerHTML=html;screenEl.scrollTop=0;
   // role selector has no bottom nav, so drop the reserved bottom padding
@@ -1739,12 +1746,12 @@ function pick(r){
 function go(t){closeLog();state.tab=t;render();}
 function setSc(sc){state.scenario=sc;state.strikeIndex=0;confirmedStrikes=[];state.actionsOpen=false;render();}
 function setOutlet(o){state.outlet=o;render();}
-function shareBrief(){if(navigator.share){navigator.share({title:'Morning Brief · ServiceFlow',text:'ServiceFlow Morning Brief for W Taipei — '+new Date().toLocaleDateString(),url:'https://service-flow.dev'});}else{navigator.clipboard&&navigator.clipboard.writeText('https://service-flow.dev');toast('Link copied to clipboard','#0891B2');}}
+function shareBrief(){if(navigator.share){navigator.share({title:'Morning Brief · ServiceFlow',text:'ServiceFlow Morning Brief for W Taipei — '+new Date().toLocaleDateString(),url:'https://service-flow.dev'});}else{navigator.clipboard&&navigator.clipboard.writeText('https://service-flow.dev');toast('Link copied to clipboard','#23475A');}}
 function toast(msg,color){const t=document.createElement('div');t.textContent=msg;
   t.style.cssText='position:absolute;left:50%;bottom:110px;transform:translateX(-50%);background:'+color+';color:#fff;font-weight:600;padding:13px 19px;border-radius:13px;font-size:12.5px;letter-spacing:.04em;z-index:30;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:88%;text-align:center;font-family:Jost,sans-serif';
   document.querySelector('.phone').appendChild(t);setTimeout(()=>t.remove(),2200);}
-function confirmToast(){toast('✓ Logged · Exported to Serve 360 format & Taiwan FSC','#16A34A');}
-function shareToast(){toast('⤓ Prep sheet sent to kitchen + GM','#0891B2');}
+function confirmToast(){toast('✓ Logged · Exported to Serve 360 format & Taiwan FSC','#3F7A73');}
+function shareToast(){toast('⤓ Prep sheet sent to kitchen + GM','#23475A');}
 
 // Safety net: delegated click on #screen for any [data-go] target. Inline
 // onclicks in innerHTML-rendered nodes are reliable in modern Safari, but
