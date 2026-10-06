@@ -47,7 +47,7 @@ The repository name `serviceflow-whotel` is historical. Never rename the repo or
 app/        Next.js 16 (App Router, React 19, TypeScript, Tailwind 4), PWA, deployed on Vercel
             @supabase/ssr in the browser and in server components (RLS applies);
             the service role only inside src/lib/engine/run.ts, route handlers and scripts
-supabase/   migrations (schema v2), seed.sql (illustrative hotels), cron.sql (pg_cron → /api/jobs/daily hourly, /api/jobs/live every 15 min)
+supabase/   migrations (schema v2, 8 files), seed.sql (illustrative hotels), cron.sql (pg_cron → /api/jobs/daily hourly, /api/jobs/live every 15 min)
 legacy/     the 2025 prototype app, the Python connectors and the federated-learning notes (not built)
 index.html  the static demo at the repository root (unchanged by the app)
 ```
