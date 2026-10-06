@@ -1,7 +1,7 @@
 import { ActionButton } from "@/components/action-button";
 import { Card, Empty, Note, ScreenHead, Strike, Tabs } from "@/components/ui";
 import { confirmPlan } from "@/lib/actions/ops";
-import { getContext } from "@/lib/data/context";
+import { getContext, mayWrite } from "@/lib/data/context";
 import { getDayWaste, getDecisions, getForecastVersions, getOutlets, getPlanLines, getWeekWaste, groupPlan, inputs, serviceDateFor, waveSplit, type Outlet } from "@/lib/data/fnb";
 import { kg, num, signed, timeShort, weekday } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -59,7 +59,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               { b: waves[1] ? `+${waves[1].covers}` : "—", s: `${timeShort(waves[1]?.startsAt ?? "")} wave` },
               { b: <>{num(ydayWaste, 1)}<small>kg</small></>, s: "waste yday" },
             ]}
-            action={confirmed ? <span className="btn btn-done">{done}</span> : <ActionButton action={confirmPlan.bind(null, f.id)} label={label} done={done} />}
+            action={confirmed ? <span className="btn btn-done">{done}</span> : mayWrite(ctx, "confirm_plan") ? <ActionButton action={confirmPlan.bind(null, f.id)} label={label} done={done} /> : <span className="pill pill-mt">waiting for the chef</span>}
           />
           <div className="mb-1 mt-6 flex items-baseline justify-between">
             <h2 className="text-[20px]">Station prep</h2>
@@ -96,7 +96,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               { b: num(f.covers_p50), s: "to cook" },
               { b: num(Number(meta.diets ?? 0)), s: "diets" },
             ]}
-            action={confirmed ? <span className="btn btn-done">{done}</span> : <ActionButton action={confirmPlan.bind(null, f.id)} label={label} done={done} />}
+            action={confirmed ? <span className="btn btn-done">{done}</span> : mayWrite(ctx, "confirm_plan") ? <ActionButton action={confirmPlan.bind(null, f.id)} label={label} done={done} /> : <span className="pill pill-mt">waiting for the chef</span>}
           />
           <div className="mb-1 mt-6 flex items-baseline justify-between">
             <h2 className="text-[20px]">Courses</h2>
@@ -129,7 +129,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               { b: num(Number(meta.peakCovers ?? waves.at(-1)?.covers ?? 0)), s: `at ${timeShort(String(meta.peakAt ?? waves.at(-1)?.startsAt ?? ""))}` },
               { b: <>{num(weekWaste, 1)}<small>kg</small></>, s: "week waste" },
             ]}
-            action={confirmed ? <span className="btn btn-done">{done}</span> : <ActionButton action={confirmPlan.bind(null, f.id)} label={label} done={done} />}
+            action={confirmed ? <span className="btn btn-done">{done}</span> : mayWrite(ctx, "confirm_plan") ? <ActionButton action={confirmPlan.bind(null, f.id)} label={label} done={done} /> : <span className="pill pill-mt">waiting for the chef</span>}
           />
           <div className="mb-1 mt-6 flex items-baseline justify-between">
             <h2 className="text-[20px]">{outlet.outlet_type === "bar" ? "Batch pars" : "Prep pars"}</h2>

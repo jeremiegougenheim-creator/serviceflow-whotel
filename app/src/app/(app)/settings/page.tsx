@@ -21,7 +21,8 @@ export default async function SettingsPage() {
           <Field label="Rooms (keys)" name="keys" type="number" defaultValue={ctx.property.keys} />
           <Field label="Currency" name="currency" defaultValue={ctx.property.currency} help="ISO code: USD, HKD, TWD…" />
           <Field label="Time zone" name="timezone" defaultValue={ctx.property.timezone} help="Asia/Hong_Kong, Asia/Taipei…" />
-          <Field label="Food cost per cover" name="food_cost_per_cover" type="number" step="0.01" defaultValue={s.food_cost_per_cover as number} help="in the hotel's currency" />
+          <Field label="Food cost per cover" name="food_cost_per_cover" type="number" step="0.01" defaultValue={s.food_cost_per_cover as number} help="in the hotel's currency; without it no saving is priced" />
+          <Field label="Food served per cover, kg" name="food_kg_per_cover" type="number" step="0.01" defaultValue={(s.food_kg_per_cover as number) ?? 0.45} help="prices a kilo of waste when a station cannot" />
           <Field label="Waste baseline, g per cover" name="waste_baseline_g_cover" type="number" step="1" defaultValue={s.waste_baseline_g_cover as number} help="measured before ServiceFlow; leave empty to use the trailing average" />
           <Field label="CO₂e per kg, default" name="co2e_default_factor" type="number" step="0.1" defaultValue={(s.co2e_default_factor as number) ?? 2.5} help="when a station has no category factor" />
           <Field label="Energy baseline, kWh per key-night" name="energy_baseline_kwh_room" type="number" step="0.1" defaultValue={s.energy_baseline_kwh_room as number} />

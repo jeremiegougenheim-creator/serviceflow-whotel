@@ -1,7 +1,7 @@
 import { ActionButton } from "@/components/action-button";
 import { Card, Empty, Note, Row, Strike, Tabs } from "@/components/ui";
 import { applyRosterSuggestion, dismissRosterSuggestion } from "@/lib/actions/ops";
-import { getContext } from "@/lib/data/context";
+import { getContext, mayWrite } from "@/lib/data/context";
 import { getStaffingWeek } from "@/lib/data/fnb";
 import { mondayOf, num, plusDays, signed } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -39,10 +39,12 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
           title={top.title}
           body={top.detail}
           action={
-            <div className="flex gap-2">
-              <ActionButton action={applyRosterSuggestion.bind(null, top.id)} label="Apply the change" done="Change applied" />
-              <ActionButton variant="ghost" action={dismissRosterSuggestion.bind(null, top.id)} label="Not this time" done="Dismissed" />
-            </div>
+            mayWrite(ctx, "roster_suggestions") ? (
+              <div className="flex gap-2">
+                <ActionButton action={applyRosterSuggestion.bind(null, top.id)} label="Apply the change" done="Change applied" />
+                <ActionButton variant="ghost" action={dismissRosterSuggestion.bind(null, top.id)} label="Not this time" done="Dismissed" />
+              </div>
+            ) : undefined
           }
         />
       ) : (
@@ -54,7 +56,7 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
             <div className="text-[14.5px] font-medium">{s.title}</div>
             <div className="muted text-[13px]">{s.detail}</div>
           </div>
-          <ActionButton small action={applyRosterSuggestion.bind(null, s.id)} label="Apply" done="Applied" />
+          {mayWrite(ctx, "roster_suggestions") ? <ActionButton small action={applyRosterSuggestion.bind(null, s.id)} label="Apply" done="Applied" /> : <span className="pill pill-mt">proposed</span>}
         </div>
       ))}
 

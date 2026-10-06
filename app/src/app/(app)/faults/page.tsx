@@ -2,8 +2,8 @@ import { ActionButton } from "@/components/action-button";
 import { VoiceLogger } from "@/components/voice-logger";
 import { Card, Grid, Kpi, Note, Row, Strike, Tabs } from "@/components/ui";
 import { confirmPlannedWorks, updateWorkOrder } from "@/lib/actions/ops";
-import { getContext } from "@/lib/data/context";
-import { hhmm, num, plusDays } from "@/lib/format";
+import { getContext, mayWrite } from "@/lib/data/context";
+import { hhmm, num, plusDays, startOfDayIn } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Maintenance" };
@@ -21,6 +21,7 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
   ];
   const tz = ctx.property.timezone;
   const now = new Date(); // server render time, once per request
+  const dayStart = startOfDayIn(ctx.today, tz); // the hotel's midnight, not the server's
   const ago = (iso: string) => {
     const h = (now.getTime() - new Date(iso).getTime()) / 36e5;
     return h < 1 ? `${Math.max(1, Math.round(h * 60))} min open` : h < 48 ? `${Math.round(h)} h open` : `${Math.round(h / 24)} d open`;
@@ -30,14 +31,14 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
     const { data: wos } = await supabase.from("work_orders").select("*, rooms(number), assets(name)").eq("property_id", ctx.property.id).gte("opened_at", new Date(now.getTime() - 7 * 864e5).toISOString()).order("priority").order("opened_at");
     const all = wos ?? [];
     const open = all.filter((w) => w.status === "open" || w.status === "in_progress");
-    const counts = { high: open.filter((w) => w.priority === "high").length, medium: open.filter((w) => w.priority === "medium").length, planned: all.filter((w) => w.status === "planned").length, closed: all.filter((w) => w.status === "closed" && w.closed_at && w.closed_at >= `${ctx.today}T00:00:00`).length };
+    const counts = { high: open.filter((w) => w.priority === "high").length, medium: open.filter((w) => w.priority === "medium").length, planned: all.filter((w) => w.status === "planned").length, closed: all.filter((w) => w.status === "closed" && w.closed_at && w.closed_at >= dayStart).length };
     const impact: Record<string, number> = { guest_facing: 0, suites: 1, in_room: 2, outlet: 3, back_of_house: 4, none: 5 };
     open.sort((a, b) => impact[a.guest_impact] - impact[b.guest_impact] || (a.priority === "high" ? -1 : 1));
     const due = (w: (typeof all)[number]) => (w.due_at ? (w.due_at.slice(0, 10) === ctx.today ? (hhmm(w.due_at, tz) >= "22:00" ? "tonight" : hhmm(w.due_at, tz)) : new Date(w.due_at).toLocaleDateString("en-GB", { weekday: "short", timeZone: tz })) : null);
     return (
       <>
         <Tabs items={tabs} current={view} />
-        <VoiceLogger propertyId={ctx.property.id} outletId={null} serviceDate={ctx.today} department="engineering" placeholder="Log a fault or a fix" examples={["1804 door hinge stiff, guest in room", "Lift B back in service"]} />
+        {mayWrite(ctx, "work_orders_raise") ? <VoiceLogger propertyId={ctx.property.id} outletId={null} serviceDate={ctx.today} department="engineering" placeholder="Log a fault or a fix" examples={["1804 door hinge stiff, guest in room", "Lift B back in service"]} /> : null}
         <div className="mt-4">
           <Grid cols={4}>
             <Kpi k="High" v={counts.high} tone={counts.high ? "rd" : undefined} />
@@ -59,7 +60,7 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
                 <span className={`pill ${w.guest_impact === "guest_facing" ? "pill-rd" : w.guest_impact === "suites" || w.guest_impact === "in_room" ? "pill-am" : "pill-mt"}`}>{due(w) ?? (w.guest_impact === "suites" ? "suites" : ago(w.opened_at))}</span>
-                <ActionButton small variant="ghost" action={updateWorkOrder.bind(null, w.id, w.status === "open" ? "in_progress" : "closed")} label={w.status === "open" ? "Start" : "Close"} done={w.status === "open" ? "Started" : "Closed"} />
+                {mayWrite(ctx, "work_orders") ? <ActionButton small variant="ghost" action={updateWorkOrder.bind(null, w.id, w.status === "open" ? "in_progress" : "closed")} label={w.status === "open" ? "Start" : "Close"} done={w.status === "open" ? "Started" : "Closed"} /> : null}
               </div>
             </div>
           ))}
@@ -73,7 +74,7 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
   if (view === "plant") {
     const [{ data: assets }, { data: readings }] = await Promise.all([
       supabase.from("assets").select("*").eq("property_id", ctx.property.id).eq("active", true).order("sort_order"),
-      supabase.from("asset_readings").select("asset_id, metric, value, unit, at").eq("property_id", ctx.property.id).gte("at", `${ctx.today}T00:00:00`).order("at", { ascending: false }),
+      supabase.from("asset_readings").select("asset_id, metric, value, unit, at").eq("property_id", ctx.property.id).gte("at", dayStart).order("at", { ascending: false }),
     ]);
     const list = assets ?? [];
     const online = list.filter((a) => a.status !== "offline").length;
@@ -115,7 +116,7 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
           eyebrow="Planned this week"
           title={`${list.length === 0 ? "No job" : list.length === 1 ? "One job" : list.length === 2 ? "Two jobs" : `${list.length} jobs`}, checked against the day.`}
           body="Kitchen plan, room arrivals and guest notices are read before a slot is booked."
-          action={proposed.length ? <ActionButton action={confirmPlannedWorks.bind(null, ctx.property.id, proposed.map((w) => w.id))} label="Confirm the slots" done="Slots confirmed" /> : <span className="btn btn-done">Slots confirmed</span>}
+          action={proposed.length ? (mayWrite(ctx, "planned_works") ? <ActionButton action={confirmPlannedWorks.bind(null, ctx.property.id, proposed.map((w) => w.id))} label="Confirm the slots" done="Slots confirmed" /> : <span className="pill pill-mt">{proposed.length} proposed</span>) : <span className="btn btn-done">Slots confirmed</span>}
         />
         <div className="mb-1 mt-6 flex items-baseline justify-between">
           <h2 className="text-[20px]">Slots</h2>

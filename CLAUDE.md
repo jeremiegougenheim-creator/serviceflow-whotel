@@ -34,8 +34,11 @@ The repository name `serviceflow-whotel` is historical. Never rename the repo or
    prediction_log keeps every forecast and its outcome. Change the model, run the history, compare.
 
 6. The data stays in the hotel.
-   Row level security on every table, keyed by property_id. Portfolio roles read; they never write.
+   Row level security on every table, keyed by property_id, and a trigger that keeps every parent
+   (outlet, station, room, forecast…) in the row's own property. Portfolio roles read; they never write.
+   A GM grants operational roles in their hotel only; portfolio and admin roles come from the service role.
    Aggregates only: no guest names, no individual records. The service role never reaches a browser.
+   Every write from the app checks the rows it touched: a refused write is reported, never shown as done.
 ```
 
 ## Stack
@@ -44,7 +47,7 @@ The repository name `serviceflow-whotel` is historical. Never rename the repo or
 app/        Next.js 16 (App Router, React 19, TypeScript, Tailwind 4), PWA, deployed on Vercel
             @supabase/ssr in the browser and in server components (RLS applies);
             the service role only inside src/lib/engine/run.ts, route handlers and scripts
-supabase/   migrations (schema v2), seed.sql (illustrative hotels), cron.sql (pg_cron → /api/jobs/daily)
+supabase/   migrations (schema v2), seed.sql (illustrative hotels), cron.sql (pg_cron → /api/jobs/daily hourly, /api/jobs/live every 15 min)
 legacy/     the 2025 prototype app, the Python connectors and the federated-learning notes (not built)
 index.html  the static demo at the repository root (unchanged by the app)
 ```

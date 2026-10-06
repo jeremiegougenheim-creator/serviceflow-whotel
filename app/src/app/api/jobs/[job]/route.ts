@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { runDailyCycle, runDebrief, runEveningBrief, runNightlyReport, runStaffing } from "@/lib/engine/run";
+import { runDailyCycle, runDebrief, runEveningBrief, runLiveTick, runNightlyReport, runStaffing } from "@/lib/engine/run";
 import { todayIn, plusDays } from "@/lib/format";
 
 export const maxDuration = 300;
@@ -13,6 +13,7 @@ export const maxDuration = 300;
  *   POST /api/jobs/debrief   today's debrief
  *   POST /api/jobs/nightly   tonight's report
  *   POST /api/jobs/staffing  hours against demand, two weeks
+ *   POST /api/jobs/live      every 15 minutes; the live proposals for every outlet in service now
  * Body (optional JSON): { property_id, date }
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ job: string }> }) {
@@ -48,6 +49,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         case "debrief": results[p.slug] = await runDebrief(db, p.id, today); break;
         case "nightly": results[p.slug] = await runNightlyReport(db, p.id, today); break;
         case "staffing": results[p.slug] = await runStaffing(db, p.id, today, 14); break;
+        case "live": results[p.slug] = await runLiveTick(db, p.id); break;
         case "cycle": results[p.slug] = await runDailyCycle(db, p.id, today); break;
         default: return NextResponse.json({ error: "unknown job" }, { status: 404 });
       }

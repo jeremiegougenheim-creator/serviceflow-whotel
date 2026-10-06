@@ -29,6 +29,7 @@ export async function importCsv(propertyId: string, kind: ImportKind, formData: 
 
   const errors: { row: number; error: string }[] = [];
   let ok = 0;
+  let skipped = 0;
   const [{ data: outlets }, { data: stations }, { data: lines }, { data: members }] = await Promise.all([
     supabase.from("outlets").select("id, slug, name").eq("property_id", propertyId),
     supabase.from("stations").select("id, slug, outlet_id").eq("property_id", propertyId),
@@ -43,7 +44,17 @@ export async function importCsv(propertyId: string, kind: ImportKind, formData: 
       switch (kind) {
         case "pms_daily": {
           const mix = (prefix: string) => Object.fromEntries(Object.entries(r).filter(([k, v]) => k.startsWith(prefix) && v !== "").map(([k, v]) => [k.slice(prefix.length), Number(v)]));
-          const { error } = await supabase.from("pms_daily").upsert({ property_id: propertyId, service_date: r.service_date, rooms_occupied: n(r.rooms_occupied) ?? 0, rooms_total: n(r.rooms_total), guests_in_house: n(r.guests_in_house) ?? 0, arrivals: n(r.arrivals) ?? 0, departures: n(r.departures) ?? 0, departures_am: n(r.departures_am) ?? 0, late_arrivals_prev: n(r.late_arrivals_prev) ?? 0, early_checkins: n(r.early_checkins) ?? 0, lounge_eligible: n(r.lounge_eligible) ?? 0, vip_arrivals: n(r.vip_arrivals) ?? 0, suites_occupied: n(r.suites_occupied) ?? 0, rate_code_mix: mix("rate_") as J, travel_source_mix: mix("src_") as J, nationality_mix: mix("nat_") as J, los_distribution: mix("los_") as J, source: "csv" }, { onConflict: "property_id,service_date" });
+          // groups = "42@07:15/tour_group;18@08:30/mice"
+          const groups = (r.groups ?? "")
+            .split(";")
+            .map((g) => g.trim())
+            .filter(Boolean)
+            .map((g, gi) => {
+              const m = g.match(/^(\d+)\s*(?:@\s*(\d{1,2}:\d{2}))?\s*(?:\/\s*([a-z_]+))?$/i);
+              if (!m) throw new Error(`groups: cannot read "${g}"`);
+              return { group_id: `csv-${r.service_date}-${gi + 1}`, size: Number(m[1]), arrival_time: m[2] ?? null, source: m[3] ?? "tour_group" };
+            });
+          const { error } = await supabase.from("pms_daily").upsert({ property_id: propertyId, service_date: r.service_date, rooms_occupied: n(r.rooms_occupied) ?? 0, rooms_total: n(r.rooms_total), guests_in_house: n(r.guests_in_house) ?? 0, arrivals: n(r.arrivals) ?? 0, departures: n(r.departures) ?? 0, departures_am: n(r.departures_am) ?? 0, late_arrivals_prev: n(r.late_arrivals_prev) ?? 0, early_checkins: n(r.early_checkins) ?? 0, lounge_eligible: n(r.lounge_eligible) ?? 0, vip_arrivals: n(r.vip_arrivals) ?? 0, suites_occupied: n(r.suites_occupied) ?? 0, rate_code_mix: mix("rate_") as J, loyalty_tier_mix: mix("tier_") as J, travel_source_mix: mix("src_") as J, nationality_mix: mix("nat_") as J, los_distribution: mix("los_") as J, group_manifest: groups as unknown as J, source: "csv" }, { onConflict: "property_id,service_date" });
           if (error) throw error;
           break;
         }
@@ -58,7 +69,17 @@ export async function importCsv(propertyId: string, kind: ImportKind, formData: 
           const oid = outletId(r.outlet);
           if (!oid) throw new Error(`unknown outlet ${r.outlet}`);
           const st = stations?.find((s) => s.outlet_id === oid && s.slug === r.station);
-          const { error } = await supabase.from("waste_logs").insert({ property_id: propertyId, outlet_id: oid, station_id: st?.id ?? null, service_date: r.service_date, kg: n(r.kg) ?? 0, reason: r.reason || null, source: r.reason === "winnow" ? "winnow" : "csv", logged_by: user.id, logged_at: `${r.service_date}T12:00:00Z` });
+          if (r.station && !st) throw new Error(`unknown station ${r.station}`);
+          const kgv = n(r.kg) ?? 0;
+          const source = r.reason === "winnow" ? "winnow" : "csv";
+          // the same measured line twice would double the ESG record: an identical row is skipped
+          let dup = supabase.from("waste_logs").select("id").eq("property_id", propertyId).eq("outlet_id", oid).eq("service_date", r.service_date).eq("kg", kgv).eq("source", source).limit(1);
+          dup = st ? dup.eq("station_id", st.id) : dup.is("station_id", null);
+          if ((await dup).data?.length) {
+            skipped++;
+            break;
+          }
+          const { error } = await supabase.from("waste_logs").insert({ property_id: propertyId, outlet_id: oid, station_id: st?.id ?? null, service_date: r.service_date, kg: kgv, reason: r.reason || null, source, logged_by: user.id, logged_at: `${r.service_date}T12:00:00Z` });
           if (error) throw error;
           break;
         }
@@ -66,6 +87,13 @@ export async function importCsv(propertyId: string, kind: ImportKind, formData: 
           const line = lines?.find((l) => l.name.toLowerCase() === r.service_line.toLowerCase());
           if (!line) throw new Error(`unknown service line ${r.service_line}`);
           const tm = r.team_member ? members?.find((m) => m.name.toLowerCase() === r.team_member.toLowerCase()) : null;
+          if (r.team_member && !tm) throw new Error(`unknown team member ${r.team_member}`);
+          let dup = supabase.from("roster_shifts").select("id").eq("property_id", propertyId).eq("service_line_id", line.id).eq("service_date", r.service_date).eq("starts_at", r.starts_at).eq("ends_at", r.ends_at).neq("status", "cancelled").limit(1);
+          dup = tm ? dup.eq("team_member_id", tm.id) : dup.is("team_member_id", null);
+          if ((await dup).data?.length) {
+            skipped++;
+            break;
+          }
           const { error } = await supabase.from("roster_shifts").insert({ property_id: propertyId, service_line_id: line.id, team_member_id: tm?.id ?? null, service_date: r.service_date, starts_at: r.starts_at, ends_at: r.ends_at, hours: n(r.hours) ?? 0, status: (r.status as "draft" | "published") || "published" });
           if (error) throw error;
           break;
@@ -99,7 +127,8 @@ export async function importCsv(propertyId: string, kind: ImportKind, formData: 
       if (errors.length >= 50) break;
     }
   }
-  await supabase.from("imports").insert({ property_id: propertyId, kind, file_name: file.name, rows_total: rows.length, rows_ok: ok, rows_failed: errors.length, errors: errors as unknown as J, status: errors.length && !ok ? "failed" : "done", imported_by: user.id });
+  await supabase.from("imports").insert({ property_id: propertyId, kind, file_name: file.name, rows_total: rows.length, rows_ok: ok, rows_failed: errors.length, errors: [...(skipped ? [{ row: 0, error: `${skipped} rows already present, skipped` }] : []), ...errors] as unknown as J, status: errors.length && !ok ? "failed" : "done", imported_by: user.id });
   revalidatePath("/settings/import");
-  return ok ? { ok: true, label: `${ok} rows imported${errors.length ? `, ${errors.length} failed` : ""}` } : { ok: false, error: errors[0]?.error ?? "Nothing imported" };
+  const tail = [skipped ? `${skipped} already present` : "", errors.length ? `${errors.length} failed` : ""].filter(Boolean).join(", ");
+  return ok || skipped ? { ok: true, label: `${ok} rows imported${tail ? ` (${tail})` : ""}` } : { ok: false, error: errors[0]?.error ?? "Nothing imported" };
 }

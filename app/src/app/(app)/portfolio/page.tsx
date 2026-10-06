@@ -39,13 +39,13 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
   const coversT = visibleO.reduce((s, r) => s + (r.covers_tomorrow ?? 0), 0);
   const shortHotels = visibleO.filter((r) => Number(r.hours_short) >= 1);
   const shortHours = shortHotels.reduce((s, r) => s + Number(r.hours_short), 0);
-  const acc = visibleO.filter((r) => r.accuracy_4w != null);
-  const accAvg = acc.length ? acc.reduce((s, r) => s + Number(r.accuracy_4w), 0) / acc.length : null;
+  const acc = visibleO.filter((r) => r.mape_4w_pct != null);
+  const accAvg = acc.length ? acc.reduce((s, r) => s + Number(r.mape_4w_pct), 0) / acc.length : null;
   const byRegion = (regions ?? []).map((rg) => ({ ...rg, q: q.filter((r) => r.region_id === rg.id), o: o.filter((r) => r.region_id === rg.id) })).filter((rg) => rg.q.length);
   const groupLevel = role === "ceo" && !regionFilter && byRegion.length > 1;
   const quarterLabel = `${["first", "second", "third", "fourth"][Math.floor(new Date(ctx.today + "T12:00:00Z").getUTCMonth() / 3)]} quarter`;
   const regionName = regionFilter ? (regions ?? []).find((r) => r.id === regionFilter)?.name : null;
-  const watch = (r: (typeof o)[number]) => (Number(r.hours_short) >= 1 ? { note: `${weekday(tomorrow)} ${String(r.short_lines ?? "kitchen").split(",")[0].toLowerCase()} short`, right: signed(-Math.round(Number(r.hours_short)), " h"), tone: "am" as const } : r.cooked_vs_plan_pct != null && Number(r.cooked_vs_plan_pct) >= 5 ? { note: "cooked above plan", right: signed(Math.round(Number(r.cooked_vs_plan_pct)), "%"), tone: "am" as const } : { note: "on plan", right: "", tone: "gn" as const });
+  const watch = (r: (typeof o)[number]) => (Number(r.hours_short) >= 1 ? { note: `${weekday(tomorrow)} ${String(r.short_lines ?? "kitchen").split(",")[0].toLowerCase()} short`, right: signed(-Math.round(Number(r.hours_short)), " h"), tone: "am" as const } : r.off_plan_pct != null && Number(r.off_plan_pct) >= 5 ? { note: "off the plan", right: signed(Math.round(Number(r.off_plan_pct)), "%"), tone: "am" as const } : { note: "on plan", right: "", tone: "gn" as const });
 
   return (
     <>
@@ -144,7 +144,7 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
           </Card>
         </>
       )}
-      <p className="muted mt-4 text-[12.5px]">Tap a hotel to open its own screens. Figures in {ctx.properties[0]?.currency ?? "USD"}, converted at each hotel&rsquo;s rate.</p>
+      <p className="muted mt-4 text-[12.5px]">Tap a hotel to open its own screens. Figures in {q[0]?.currency ?? ctx.properties[0]?.currency ?? "USD"}, converted at each hotel&rsquo;s rate.</p>
     </>
   );
 }

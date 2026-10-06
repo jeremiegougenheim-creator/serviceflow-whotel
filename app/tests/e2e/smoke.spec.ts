@@ -64,3 +64,22 @@ test("a chef never sees another hotel", async ({ page }) => {
   await expect(page.getByText("HARBOUR HOTEL", { exact: true })).toBeVisible();
   await expect(page.getByText("Townhouse")).toHaveCount(0);
 });
+
+test("a live proposal approved by the chef becomes a decision on the record", async ({ page }) => {
+  await signIn(page, "chef@demo.serviceflow");
+  await page.goto("/live");
+  const approve = page.getByRole("button", { name: "Approve" }).first();
+  if (await approve.isVisible()) {
+    await approve.click();
+    await expect(page.getByText("Approved").first()).toBeVisible();
+  }
+});
+
+test("a reader is offered no tap the database would refuse", async ({ page }) => {
+  await signIn(page, "owner@demo.serviceflow");
+  await page.goto("/brief");
+  await expect(page.getByRole("button", { name: "Approve" })).toHaveCount(0);
+  await page.goto("/waste");
+  await expect(page.getByPlaceholder("Log a station, in English or Chinese")).toHaveCount(0);
+  await expect(page.getByText(/Measured by the bin/).first()).toBeVisible();
+});

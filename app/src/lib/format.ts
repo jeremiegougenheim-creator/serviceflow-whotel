@@ -1,4 +1,4 @@
-import { formatInTimeZone } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
 /** Money in the property's currency: US$270 · HK$2,100 · NT$18,000 · €1,540 */
 export function money(amount: number | string | null | undefined, currency = "USD", opts: { decimals?: number } = {}): string {
@@ -69,6 +69,11 @@ export function todayIn(tz: string): string {
 
 export function nowClock(tz: string): string {
   return formatInTimeZone(new Date(), tz, "HH:mm");
+}
+
+/** The instant a property-local day starts (00:00 in its time zone), as ISO. */
+export function startOfDayIn(date: string, tz: string): string {
+  return fromZonedTime(`${date}T00:00:00`, tz).toISOString();
 }
 
 export function plusDays(date: string, n: number): string {

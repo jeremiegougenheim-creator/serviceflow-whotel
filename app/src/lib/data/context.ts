@@ -92,4 +92,24 @@ export function can(ctx: AppContext, ...roles: Role[]): boolean {
   return ctx.roles.includes("admin") || roles.some((r) => ctx.roles.includes(r));
 }
 
+/** Who may write where: the same lists as the row level security policies, so a screen never offers a tap the database refuses. */
+export const WRITES = {
+  decisions: ["gm", "fnb_mgr", "chef", "sous_chef", "hk", "eng"],
+  plans: ["gm", "fnb_mgr", "chef", "sous_chef", "prep_cook"],
+  confirm_plan: ["gm", "fnb_mgr", "chef"],
+  live_events: ["gm", "fnb_mgr", "chef", "sous_chef"],
+  waste_logs: ["gm", "fnb_mgr", "chef", "sous_chef", "prep_cook"],
+  service_actuals: ["gm", "fnb_mgr", "chef", "sous_chef"],
+  room_tasks: ["gm", "hk"],
+  work_orders: ["gm", "eng"],
+  work_orders_raise: ["gm", "eng", "hk", "fnb_mgr", "chef", "sous_chef"],
+  planned_works: ["gm", "eng"],
+  roster_suggestions: ["gm", "fnb_mgr", "chef", "hk"],
+  pos_variances: ["gm", "fnb_mgr"],
+} as const satisfies Record<string, readonly Role[]>;
+
+export function mayWrite(ctx: AppContext, what: keyof typeof WRITES): boolean {
+  return can(ctx, ...WRITES[what]);
+}
+
 export const PROPERTY_COOKIE_NAME = PROPERTY_COOKIE;

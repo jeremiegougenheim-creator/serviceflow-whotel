@@ -62,12 +62,19 @@ export async function previewVoice(input: { transcript: string; propertyId: stri
   return { intent, summary, canApply, context: { propertyId: input.propertyId, outletId: input.outletId, serviceDate: input.serviceDate, roomId } };
 }
 
-/** Write what the person confirmed. */
-export async function applyVoice(p: VoicePreview, meta: { transcript: string; language: string | null; source: "voice" | "manual"; secondsToLog: number | null }): Promise<Result> {
+/**
+ * Write what the person confirmed. The transcript is parsed again here, in the context the
+ * page gave (hotel, outlet, date, department): the browser's copy of the preview is only a
+ * display, never the thing written.
+ */
+export async function applyVoice(shown: VoicePreview, meta: { transcript: string; language: string | null; source: "voice" | "manual"; secondsToLog: number | null }): Promise<Result> {
+  const department = shown.context.outletId ? "kitchen" : shown.intent.intent === "fault" ? "engineering" : "housekeeping";
+  const p = await previewVoice({ transcript: meta.transcript, propertyId: shown.context.propertyId, outletId: shown.context.outletId, serviceDate: shown.context.serviceDate, department });
   const { intent, context } = p;
+  if (!p.canApply) return { ok: false, error: p.summary };
   switch (intent.intent) {
     case "waste":
-      if (intent.kg == null || !context.outletId) return { ok: false, error: "Station and kilos are needed" };
+      if (intent.kg == null || !intent.stationId || !context.outletId) return { ok: false, error: "Station and kilos are needed" };
       return logWaste({ propertyId: context.propertyId, outletId: context.outletId, stationId: intent.stationId, serviceDate: context.serviceDate, kg: intent.kg, reason: intent.reason, transcript: meta.transcript, language: meta.language, source: meta.source, secondsToLog: meta.secondsToLog });
     case "room_done":
       if (!context.roomId) return { ok: false, error: "Room not found" };

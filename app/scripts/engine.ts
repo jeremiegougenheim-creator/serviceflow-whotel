@@ -6,9 +6,10 @@
  *   npm run engine -- nightly <property-slug|all> [date]
  *   npm run engine -- staffing <property-slug|all> [from] [days]
  *   npm run engine -- live <property-slug> <outlet-slug> <date> <HH:MM>
+ *   npm run engine -- tick <property-slug|all>                  the live tick for every outlet in service now
  */
 import { adminDb, plusDays, today } from "./_db";
-import { runDebrief, runEveningBrief, runLive, runNightlyReport, runStaffing } from "../src/lib/engine/run";
+import { runDebrief, runEveningBrief, runLive, runLiveTick, runNightlyReport, runStaffing } from "../src/lib/engine/run";
 
 async function main() {
   const [cmd, slug = "all", a, b] = process.argv.slice(2);
@@ -23,6 +24,7 @@ async function main() {
       case "debrief": console.log(await runDebrief(db, p.id, a ?? today())); break;
       case "nightly": console.log(await runNightlyReport(db, p.id, a ?? today())); break;
       case "staffing": console.log(await runStaffing(db, p.id, a ?? today(), b ? Number(b) : 14)); break;
+      case "tick": console.log(await runLiveTick(db, p.id)); break;
       case "live": {
         const { data: o } = await db.from("outlets").select("id").eq("property_id", p.id).eq("slug", a!).single();
         console.log(await runLive(db, p.id, o!.id, b ?? today(), process.argv[6] ?? "08:00"));

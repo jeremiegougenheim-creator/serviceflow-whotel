@@ -12,6 +12,14 @@ type J = NonNullable<Json>;
 
 type Result = { ok: true; label?: string } | { ok: false; error: string };
 const fail = (e: { message: string } | null | undefined): Result => ({ ok: false, error: e?.message ?? "Not allowed" });
+const NOT_ALLOWED = "Not allowed for your role";
+
+/** An update RLS filtered out returns no rows and no error: that is a refusal, not a save. */
+function touched(r: { error: { message: string } | null; data: { id: string }[] | null }, label = "Saved"): Result {
+  if (r.error) return fail(r.error);
+  if (!r.data?.length) return { ok: false, error: NOT_ALLOWED };
+  return { ok: true, label };
+}
 
 async function me() {
   const supabase = await createClient();
@@ -31,7 +39,7 @@ export async function saveProperty(propertyId: string, formData: FormData): Prom
   const { supabase } = await me();
   const { data: current } = await supabase.from("properties").select("settings").eq("id", propertyId).single();
   const settings = { ...((current?.settings as Record<string, unknown>) ?? {}) };
-  for (const k of ["food_cost_per_cover", "waste_baseline_g_cover", "co2e_default_factor", "energy_baseline_kwh_room", "saving_points_total", "saving_points_serviceflow"]) {
+  for (const k of ["food_cost_per_cover", "food_kg_per_cover", "waste_baseline_g_cover", "co2e_default_factor", "energy_baseline_kwh_room", "saving_points_total", "saving_points_serviceflow"]) {
     const v = num(formData.get(k));
     if (v == null) delete settings[k];
     else settings[k] = v;
@@ -41,13 +49,31 @@ export async function saveProperty(propertyId: string, formData: FormData): Prom
     if (v) settings[k] = v;
   }
   settings.winnow = formData.get("winnow") === "on";
-  const { error } = await supabase
-    .from("properties")
-    .update({ name: str(formData.get("name")) ?? undefined, keys: num(formData.get("keys")) ?? undefined, currency: (str(formData.get("currency")) ?? "USD").toUpperCase().slice(0, 3), timezone: str(formData.get("timezone")) ?? undefined, city: str(formData.get("city")), settings: settings as J })
-    .eq("id", propertyId);
-  if (error) return fail(error);
+  // rule 2: the predictive share is a part of the whole, never more
+  const total = Number(settings.saving_points_total ?? 4);
+  const sf = Number(settings.saving_points_serviceflow ?? 3);
+  if (!(total > 0) || !(sf >= 0) || sf > total) return { ok: false, error: "ServiceFlow's saving points must be between 0 and the total" };
+  for (const k of ["food_cost_per_cover", "food_kg_per_cover", "waste_baseline_g_cover", "co2e_default_factor", "energy_baseline_kwh_room"]) {
+    if (settings[k] != null && !(Number(settings[k]) >= 0)) return { ok: false, error: `${k.replace(/_/g, " ")} must be a positive number` };
+  }
+  const tz = str(formData.get("timezone"));
+  if (tz) {
+    try {
+      new Intl.DateTimeFormat("en", { timeZone: tz });
+    } catch {
+      return { ok: false, error: `Unknown time zone ${tz}` };
+    }
+  }
+  const r = touched(
+    await supabase
+      .from("properties")
+      .update({ name: str(formData.get("name")) ?? undefined, keys: num(formData.get("keys")) ?? undefined, currency: (str(formData.get("currency")) ?? "USD").toUpperCase().slice(0, 3), timezone: tz ?? undefined, city: str(formData.get("city")), settings: settings as J })
+      .eq("id", propertyId)
+      .select("id"),
+  );
+  if (!r.ok) return r;
   revalidatePath("/", "layout");
-  return { ok: true, label: "Saved" };
+  return r;
 }
 
 // ── outlets, waves, stations ────────────────────────────────────────────────
@@ -70,8 +96,8 @@ export async function saveOutlet(propertyId: string, outletId: string | null, fo
   if (outletId) {
     const { data: cur } = await supabase.from("outlets").select("settings").eq("id", outletId).single();
     const merged = { ...((cur?.settings as Record<string, unknown>) ?? {}), ...settings };
-    const { error } = await supabase.from("outlets").update({ ...row, settings: merged as J }).eq("id", outletId);
-    if (error) return fail(error);
+    const r = touched(await supabase.from("outlets").update({ ...row, settings: merged as J }).eq("id", outletId).eq("property_id", propertyId).select("id"));
+    if (!r.ok) return r;
   } else {
     const { data: created, error } = await supabase.from("outlets").insert({ ...row, settings: settings as J }).select("id").single();
     if (error) return fail(error);
@@ -115,27 +141,27 @@ export async function saveStation(propertyId: string, outletId: string, stationI
     sort_order: num(formData.get("sort_order")) ?? 0,
     active: formData.get("active") !== "off",
   };
-  const { error } = stationId ? await supabase.from("stations").update(row).eq("id", stationId) : await supabase.from("stations").insert(row);
-  if (error) return fail(error);
+  const r = touched(stationId ? await supabase.from("stations").update(row).eq("id", stationId).eq("property_id", propertyId).select("id") : await supabase.from("stations").insert(row).select("id"));
+  if (!r.ok) return r;
   revalidatePath("/settings/outlets");
-  return { ok: true, label: "Saved" };
+  return r;
 }
 
 export async function deleteStation(stationId: string): Promise<Result> {
   const { supabase } = await me();
-  const { error } = await supabase.from("stations").update({ active: false }).eq("id", stationId);
-  if (error) return fail(error);
+  const r = touched(await supabase.from("stations").update({ active: false }).eq("id", stationId).select("id"), "Removed");
+  if (!r.ok) return r;
   revalidatePath("/settings/outlets");
-  return { ok: true, label: "Removed" };
+  return r;
 }
 
 export async function saveWave(propertyId: string, outletId: string, waveId: string | null, formData: FormData): Promise<Result> {
   const { supabase } = await me();
   const row = { property_id: propertyId, outlet_id: outletId, label: str(formData.get("label")) ?? "Wave", starts_at: str(formData.get("starts_at")) ?? "08:00", share_default: num(formData.get("share_default")) ?? 0.33, sort_order: num(formData.get("sort_order")) ?? 1 };
-  const { error } = waveId ? await supabase.from("waves").update(row).eq("id", waveId) : await supabase.from("waves").insert(row);
-  if (error) return fail(error);
+  const r = touched(waveId ? await supabase.from("waves").update(row).eq("id", waveId).eq("property_id", propertyId).select("id") : await supabase.from("waves").insert(row).select("id"));
+  if (!r.ok) return r;
   revalidatePath("/settings/outlets");
-  return { ok: true, label: "Saved" };
+  return r;
 }
 
 // ── staffing lines, team, members ───────────────────────────────────────────
@@ -143,30 +169,38 @@ export async function saveWave(propertyId: string, outletId: string, waveId: str
 export async function saveServiceLine(propertyId: string, lineId: string | null, formData: FormData): Promise<Result> {
   const { supabase } = await me();
   const row = { property_id: propertyId, outlet_id: str(formData.get("outlet_id")), name: str(formData.get("name")) ?? "Service", department: String(formData.get("department") ?? "kitchen") as "kitchen" | "service" | "stewarding" | "bar" | "housekeeping" | "engineering" | "front_office" | "management", shift_label: str(formData.get("shift_label")), starts_at: str(formData.get("starts_at")), ends_at: str(formData.get("ends_at")), hours_per_cover: num(formData.get("hours_per_cover")), minutes_per_room: num(formData.get("minutes_per_room")), fixed_hours: num(formData.get("fixed_hours")) ?? 0, min_hours: num(formData.get("min_hours")) ?? 0, sort_order: num(formData.get("sort_order")) ?? 0, active: formData.get("active") !== "off" };
-  const { error } = lineId ? await supabase.from("service_lines").update(row).eq("id", lineId) : await supabase.from("service_lines").insert(row);
-  if (error) return fail(error);
+  const r = touched(lineId ? await supabase.from("service_lines").update(row).eq("id", lineId).eq("property_id", propertyId).select("id") : await supabase.from("service_lines").insert(row).select("id"));
+  if (!r.ok) return r;
   revalidatePath("/settings/staffing");
-  return { ok: true, label: "Saved" };
+  return r;
 }
 
 export async function saveTeamMember(propertyId: string, memberId: string | null, formData: FormData): Promise<Result> {
   const { supabase } = await me();
   const row = { property_id: propertyId, name: str(formData.get("name")) ?? "", department: String(formData.get("department") ?? "kitchen") as "kitchen" | "service" | "stewarding" | "bar" | "housekeeping" | "engineering" | "front_office" | "management", role: str(formData.get("role")) ?? "cook", phone: str(formData.get("phone")), email: str(formData.get("email")), hourly_cost: num(formData.get("hourly_cost")), pool: formData.get("pool") === "on", active: formData.get("active") !== "off" };
   if (!row.name) return { ok: false, error: "A name is needed" };
-  const { error } = memberId ? await supabase.from("team_members").update(row).eq("id", memberId) : await supabase.from("team_members").insert(row);
-  if (error) return fail(error);
+  const r = touched(memberId ? await supabase.from("team_members").update(row).eq("id", memberId).eq("property_id", propertyId).select("id") : await supabase.from("team_members").insert(row).select("id"));
+  if (!r.ok) return r;
   revalidatePath("/settings/team");
-  return { ok: true, label: "Saved" };
+  return r;
 }
 
+/** The roles a GM can grant from the app: one hotel, one operational job. Portfolio and admin roles are granted outside the app. */
+const INVITABLE_ROLES = ["gm", "fnb_mgr", "chef", "sous_chef", "prep_cook", "hk", "eng", "auditor"] as const;
+type InvitableRole = (typeof INVITABLE_ROLES)[number];
+
 /** Invite someone to the app: a membership by email; it attaches to their account at first sign-in. */
-export async function inviteMember(propertyId: string, orgId: string, formData: FormData): Promise<Result> {
+export async function inviteMember(propertyId: string, formData: FormData): Promise<Result> {
   const { supabase } = await me();
   const email = str(formData.get("email"))?.toLowerCase();
-  const role = String(formData.get("role") ?? "chef") as "gm" | "fnb_mgr" | "chef" | "sous_chef" | "prep_cook" | "hk" | "eng" | "auditor" | "admin" | "owner" | "vp" | "ceo";
-  if (!email) return { ok: false, error: "An email is needed" };
+  const role = String(formData.get("role") ?? "chef") as InvitableRole;
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: "A valid email is needed" };
+  if (!INVITABLE_ROLES.includes(role)) return { ok: false, error: "That role is granted outside the app" };
+  // the organisation is the hotel's own, never the caller's choice
+  const { data: prop } = await supabase.from("properties").select("org_id").eq("id", propertyId).single();
+  if (!prop) return { ok: false, error: NOT_ALLOWED };
   const { data: existing } = await supabase.from("users").select("id").eq("email", email).maybeSingle();
-  const { error } = await supabase.from("memberships").insert({ invited_email: email, user_id: existing?.id ?? null, scope_type: "property", org_id: orgId, property_id: propertyId, role });
+  const { error } = await supabase.from("memberships").insert({ invited_email: email, user_id: existing?.id ?? null, scope_type: "property", org_id: prop.org_id, property_id: propertyId, role });
   if (error) return fail(error);
   // send the sign-in link when the mailer is configured (service role, server only)
   try {
@@ -181,10 +215,10 @@ export async function inviteMember(propertyId: string, orgId: string, formData: 
 
 export async function removeMember(membershipId: string): Promise<Result> {
   const { supabase } = await me();
-  const { error } = await supabase.from("memberships").update({ active: false }).eq("id", membershipId);
-  if (error) return fail(error);
+  const r = touched(await supabase.from("memberships").update({ active: false }).eq("id", membershipId).select("id"), "Removed");
+  if (!r.ok) return r;
   revalidatePath("/settings/team");
-  return { ok: true, label: "Removed" };
+  return r;
 }
 
 // ── engine on demand ────────────────────────────────────────────────────────

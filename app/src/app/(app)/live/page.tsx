@@ -2,7 +2,7 @@ import { ActionButton } from "@/components/action-button";
 import { VoiceLogger } from "@/components/voice-logger";
 import { Card, Empty, Tabs } from "@/components/ui";
 import { actOnLiveEvent, setStationStatus } from "@/lib/actions/ops";
-import { getContext } from "@/lib/data/context";
+import { getContext, mayWrite } from "@/lib/data/context";
 import { getLatestForecast, getOutlets, getPlanLines, groupPlan, serviceDateFor } from "@/lib/data/fnb";
 import { hhmm, num, timeShort } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -52,7 +52,7 @@ export default async function LivePage({ searchParams }: { searchParams: Promise
         </div>
       ) : null}
 
-      <VoiceLogger propertyId={ctx.property.id} outletId={outlet.id} serviceDate={date} department="kitchen" placeholder="Log a station, in English or Chinese" examples={["Western hot over-prep 2 kg", "142 seated", "eggs ready"]} />
+      {mayWrite(ctx, "waste_logs") ? <VoiceLogger propertyId={ctx.property.id} outletId={outlet.id} serviceDate={date} department="kitchen" placeholder="Log a station, in English or Chinese" examples={["Western hot over-prep 2 kg", "142 seated", "eggs ready"]} /> : null}
 
       <div className="mt-5">
         {(events ?? []).length === 0 ? (
@@ -66,7 +66,7 @@ export default async function LivePage({ searchParams }: { searchParams: Promise
               </div>
               <div className="mt-1 text-[16px] font-medium">{e.title}</div>
               {e.body ? <p className="muted mt-0.5 text-[13.5px]">{e.body}</p> : null}
-              {e.status === "open" && e.proposal ? (
+              {e.status === "open" && e.proposal && mayWrite(ctx, "live_events") ? (
                 <div className="mt-3 flex gap-2">
                   <ActionButton small action={actOnLiveEvent.bind(null, e.id, "approved")} label="Approve" done="Approved" />
                   <ActionButton small variant="ghost" action={actOnLiveEvent.bind(null, e.id, "dismissed")} label="Not now" done="Dismissed" />
@@ -97,8 +97,8 @@ export default async function LivePage({ searchParams }: { searchParams: Promise
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
-                  {g.status === "closed" ? (
-                    <span className="pill pill-mt">closed</span>
+                  {g.status === "closed" || !mayWrite(ctx, "plans") ? (
+                    <span className={`pill ${g.status === "prepped" ? "pill-gn" : g.status === "running_low" ? "pill-am" : "pill-mt"}`}>{g.status.replace("_", " ")}</span>
                   ) : g.status === "running_low" ? (
                     <>
                       <span className="pill pill-am">running low</span>

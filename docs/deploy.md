@@ -1,6 +1,6 @@
 # Deploy ServiceFlow
 
-Three pieces: a Supabase project (Postgres, Auth, RLS), the Next.js app on Vercel, and one pg_cron job that drives the engine.
+Three pieces: a Supabase project (Postgres, Auth, RLS), the Next.js app on Vercel, and two pg_cron jobs that drive the engine (the hourly steps and the 15-minute live tick).
 
 ## 1. Supabase
 
@@ -32,7 +32,7 @@ Three pieces: a Supabase project (Postgres, Auth, RLS), the Next.js app on Verce
 
 ## 3. The schedule
 
-In the Supabase SQL editor run `supabase/cron.sql` with `APP_URL` and `JOBS_SECRET` filled in. Every hour the app runs the step due for each hotel at its own local time (brief 18:00, dawn update 03:30, debrief 12:30, report 23:00; all per hotel in Set-up → Hotel).
+In the Supabase SQL editor run `supabase/cron.sql` with `APP_URL` and `JOBS_SECRET` filled in. Every hour the app runs the step due for each hotel at its own local time (brief 18:00, dawn update 03:30, debrief 12:30, report 23:00; all per hotel in Set-up → Hotel). Every 15 minutes `/api/jobs/live` reads the pace of every outlet in service and writes its proposals (cover check, running fast, waste risk); a count logged from the Live screen triggers the same read at once.
 
 To run a step by hand: Set-up → Engine in the app, or `curl -X POST -H "Authorization: Bearer $JOBS_SECRET" https://<app>/api/jobs/brief`.
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ActionButton } from "@/components/action-button";
 import { Card, Grid, Kpi, Row, ScreenHead, SectionHead } from "@/components/ui";
 import { approveDecision } from "@/lib/actions/ops";
-import { getContext } from "@/lib/data/context";
+import { getContext, mayWrite } from "@/lib/data/context";
 import { drivers, getDecisions, getLatestForecast, getOutlets, getPms, getStaffingWeek } from "@/lib/data/fnb";
 import { greeting, money, plusDays, signed, timeShort, weekday, mondayOf } from "@/lib/format";
 
@@ -67,7 +67,7 @@ export default async function HomePage() {
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
                   {Number(d.est_saving) > 0 ? <span className="text-[13px] text-green">{money(d.est_saving, d.currency ?? ctx.property.currency)}</span> : null}
-                  <ActionButton small action={approveDecision.bind(null, d.id)} label="Approve" done="Approved" />
+                  {mayWrite(ctx, "decisions") ? <ActionButton small action={approveDecision.bind(null, d.id)} label="Approve" done="Approved" /> : <span className="pill pill-mt">{d.status}</span>}
                 </div>
               </div>
             ))}

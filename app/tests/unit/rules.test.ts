@@ -80,6 +80,16 @@ describe("the plan and the three decisions", () => {
     expect(f.cookCount).toBe(116);
     expect(f.cookCount).toBeLessThan(120);
   });
+  it("a banquet confirmed above its booking still yields p10 ≤ p50 ≤ p90", () => {
+    const o = outlet({ type: "banquet", waves: [{ id: "w", label: "Service", startsAt: "19:00", shareDefault: 1, sortOrder: 1 }], settings: { buffer_pct: 0.03 } });
+    const f = forecastBanquet({ outlet: o, banquets: [{ id: "b", name: "Gala", venue: "Ballroom", bookedCount: 100, confirmedCount: 104, diets: {}, courses: [], serveFrom: "19:00" }] });
+    expect(f.p10).toBeLessThanOrEqual(f.p50);
+    expect(f.p50).toBeLessThanOrEqual(f.p90);
+  });
+  it("a PMS row without a rate-code mix is flagged as a flat attach, never silently", () => {
+    const f = forecastBreakfast({ outlet: outlet(), pms: pms({ rateCodeMix: {} }), weather: null, events: [], history: [] });
+    expect(f.drivers.some((d) => /no rate-code mix/i.test(d.label))).toBe(true);
+  });
 });
 
 describe("savings and ESG", () => {
@@ -90,6 +100,24 @@ describe("savings and ESG", () => {
     const n = splitSaving(100, property({ winnow: false }));
     expect(n.binScale).toBe(0);
     expect(n.serviceflow).toBe(100);
+  });
+  it("a mis-set share in Set-up can never claim more than the whole", () => {
+    const s = splitSaving(100, property({ winnow: true, saving_points_total: 2, saving_points_serviceflow: 3 }));
+    expect(s.serviceflow).toBeLessThanOrEqual(s.total);
+    expect(s.binScale).toBeGreaterThanOrEqual(0);
+    expect(s.serviceflow + s.binScale).toBeCloseTo(s.total, 2);
+  });
+  it("a day over the baseline is a negative saving, not zero", () => {
+    const d = computeDebrief({ property: property(), outletStations: outlet().stations, forecast: null, actualCovers: 200, waste: [{ stationId: "s1", kg: 30, co2eKg: 30 * 27 }], trailingBaselineGPerCover: null, foodCostPerCover: 6.9, planFollowedPct: null, decisionsApproved: 0, decisionsTotal: 0 });
+    expect(d.wasteGPerCover).toBe(150);
+    expect(d.wasteAvoidedKg).toBeLessThan(0);
+    expect(d.savingTotal).toBeLessThan(0);
+    expect(Math.abs(d.savingServiceflow)).toBeLessThanOrEqual(Math.abs(d.savingTotal));
+  });
+  it("without a food cost the saving is unknown, never a guessed constant", () => {
+    const d = computeDebrief({ property: property({ food_cost_per_cover: undefined }), outletStations: [station({ kgPerUnit: 0 })], forecast: null, actualCovers: 200, waste: [{ stationId: "s1", kg: 6, co2eKg: 6 * 27 }], trailingBaselineGPerCover: null, foodCostPerCover: 0, planFollowedPct: null, decisionsApproved: 0, decisionsTotal: 0 });
+    expect(d.wasteAvoidedKg).toBeGreaterThan(0);
+    expect(d.savingTotal).toBe(0);
   });
   it("CO2e is zero without a measured waste log", () => {
     const d = computeDebrief({ property: property(), outletStations: outlet().stations, forecast: { p10: 190, p50: 200, p90: 212, usual: 190 }, actualCovers: 205, waste: [], trailingBaselineGPerCover: null, foodCostPerCover: 6.9, planFollowedPct: null, decisionsApproved: 0, decisionsTotal: 0 });
@@ -163,6 +191,23 @@ describe("voice, in English or Chinese", () => {
     expect(parseChineseNumber("二十四")).toBe(24);
     expect(parseChineseNumber("一点五")).toBe(1.5);
     expect(parseChineseNumber("半")).toBe(0.5);
+    expect(parseChineseNumber("三百")).toBe(300);
+    expect(parseChineseNumber("一百二十")).toBe(120);
+    expect(parseChineseNumber("三百二")).toBe(320);
+    expect(parseChineseNumber("两半")).toBe(2.5);
+  });
+  it("a quantity with a unit is never a room number", () => {
+    const stations2 = [...stations, { id: "s3", name: "Eggs", slug: "eggs" }, { id: "s4", name: "Bakery", slug: "bakery" }];
+    expect(parseVoice("Eggs 120 portions ready", { stations: stations2 }).intent).toBe("station_ready");
+    const g = parseVoice("Bakery 300 g binned, check the fridge", { stations: stations2 });
+    expect(g.intent).toBe("waste");
+    if (g.intent === "waste") expect(g.kg).toBe(0.3);
+    const cn = parseVoice("西式热食 多备 两公斤半", { stations });
+    expect(cn.intent).toBe("waste");
+    if (cn.intent === "waste") expect(cn.kg).toBe(2.5);
+    const hundreds = parseVoice("點心 剩 三百克", { stations });
+    if (hundreds.intent === "waste") expect(hundreds.kg).toBe(0.3);
+    expect(parseVoice("2506 done, 24 minutes", { stations }).intent).toBe("room_done");
   });
   it("logs waste in English", () => {
     const v = parseVoice("Western hot over-prep 2 kg", { stations });

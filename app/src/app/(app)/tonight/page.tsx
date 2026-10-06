@@ -1,7 +1,7 @@
 import { ActionButton } from "@/components/action-button";
 import { Card, Empty, Row, ScreenHead } from "@/components/ui";
 import { approveDecision, reconcileVariance } from "@/lib/actions/ops";
-import { getContext } from "@/lib/data/context";
+import { getContext, mayWrite } from "@/lib/data/context";
 import { money, plusDays, weekday } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -68,7 +68,7 @@ export default async function TonightPage({ searchParams }: { searchParams: Prom
             </div>
             <div className="flex shrink-0 flex-col items-end gap-1">
               <span className="font-display text-[20px] text-green">{Number(a.est_saving) > 0 ? money(a.est_saving, a.currency ?? ctx.property.currency) : ""}</span>
-              {a.status === "proposed" ? (
+              {a.status === "proposed" && (a.kind === "reconcile" ? mayWrite(ctx, "pos_variances") : mayWrite(ctx, "decisions")) ? (
                 a.kind === "reconcile" && variances?.[0] ? (
                   <ActionButton small action={reconcileVariance.bind(null, variances[0].id)} label="Reconcile" done="Reconciled" />
                 ) : (

@@ -342,8 +342,14 @@ CREATE TABLE outcomes (
   computed_at           timestamptz NOT NULL DEFAULT now(),
   notes                 text,
   UNIQUE (outlet_id, service_date),
+  -- the split never claims more than the measured total, in either direction: a day over the
+  -- baseline is stored as a negative saving, never clamped away (rule 2)
   CHECK (saving_serviceflow IS NULL OR saving_bin_scale IS NULL OR saving_total IS NULL
-         OR saving_serviceflow + saving_bin_scale <= saving_total + 0.01)
+         OR (saving_serviceflow + saving_bin_scale <= saving_total + 0.01
+             AND abs(saving_serviceflow) <= abs(saving_total) + 0.01
+             AND abs(saving_bin_scale) <= abs(saving_total) + 0.01
+             AND sign(saving_serviceflow) * sign(saving_total) >= 0
+             AND sign(saving_bin_scale) * sign(saving_total) >= 0))
 );
 CREATE INDEX idx_outcomes_lookup ON outcomes(outlet_id, service_date DESC);
 CREATE INDEX idx_outcomes_property_date ON outcomes(property_id, service_date DESC);
@@ -373,6 +379,7 @@ CREATE TABLE prediction_log (
   features      jsonb NOT NULL DEFAULT '{}',
   prediction    jsonb NOT NULL DEFAULT '{}',
   outcome       jsonb,
-  created_at    timestamptz NOT NULL DEFAULT now()
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (forecast_id)                      -- one audit row per forecast version
 );
 CREATE INDEX idx_prediction_log_lookup ON prediction_log(outlet_id, service_date DESC);

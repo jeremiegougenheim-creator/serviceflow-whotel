@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const { defaultBrowserType: _ignored, ...iphone } = devices["iPhone 13"];
+// the iPhone profile minus its WebKit default: the smoke runs on the pre-installed Chromium
+const iphone = Object.fromEntries(Object.entries(devices["iPhone 13"]).filter(([k]) => k !== "defaultBrowserType"));
 
 export default defineConfig({
   testDir: "tests/e2e",

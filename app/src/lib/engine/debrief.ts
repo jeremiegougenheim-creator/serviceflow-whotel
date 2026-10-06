@@ -66,13 +66,18 @@ export function costPerKg(waste: WasteEntry[], stations: StationCfg[], fallback:
  * avoidance comes from the plan. serviceflow + bin ≤ total, always.
  */
 export function splitSaving(total: number, property: PropertyCfg): { serviceflow: number; binScale: number; total: number } {
-  const pointsTotal = property.settings.saving_points_total ?? 4;
-  const pointsSf = property.settings.saving_points_serviceflow ?? 3;
-  const t = Math.max(0, r2(total));
+  const pointsTotal = Math.max(0.01, property.settings.saving_points_total ?? 4);
+  // the predictive share can never exceed the whole, whatever Set-up says
+  const pointsSf = Math.min(pointsTotal, Math.max(0, property.settings.saving_points_serviceflow ?? 3));
+  // signed: a day over the baseline is a negative saving, never clamped to zero (rule 2)
+  const t = r2(Number.isFinite(total) ? total : 0);
   if (!property.settings.winnow) return { serviceflow: t, binScale: 0, total: t };
   const sf = r2((t * pointsSf) / pointsTotal);
   return { serviceflow: sf, binScale: r2(t - sf), total: t };
 }
+
+/** Kilograms of food served per cover when no station can price the waste (overridable in Set-up). */
+export const FOOD_KG_PER_COVER_DEFAULT = 0.45;
 
 export function computeDebrief(input: DebriefInput): DebriefOutput {
   const { property, forecast, actualCovers, waste } = input;
@@ -88,10 +93,12 @@ export function computeDebrief(input: DebriefInput): DebriefOutput {
   // no log, no claim: without a measured entry there is no g/cover and nothing avoided
   const logged = waste.length > 0;
   const gPerCover = logged && actualCovers ? r2((wasteKg * 1000) / actualCovers) : null;
-  const avoidedKg = logged && baseline != null && actualCovers && gPerCover != null ? Math.max(0, r3(((baseline - gPerCover) * actualCovers) / 1000)) : 0;
+  // signed: below the baseline is avoided, above it is excess; the screens clamp, the store does not
+  const avoidedKg = logged && baseline != null && actualCovers && gPerCover != null ? r3(((baseline - gPerCover) * actualCovers) / 1000) : 0;
   const co2eAvoided = r3(avoidedKg * blendedFactor);
 
-  const perKg = costPerKg(waste, input.outletStations, input.foodCostPerCover / 0.45);
+  const kgPerCover = property.settings.food_kg_per_cover ?? FOOD_KG_PER_COVER_DEFAULT;
+  const perKg = costPerKg(waste, input.outletStations, input.foodCostPerCover > 0 ? input.foodCostPerCover / kgPerCover : 0);
   const split = splitSaving(avoidedKg * perKg, property);
   const foodCost = actualCovers != null ? r2(actualCovers * input.foodCostPerCover) : null;
 

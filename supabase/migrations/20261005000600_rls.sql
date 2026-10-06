@@ -52,8 +52,110 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   FROM memberships m WHERE m.user_id = auth.uid() AND m.active
 $$;
 
-GRANT EXECUTE ON FUNCTION sf_my_property_ids(), sf_my_roles(uuid), sf_is_member(uuid), sf_can(uuid, text[]), sf_my_org_ids()
+-- Orgs where the user holds a portfolio or admin role on an org or region scope:
+-- the only people who may see who works in the other hotels.
+CREATE OR REPLACE FUNCTION sf_my_portfolio_org_ids() RETURNS uuid[]
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT COALESCE(array_agg(DISTINCT m.org_id), '{}'::uuid[])
+  FROM memberships m
+  WHERE m.user_id = auth.uid() AND m.active
+    AND m.scope_type IN ('org','region') AND m.role IN ('owner','vp','ceo','admin')
+$$;
+
+-- True for a request signed by a person (never for the service role or a database session).
+CREATE OR REPLACE FUNCTION sf_is_person() RETURNS boolean
+LANGUAGE sql STABLE AS $$
+  SELECT auth.uid() IS NOT NULL
+$$;
+
+GRANT EXECUTE ON FUNCTION sf_my_property_ids(), sf_my_roles(uuid), sf_is_member(uuid), sf_can(uuid, text[]), sf_my_org_ids(), sf_my_portfolio_org_ids(), sf_is_person()
   TO authenticated, service_role;
+
+-- ─── tenant integrity: a row's parents belong to the row's property ─────────
+--
+-- RLS checks property_id; this trigger checks that outlet_id, station_id, room_id,
+-- forecast_id… point at rows of the same property, so a person who knows another
+-- hotel's UUID cannot write into that hotel through a parent column.
+
+CREATE OR REPLACE FUNCTION sf_check_parent_property() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  j        jsonb := to_jsonb(NEW);
+  pair     text[];
+  v_id     uuid;
+  v_parent uuid;
+BEGIN
+  IF NEW.property_id IS NULL THEN RETURN NEW; END IF;
+  FOREACH pair SLICE 1 IN ARRAY ARRAY[
+      ['outlet_id','outlets'], ['station_id','stations'], ['wave_id','waves'], ['forecast_id','forecasts'],
+      ['decision_id','decisions'], ['room_id','rooms'], ['asset_id','assets'], ['service_line_id','service_lines'],
+      ['team_member_id','team_members'], ['prepped_by','team_members'], ['done_by','team_members'],
+      ['inspected_by','team_members'], ['assigned_to','team_members']]
+  LOOP
+    IF (j ->> pair[1]) IS NOT NULL THEN
+      v_id := (j ->> pair[1])::uuid;
+      EXECUTE format('SELECT property_id FROM %I WHERE id = $1', pair[2]) INTO v_parent USING v_id;
+      IF v_parent IS DISTINCT FROM NEW.property_id THEN
+        RAISE EXCEPTION '%.% refers to a row of another property', TG_TABLE_NAME, pair[1]
+          USING ERRCODE = 'check_violation';
+      END IF;
+    END IF;
+  END LOOP;
+  RETURN NEW;
+END $$;
+
+DO $$
+DECLARE t text;
+BEGIN
+  FOR t IN
+    SELECT c.table_name
+    FROM information_schema.columns c
+    WHERE c.table_schema = 'public' AND c.column_name = 'property_id'
+      AND EXISTS (SELECT 1 FROM information_schema.columns p
+                  WHERE p.table_schema = 'public' AND p.table_name = c.table_name
+                    AND p.column_name IN ('outlet_id','station_id','wave_id','forecast_id','decision_id','room_id','asset_id',
+                                          'service_line_id','team_member_id','prepped_by','done_by','inspected_by','assigned_to'))
+      AND c.table_name IN (SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE')
+  LOOP
+    EXECUTE format('CREATE TRIGGER trg_parent_property BEFORE INSERT OR UPDATE ON %I FOR EACH ROW EXECUTE FUNCTION sf_check_parent_property()', t);
+  END LOOP;
+END $$;
+
+-- A membership written by a person is one property, one operational role, inside that
+-- property's organisation. Portfolio and admin roles, and org or region scopes, are
+-- granted by the service role only (an owner's console, a support script).
+CREATE OR REPLACE FUNCTION sf_check_membership() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_org uuid;
+BEGIN
+  IF NOT sf_is_person() THEN RETURN NEW; END IF;
+  IF NEW.scope_type <> 'property' OR NEW.property_id IS NULL OR NEW.region_id IS NOT NULL THEN
+    RAISE EXCEPTION 'a person may only grant property memberships' USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  IF NEW.role IN ('admin','owner','vp','ceo') THEN
+    RAISE EXCEPTION 'portfolio and admin roles are not granted from the app' USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  SELECT org_id INTO v_org FROM properties WHERE id = NEW.property_id;
+  IF v_org IS NULL OR v_org <> NEW.org_id THEN
+    RAISE EXCEPTION 'membership.org_id must be the property''s organisation' USING ERRCODE = 'check_violation';
+  END IF;
+  IF TG_OP = 'UPDATE' AND (OLD.scope_type <> 'property' OR OLD.role IN ('admin','owner','vp','ceo')) THEN
+    RAISE EXCEPTION 'this membership is managed outside the app' USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER trg_memberships_check BEFORE INSERT OR UPDATE ON memberships FOR EACH ROW EXECUTE FUNCTION sf_check_membership();
+
+-- A hotel stays in its organisation and region unless the service role moves it.
+CREATE OR REPLACE FUNCTION sf_check_property_parent() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF sf_is_person() AND (NEW.org_id <> OLD.org_id OR NEW.region_id IS DISTINCT FROM OLD.region_id) THEN
+    RAISE EXCEPTION 'a hotel''s organisation and region are set by the service role' USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER trg_properties_parent BEFORE UPDATE ON properties FOR EACH ROW EXECUTE FUNCTION sf_check_property_parent();
 
 -- ─── audit trigger ──────────────────────────────────────────────────────────
 
@@ -117,19 +219,28 @@ CREATE POLICY properties_select ON properties FOR SELECT TO authenticated USING 
 CREATE POLICY properties_update ON properties FOR UPDATE TO authenticated
   USING (sf_can(id, 'gm')) WITH CHECK (sf_can(id, 'gm'));
 
+-- People: yourself; the people of a hotel you manage; everyone in an organisation you hold
+-- a portfolio role in. A cook sees no one else's email.
 CREATE POLICY users_select ON users FOR SELECT TO authenticated
   USING (id = auth.uid() OR EXISTS (
     SELECT 1 FROM memberships m WHERE m.user_id = users.id AND m.active
-      AND (m.property_id = ANY (sf_my_property_ids()) OR m.org_id = ANY (sf_my_org_ids()))));
+      AND ((m.property_id IS NOT NULL AND sf_can(m.property_id, 'gm','owner','vp','ceo'))
+           OR m.org_id = ANY (sf_my_portfolio_org_ids()))));
 CREATE POLICY users_update_self ON users FOR UPDATE TO authenticated USING (id = auth.uid()) WITH CHECK (id = auth.uid());
 
 CREATE POLICY memberships_select ON memberships FOR SELECT TO authenticated
   USING (user_id = auth.uid()
-         OR (property_id IS NOT NULL AND sf_can(property_id, 'gm'))
-         OR org_id = ANY (sf_my_org_ids()));
+         OR (property_id IS NOT NULL AND sf_can(property_id, 'gm','owner','vp','ceo'))
+         OR org_id = ANY (sf_my_portfolio_org_ids()));
+-- The GM of a hotel grants operational roles in that hotel (trg_memberships_check enforces
+-- the scope, the organisation and the role list).
 CREATE POLICY memberships_write ON memberships FOR ALL TO authenticated
-  USING (property_id IS NOT NULL AND sf_can(property_id, 'gm'))
-  WITH CHECK (property_id IS NOT NULL AND sf_can(property_id, 'gm'));
+  USING (scope_type = 'property' AND property_id IS NOT NULL AND sf_can(property_id, 'gm')
+         AND role NOT IN ('admin','owner','vp','ceo'))
+  WITH CHECK (scope_type = 'property' AND property_id IS NOT NULL AND sf_can(property_id, 'gm')
+         AND role NOT IN ('admin','owner','vp','ceo')
+         AND region_id IS NULL
+         AND org_id = (SELECT p.org_id FROM properties p WHERE p.id = property_id));
 
 -- ─── policies: configuration ────────────────────────────────────────────────
 
@@ -211,7 +322,7 @@ CREATE POLICY decisions_update ON decisions FOR UPDATE TO authenticated
   USING (sf_can(property_id, 'gm','fnb_mgr','chef','sous_chef','hk','eng'))
   WITH CHECK (sf_can(property_id, 'gm','fnb_mgr','chef','sous_chef','hk','eng'));
 CREATE POLICY decisions_insert ON decisions FOR INSERT TO authenticated
-  WITH CHECK (sf_can(property_id, 'gm','fnb_mgr','chef','hk','eng'));
+  WITH CHECK (sf_can(property_id, 'gm','fnb_mgr','chef','sous_chef','hk','eng'));
 
 CREATE POLICY live_events_select ON live_events FOR SELECT TO authenticated USING (sf_is_member(property_id));
 CREATE POLICY live_events_write ON live_events FOR ALL TO authenticated
@@ -221,9 +332,12 @@ CREATE POLICY live_events_write ON live_events FOR ALL TO authenticated
 CREATE POLICY waste_logs_select ON waste_logs FOR SELECT TO authenticated USING (sf_is_member(property_id));
 CREATE POLICY waste_logs_insert ON waste_logs FOR INSERT TO authenticated
   WITH CHECK (sf_can(property_id, 'gm','fnb_mgr','chef','sous_chef','prep_cook'));
+-- A log can be corrected by the kitchen's managers, or by its author within a day; the row
+-- stays in a hotel the author may log in (the parent trigger keeps outlet and station there too).
 CREATE POLICY waste_logs_update ON waste_logs FOR UPDATE TO authenticated
   USING (sf_can(property_id, 'gm','fnb_mgr','chef') OR (logged_by = auth.uid() AND logged_at > now() - interval '24 hours'))
-  WITH CHECK (sf_can(property_id, 'gm','fnb_mgr','chef') OR logged_by = auth.uid());
+  WITH CHECK (sf_can(property_id, 'gm','fnb_mgr','chef')
+              OR (logged_by = auth.uid() AND sf_can(property_id, 'sous_chef','prep_cook')));
 CREATE POLICY waste_logs_delete ON waste_logs FOR DELETE TO authenticated
   USING (sf_can(property_id, 'gm','chef') OR (logged_by = auth.uid() AND logged_at > now() - interval '24 hours'));
 
@@ -274,7 +388,8 @@ CREATE POLICY energy_readings_write ON energy_readings FOR ALL TO authenticated
   USING (sf_can(property_id, 'gm','eng')) WITH CHECK (sf_can(property_id, 'gm','eng'));
 
 CREATE POLICY voice_logs_select ON voice_logs FOR SELECT TO authenticated USING (sf_is_member(property_id));
-CREATE POLICY voice_logs_insert ON voice_logs FOR INSERT TO authenticated WITH CHECK (sf_is_member(property_id) AND logged_by = auth.uid());
+CREATE POLICY voice_logs_insert ON voice_logs FOR INSERT TO authenticated
+  WITH CHECK (sf_can(property_id, 'gm','fnb_mgr','chef','sous_chef','prep_cook','hk','eng') AND logged_by = auth.uid());
 
 -- ─── policies: reports, portfolio, notifications, imports, jobs, audit ──────
 

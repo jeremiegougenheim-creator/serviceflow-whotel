@@ -2,7 +2,7 @@ import { ActionButton } from "@/components/action-button";
 import { VoiceLogger } from "@/components/voice-logger";
 import { Card, Grid, Kpi, Note, Row, Strike, Tabs } from "@/components/ui";
 import { assignInspections, updateRoomTask } from "@/lib/actions/ops";
-import { getContext } from "@/lib/data/context";
+import { getContext, mayWrite } from "@/lib/data/context";
 import { num, timeShort } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -46,7 +46,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
       <Tabs items={tabs} current={view} />
       {view === "all" ? (
         <>
-          <VoiceLogger propertyId={ctx.property.id} outletId={null} serviceDate={ctx.today} department="housekeeping" placeholder="Log a room, in English or Chinese" examples={["2506 done, 24 minutes", "2506 完成 24 分钟"]} />
+          {mayWrite(ctx, "room_tasks") ? <VoiceLogger propertyId={ctx.property.id} outletId={null} serviceDate={ctx.today} department="housekeeping" placeholder="Log a room, in English or Chinese" examples={["2506 done, 24 minutes", "2506 完成 24 分钟"]} /> : null}
           <div className="mt-4">
             <Grid>
               <Kpi k="Min per room" v={avgMin != null ? num(avgMin, 1) : "—"} n={`target ${tLo}–${tHi}`} tone={avgMin != null && avgMin > tHi ? "am" : undefined} />
@@ -70,7 +70,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <span className={`pill pill-${tone}`}>{p}</span>
-                    <ActionButton small variant="ghost" action={updateRoomTask.bind(null, t.id, "done", undefined)} label="Done" done="Done" />
+                    {mayWrite(ctx, "room_tasks") ? <ActionButton small variant="ghost" action={updateRoomTask.bind(null, t.id, "done", undefined)} label="Done" done="Done" /> : null}
                   </div>
                 </div>
               );
@@ -106,7 +106,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
               { b: vip.filter((t) => t.status === "inspected").length, s: "ready" },
               { b: vip.filter((t) => t.status !== "inspected").length, s: "to do" },
             ]}
-            action={<ActionButton action={assignInspections.bind(null, ctx.property.id, ctx.today)} label="Assign the inspection" done="Inspection assigned" />}
+            action={mayWrite(ctx, "room_tasks") ? <ActionButton action={assignInspections.bind(null, ctx.property.id, ctx.today)} label="Assign the inspection" done="Inspection assigned" /> : undefined}
           />
           <div className="mb-1 mt-6 flex items-baseline justify-between">
             <h2 className="text-[20px]">Arrivals</h2>
@@ -122,7 +122,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
                   <span>{t.status === "inspected" ? `inspected ${t.inspected_at ? new Date(t.inspected_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: ctx.property.timezone }) : ""}` : line(t)}</span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {t.status === "inspected" ? <span className="pill pill-gn">ready</span> : t.status === "done" ? <ActionButton small action={updateRoomTask.bind(null, t.id, "inspected", undefined)} label="Inspected" done="Inspected" /> : <span className="text-[18px]">{timeShort(t.arrival_at ?? t.needed_by ?? "")}</span>}
+                  {t.status === "inspected" ? <span className="pill pill-gn">ready</span> : t.status === "done" && mayWrite(ctx, "room_tasks") ? <ActionButton small action={updateRoomTask.bind(null, t.id, "inspected", undefined)} label="Inspected" done="Inspected" /> : t.status === "done" ? <span className="pill pill-mt">done</span> : <span className="text-[18px]">{timeShort(t.arrival_at ?? t.needed_by ?? "")}</span>}
                 </div>
               </div>
             ))}

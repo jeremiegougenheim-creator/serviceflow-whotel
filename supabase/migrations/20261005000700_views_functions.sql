@@ -117,7 +117,7 @@ CREATE OR REPLACE FUNCTION sf_portfolio_ops(p_date date DEFAULT CURRENT_DATE + 1
 RETURNS TABLE (
   property_id uuid, property text, region_id uuid, region text, keys int,
   covers_tomorrow int, hours_short numeric, short_lines text,
-  accuracy_4w numeric, cooked_vs_plan_pct numeric
+  mape_4w_pct numeric, off_plan_pct numeric
 )
 LANGUAGE sql STABLE SECURITY INVOKER AS $$
   WITH fc AS (
@@ -129,14 +129,16 @@ LANGUAGE sql STABLE SECURITY INVOKER AS $$
            string_agg(service_line, ', ') FILTER (WHERE delta_hours < -0.5) AS short_lines
     FROM v_staffing_day WHERE service_date = p_date GROUP BY property_id
   ), acc AS (
-    SELECT property_id, round(avg(mape) * 100, 1) AS accuracy_4w,
-           round(avg(CASE WHEN usual_covers > 0 AND actual_covers IS NOT NULL THEN (forecast_covers_p50 - actual_covers)::numeric / actual_covers END) * 100, 1) AS cooked_vs_plan
-    FROM outcomes WHERE service_date >= p_date - 29 AND service_date < p_date AND mape IS NOT NULL
+    -- mape_4w_pct = mean absolute forecast error over the last four weeks of closed services;
+    -- off_plan_pct = share of station lines not prepped to the approved plan
+    SELECT property_id, round(avg(mape) * 100, 1) AS mape_4w_pct,
+           round(100 - avg(plan_followed_pct), 1) AS off_plan_pct
+    FROM outcomes WHERE service_date >= p_date - 28 AND service_date < p_date AND mape IS NOT NULL
     GROUP BY property_id
   )
   SELECT p.id, p.name, p.region_id, r.name, p.keys,
          COALESCE(fc.covers, 0), COALESCE(st.hours_short, 0), st.short_lines,
-         acc.accuracy_4w, acc.cooked_vs_plan
+         acc.mape_4w_pct, acc.off_plan_pct
   FROM properties p
   LEFT JOIN regions r ON r.id = p.region_id
   LEFT JOIN fc  ON fc.property_id = p.id

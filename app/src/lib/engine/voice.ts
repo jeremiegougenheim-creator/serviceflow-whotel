@@ -31,48 +31,58 @@ export type VoiceIntent =
   | { intent: "station_ready"; stationId: string | null; stationName: string | null; confidence: number }
   | { intent: "unknown"; confidence: number };
 
-const CN_DIGITS: Record<string, number> = { 零: 0, 一: 1, 二: 2, 两: 2, 兩: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10, 半: 0.5 };
+const CN_DIGITS: Record<string, number> = { 零: 0, 一: 1, 二: 2, 两: 2, 兩: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 半: 0.5 };
 
-/** Chinese numerals to numbers: 二十四 → 24, 两 → 2, 一点五 → 1.5, 半 → 0.5 */
+/** Chinese numerals to numbers: 二十四 → 24, 三百 → 300, 两 → 2, 一点五 → 1.5, 半 → 0.5, 两斤半 → 2.5 */
 export function parseChineseNumber(s: string): number | null {
   const str = s.replace(/點/g, "点");
   if (!str) return null;
   if (/^\d+(\.\d+)?$/.test(str)) return parseFloat(str);
   const [intPart, fracPart] = str.split("点");
   let n = 0;
+  let half = false;
   if (intPart) {
-    if (intPart === "十") n = 10;
-    else if (intPart.includes("十")) {
-      const [tens, ones] = intPart.split("十");
-      n = (tens ? CN_DIGITS[tens] ?? 1 : 1) * 10 + (ones ? CN_DIGITS[ones] ?? 0 : 0);
-    } else {
-      let ok = true;
-      for (const ch of intPart) {
-        if (ch === "半") {
-          n += 0.5;
-          continue;
-        }
-        if (CN_DIGITS[ch] == null) {
-          ok = false;
-          break;
-        }
-        n = n * 10 + CN_DIGITS[ch];
+    // positional: 百 and 十 are multipliers, digits add; a trailing 半 adds a half
+    let cur = 0; // the digit waiting for a multiplier
+    let lastMultiplier: "百" | "十" | null = null;
+    const chars = [...intPart];
+    for (let i = 0; i < chars.length; i++) {
+      const ch = chars[i];
+      if (ch === "半") {
+        if (i !== chars.length - 1) return null;
+        half = true;
+      } else if (ch === "百") {
+        n += (cur || 1) * 100;
+        cur = 0;
+        lastMultiplier = "百";
+      } else if (ch === "十") {
+        n += (cur || 1) * 10;
+        cur = 0;
+        lastMultiplier = "十";
+      } else if (CN_DIGITS[ch] != null) {
+        cur = cur * 10 + CN_DIGITS[ch]; // 二十四 = 24, 一二三 = 123
+      } else {
+        return null;
       }
-      if (!ok) return null;
     }
+    // a lone digit right after 百 is tens: 三百二 = 320; after 十 it is units: 二十四 = 24
+    n += lastMultiplier === "百" && cur > 0 && cur < 10 ? cur * 10 : cur;
   }
   if (fracPart) {
     let f = "";
     for (const ch of fracPart) {
-      if (CN_DIGITS[ch] == null) return null;
+      if (CN_DIGITS[ch] == null || ch === "半") return null;
       f += CN_DIGITS[ch];
     }
     n += parseFloat("0." + f);
   }
+  if (half) n += 0.5;
   return n;
 }
 
-const NUM = "(\\d+(?:[.,]\\d+)?|[零一二两兩三四五六七八九十半点點]+)";
+const NUM = "(\\d+(?:[.,]\\d+)?|[零一二两兩三四五六七八九十百半点點]+)";
+/** A number followed by one of these is a quantity, never a room number. */
+const UNIT_AFTER_NUMBER = /^(\d{3,4})\s*(kg|kgs|kilo|kilos|kilogram|kilograms|g|gr|grams?|portions?|pax|covers?|seated|plates?|pieces?|pcs|min|mins|minutes?|%|公斤|千克|克|份|位|人|个|個|分钟)\b/;
 const toNum = (s: string | undefined): number | null => {
   if (!s) return null;
   const t = s.replace(",", ".");
@@ -124,7 +134,9 @@ export function parseVoice(transcriptRaw: string, ctx: { stations: VoiceStation[
   }
 
   // room done: "2506 done, 24 minutes" · "room 1512 ready" · "2506 完成 24 分钟"
-  const room = t.match(/\b(\d{3,4})\b/);
+  // (a 3–4 digit number followed by a unit is a quantity: "120 portions", "300 g")
+  const roomCandidates = [...t.matchAll(/\b(\d{3,4})\b/g)].filter((m) => !UNIT_AFTER_NUMBER.test(t.slice(m.index)) && !UNIT_AFTER_NUMBER.test(transcript.slice(transcript.indexOf(m[1]))));
+  const room = roomCandidates[0];
   if (room) {
     const r = room[1];
     const done = /\b(done|finished|ready|clean|cleaned|complete|completed)\b/.test(t) || /完成|好了|做好|清洁完/.test(transcript);
@@ -149,12 +161,13 @@ export function parseVoice(transcriptRaw: string, ctx: { stations: VoiceStation[
   }
 
   // waste: "<station> over-prep 2 kg" · "<station> 多备 两公斤" · "2 kilos plate waste at bakery"
-  const kgMatch = t.match(new RegExp(`${NUM}\\s*(kg|kgs|kilo|kilos|kilogram|kilograms)\\b`)) ?? transcript.match(/([零一二两兩三四五六七八九十半点點\d.]+)\s*(公斤|千克|kg)/i);
-  const gMatch = t.match(new RegExp(`${NUM}\\s*(g|grams?)\\b`)) ?? transcript.match(/([零一二两兩三四五六七八九十半\d.]+)\s*克/);
+  const kgMatch = t.match(new RegExp(`${NUM}\\s*(kg|kgs|kilo|kilos|kilogram|kilograms)\\b`)) ?? transcript.match(/([零一二两兩三四五六七八九十百半点點\d.]+)\s*(公斤|千克|kg)(半)?/i);
+  const gMatch = t.match(new RegExp(`${NUM}\\s*(g|grams?)\\b`)) ?? transcript.match(/([零一二两兩三四五六七八九十百半\d.]+)\s*克/);
   const station = matchStation(transcript, ctx.stations);
   const wasteWords = /\b(waste|wasted|over[- ]?prep|overprepped|left|leftover|thrown|binned|bin|spoil|spoiled|plate waste|trim)\b/.test(t) || /浪费|多备|剩|倒掉|丢|扔|变质|过量/.test(transcript);
   if (kgMatch || gMatch || (station && wasteWords)) {
     let kg = kgMatch ? toNum(kgMatch[1]) : gMatch ? (toNum(gMatch[1]) ?? 0) / 1000 : null;
+    if (kg != null && kgMatch && kgMatch[3] === "半") kg += 0.5; // 两公斤半 → 2.5
     if (kg != null) kg = Math.round(kg * 100) / 100;
     const reason = /over[- ]?prep|overprepped|多备|过量/.test(t + transcript) ? "over-prep" : /plate|剩|客人/.test(t + transcript) ? "plate waste" : /spoil|变质/.test(t + transcript) ? "spoilage" : /trim/.test(t) ? "trim" : null;
     return { intent: "waste", stationId: station?.station.id ?? null, stationName: station?.station.name ?? null, kg, reason, confidence: station && kg != null ? 0.92 : 0.55 };

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CloseServiceForm } from "./close-form";
 import { VoiceLogger } from "@/components/voice-logger";
 import { Card, Empty, Grid, Kpi, Note, Row, ScreenHead, Tabs } from "@/components/ui";
-import { getContext } from "@/lib/data/context";
+import { getContext, mayWrite } from "@/lib/data/context";
 import { getLatestForecast, getOutlets } from "@/lib/data/fnb";
 import { kg as fmtKg, num, pct, plusDays, signed } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -24,13 +24,17 @@ export default async function WastePage({ searchParams }: { searchParams: Promis
     getLatestForecast(outlet.id, date),
     supabase.from("waste_logs").select("kg, co2e_kg").eq("outlet_id", outlet.id).eq("service_date", date),
   ]);
+  const logged = (logs ?? []).length > 0;
   const totalKg = (logs ?? []).reduce((s, w) => s + Number(w.kg), 0);
   const totalCo2 = (logs ?? []).reduce((s, w) => s + Number(w.co2e_kg), 0);
   const covers = actual?.actual_covers ?? outcome?.actual_covers ?? null;
-  const gPerCover = covers ? Math.round((totalKg * 1000) / covers) : null;
+  const gPerCover = logged && covers ? Math.round((totalKg * 1000) / covers) : null;
   const baseline = outcome?.baseline_g_per_cover != null ? Number(outcome.baseline_g_per_cover) : Number((ctx.property.settings as Record<string, number>)?.waste_baseline_g_cover ?? 0) || null;
-  const underKg = baseline && covers ? Math.max(0, ((baseline - (gPerCover ?? baseline)) * covers) / 1000) : null;
-  const factor = totalKg > 0 ? totalCo2 / totalKg : 2.5;
+  // no log, no claim (rule 3): the kilos under the baseline exist only once a measured entry does;
+  // a day over the baseline is shown as such, never as zero avoided
+  const deltaKg = logged && baseline && covers && gPerCover != null ? ((baseline - gPerCover) * covers) / 1000 : null;
+  const underKg = deltaKg != null ? Math.max(0, deltaKg) : null;
+  const factor = totalKg > 0 ? totalCo2 / totalKg : Number((ctx.property.settings as Record<string, number>)?.co2e_default_factor ?? 2.5);
   const closed = !!actual;
   const err = outcome?.error_pct != null ? Number(outcome.error_pct) : f && covers ? ((covers - f.covers_p50) / f.covers_p50) * 100 : null;
   const within = outcome?.within_band ?? (f && covers ? covers >= f.covers_p10 && covers <= f.covers_p90 : null);
@@ -61,11 +65,11 @@ export default async function WastePage({ searchParams }: { searchParams: Promis
 
       <Grid>
         <Kpi k="Waste logged" v={<>{num(totalKg, 1)}<small>kg</small></>} n={gPerCover != null ? `${gPerCover} g per cover` : "no cover count yet"} />
-        <Kpi k="Under baseline" v={underKg != null ? <>{num(underKg, 1)}<small>kg</small></> : "—"} n={underKg != null ? `≈ ${num(underKg * factor, 0)} kg CO₂e` : baseline ? `baseline ${baseline} g per cover` : "set a baseline in Set-up"} tone={underKg ? "gn" : undefined} />
+        <Kpi k={deltaKg != null && deltaKg < 0 ? "Over baseline" : "Under baseline"} v={deltaKg != null ? <>{num(Math.abs(deltaKg), 1)}<small>kg</small></> : "—"} n={deltaKg != null ? (deltaKg >= 0 ? `≈ ${num(underKg! * factor, 0)} kg CO₂e, measured by the bin` : `baseline ${baseline} g per cover`) : !logged ? "no log, no claim" : baseline ? `baseline ${baseline} g per cover` : "set a baseline in Set-up"} tone={deltaKg != null ? (deltaKg > 0 ? "gn" : deltaKg < 0 ? "am" : undefined) : undefined} />
       </Grid>
 
       <div className="mt-4">
-        <VoiceLogger propertyId={ctx.property.id} outletId={outlet.id} serviceDate={date} department="kitchen" placeholder="Log a station, in English or Chinese" examples={["Bakery plate waste 1.5 kg", "點心 剩 一公斤"]} />
+        {mayWrite(ctx, "waste_logs") ? <VoiceLogger propertyId={ctx.property.id} outletId={outlet.id} serviceDate={date} department="kitchen" placeholder="Log a station, in English or Chinese" examples={["Bakery plate waste 1.5 kg", "點心 剩 一公斤"]} /> : <Note>Measured by the bin — not modelled. The kitchen logs; this view reads.</Note>}
       </div>
 
       <div className="mb-1 mt-6 flex items-baseline justify-between">
@@ -79,7 +83,7 @@ export default async function WastePage({ searchParams }: { searchParams: Promis
         {!(byStation ?? []).length ? <Row title="Nothing logged yet today." /> : null}
       </Card>
 
-      {!closed ? (
+      {!closed && mayWrite(ctx, "service_actuals") ? (
         <div className="mt-6">
           <CloseServiceForm propertyId={ctx.property.id} outletId={outlet.id} serviceDate={date} suggested={f?.covers_p50 ?? null} />
         </div>

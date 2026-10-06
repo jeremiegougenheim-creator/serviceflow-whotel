@@ -5,6 +5,8 @@
 -- Every hour the app runs, for each hotel, the step whose configured local hour
 -- it is: the evening brief (18:00), the dawn update (03:30 → 03), the debrief
 -- (12:30 → 12) and the nightly report (23:00). Times live in properties.settings.
+-- Every 15 minutes the live tick runs for every outlet in service at its hotel's
+-- clock: cover check, running fast, waste risk (proposals, never actions).
 -- ============================================================================
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 CREATE EXTENSION IF NOT EXISTS pg_net;
@@ -20,6 +22,21 @@ SELECT cron.schedule(
     headers := '{"Content-Type": "application/json", "Authorization": "Bearer JOBS_SECRET"}'::jsonb,
     body    := '{}'::jsonb,
     timeout_milliseconds := 240000
+  );
+  $$
+);
+
+SELECT cron.unschedule('serviceflow-live') WHERE EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'serviceflow-live');
+
+SELECT cron.schedule(
+  'serviceflow-live',
+  '*/15 * * * *',
+  $$
+  SELECT net.http_post(
+    url     := 'APP_URL/api/jobs/live',
+    headers := '{"Content-Type": "application/json", "Authorization": "Bearer JOBS_SECRET"}'::jsonb,
+    body    := '{}'::jsonb,
+    timeout_milliseconds := 120000
   );
   $$
 );

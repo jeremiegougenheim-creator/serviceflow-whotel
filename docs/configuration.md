@@ -6,11 +6,12 @@ All per-hotel settings are rows; the engine reads them at every run.
 
 | Key | Meaning | Default |
 | --- | --- | --- |
-| `food_cost_per_cover` | cost of food served per breakfast cover, hotel currency | — |
-| `waste_baseline_g_cover` | measured g of waste per cover before ServiceFlow | trailing 28-day average |
+| `food_cost_per_cover` | cost of food served per breakfast cover, hotel currency; without it no saving is priced | — |
+| `food_kg_per_cover` | kg of food served per cover, to price a kilo of waste when a station cannot | 0.45 |
+| `waste_baseline_g_cover` | measured g of waste per cover before ServiceFlow | mean of the hotel's closed days with a log and no forecast (the pre-ServiceFlow record, up to 28 days); none → nothing avoided is claimed |
 | `co2e_default_factor` | kg CO2e per kg when a station has no category factor | 2.5 |
 | `winnow` | a bin scale is in place (its reactive point is credited to the scale) | false |
-| `saving_points_total` / `saving_points_serviceflow` | food-cost points in all / the forecast's share | 4 / 3 |
+| `saving_points_total` / `saving_points_serviceflow` | food-cost points in all / the forecast's share (the forecast's share can never exceed the total) | 4 / 3 |
 | `energy_baseline_kwh_room` | baseline kWh per key-night | — |
 | `brief_time`, `dawn_update_time`, `debrief_time` | local times of the three daily steps | 18:00, 03:30, 12:30 |
 

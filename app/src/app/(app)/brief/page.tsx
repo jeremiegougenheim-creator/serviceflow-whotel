@@ -1,7 +1,7 @@
 import { ActionButton } from "@/components/action-button";
 import { Card, Empty, Row, ScreenHead, SectionHead, Tabs } from "@/components/ui";
 import { approveDecision, rejectDecision } from "@/lib/actions/ops";
-import { getContext } from "@/lib/data/context";
+import { getContext, mayWrite } from "@/lib/data/context";
 import { drivers, getDecisions, getLatestForecast, getOutlets, inputs } from "@/lib/data/fnb";
 import { money, plusDays } from "@/lib/format";
 
@@ -39,7 +39,7 @@ export default async function BriefPage({ searchParams }: { searchParams: Promis
                   <span>{d.detail ?? d.reason}</span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {d.status === "proposed" ? (
+                  {d.status === "proposed" && mayWrite(ctx, "decisions") ? (
                     <>
                       <ActionButton small variant="ghost" action={rejectDecision.bind(null, d.id)} label="Keep" done="Kept" />
                       <ActionButton small action={approveDecision.bind(null, d.id)} label="Approve" done="Approved" />

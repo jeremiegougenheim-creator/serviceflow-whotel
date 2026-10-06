@@ -66,6 +66,7 @@ export interface PropertyCfg {
     winnow?: boolean;
     saving_points_total?: number;
     saving_points_serviceflow?: number;
+    food_kg_per_cover?: number;
     energy_baseline_kwh_room?: number;
     brief_time?: string;
     dawn_update_time?: string;

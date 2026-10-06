@@ -3,8 +3,7 @@
  * writes forecasts, plans, decisions, staffing, debriefs and the nightly report.
  * Every run is logged in job_runs. Runs are idempotent for a given date (forecast versions).
  */
-import { addDays, format } from "date-fns";
-import { fromZonedTime } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import type { AdminClient } from "@/lib/supabase/admin";
 import type { Json, Tables } from "@/lib/supabase/database.types";
 
@@ -33,10 +32,15 @@ import type {
 } from "./types";
 
 export const MODEL_VERSION = "sf-2.0";
-const iso = (d: Date) => format(d, "yyyy-MM-dd");
-const plusDays = (date: string, n: number) => iso(addDays(new Date(date + "T12:00:00Z"), n));
+/** Calendar arithmetic in UTC: the process time zone never moves a service date. */
+const plusDays = (date: string, n: number) => {
+  const d = new Date(date + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
 /** A property-local clock time as an absolute instant. */
 const localInstant = (date: string, clock: string, tz: string) => fromZonedTime(`${date}T${clock}:00`, tz).toISOString();
+const minutesOf = (clock: string) => Number(clock.slice(0, 2)) * 60 + Number(clock.slice(3, 5));
 
 // ── mapping rows → engine config ────────────────────────────────────────────
 
@@ -163,13 +167,15 @@ async function loadSignals(db: AdminClient, propertyId: string, date: string) {
 }
 
 /** Past services for one outlet: forecast, actual, waste, and the over-prep ratio per station. */
-async function loadHistory(db: AdminClient, outlet: OutletCfg, before: string, days = 90): Promise<HistoryPoint[]> {
+async function loadHistory(db: AdminClient, propertyId: string, outlet: OutletCfg, before: string, days = 90): Promise<HistoryPoint[]> {
   const from = plusDays(before, -days);
+  // every read carries the property as well as the outlet: a row that names another hotel's
+  // outlet never reaches the engine (the database refuses such rows too; belt and braces)
   const [{ data: actuals }, { data: forecasts }, { data: waste }, { data: pms }] = await Promise.all([
-    db.from("service_actuals").select("service_date, actual_covers").eq("outlet_id", outlet.id).gte("service_date", from).lt("service_date", before),
-    db.from("v_latest_forecasts").select("service_date, covers_p50").eq("outlet_id", outlet.id).gte("service_date", from).lt("service_date", before),
-    db.from("waste_logs").select("service_date, station_id, kg").eq("outlet_id", outlet.id).gte("service_date", from).lt("service_date", before),
-    db.from("pms_daily").select("service_date, rooms_occupied").eq("property_id", (await db.from("outlets").select("property_id").eq("id", outlet.id).single()).data!.property_id).gte("service_date", from).lt("service_date", before),
+    db.from("service_actuals").select("service_date, actual_covers").eq("property_id", propertyId).eq("outlet_id", outlet.id).gte("service_date", from).lt("service_date", before),
+    db.from("v_latest_forecasts").select("service_date, covers_p50").eq("property_id", propertyId).eq("outlet_id", outlet.id).gte("service_date", from).lt("service_date", before),
+    db.from("waste_logs").select("service_date, station_id, kg").eq("property_id", propertyId).eq("outlet_id", outlet.id).gte("service_date", from).lt("service_date", before),
+    db.from("pms_daily").select("service_date, rooms_occupied").eq("property_id", propertyId).gte("service_date", from).lt("service_date", before),
   ]);
   const byDate = new Map<string, HistoryPoint>();
   const get = (d: string) => {
@@ -190,14 +196,15 @@ async function loadHistory(db: AdminClient, outlet: OutletCfg, before: string, d
     const st = w.station_id ? stById.get(w.station_id) : undefined;
     if (st && st.basePar > 0 && st.kgPerUnit > 0) {
       const prepKg = st.basePar * st.kgPerUnit;
-      h.stationOverPrep![st.id] = 1 + Number(w.kg) / prepKg; // 1.10 = 10% of the par ended in the bin
+      // every log of the day adds up: 1.10 = 10% of the par ended in the bin
+      h.stationOverPrep![st.id] = (h.stationOverPrep![st.id] ?? 1) + Number(w.kg) / prepKg;
     }
   }
   return [...byDate.values()].sort((a, b) => a.serviceDate.localeCompare(b.serviceDate));
 }
 
-async function loadCorrections(db: AdminClient, outletId: string, before: string): Promise<Correction[]> {
-  const { data } = await db.from("plan_corrections").select("station_id, factor, service_date").eq("outlet_id", outletId).lt("service_date", before).order("service_date", { ascending: false }).limit(50);
+async function loadCorrections(db: AdminClient, propertyId: string, outletId: string, before: string): Promise<Correction[]> {
+  const { data } = await db.from("plan_corrections").select("station_id, factor, service_date").eq("property_id", propertyId).eq("outlet_id", outletId).lt("service_date", before).order("service_date", { ascending: false }).limit(50);
   return (data ?? []).map((c) => ({ stationId: c.station_id, factor: Number(c.factor), serviceDate: c.service_date }));
 }
 
@@ -207,7 +214,9 @@ async function job<T>(db: AdminClient, params: { job: Tables<"job_runs">["job"];
   const { data: run } = await db.from("job_runs").insert({ job: params.job, property_id: params.propertyId, outlet_id: params.outletId ?? null, service_date: params.serviceDate, status: "running" }).select("id").single();
   try {
     const result = await fn();
-    if (run) await db.from("job_runs").update({ status: "ok", finished_at: new Date().toISOString(), log: (result as J) ?? {} }).eq("id", run.id);
+    // an outlet that failed is recorded in the log and marks the run partial; the others ran
+    const partial = !!result && typeof result === "object" && Object.values(result as Record<string, unknown>).some((v) => !!v && typeof v === "object" && "error" in (v as object));
+    if (run) await db.from("job_runs").update({ status: partial ? "partial" : "ok", finished_at: new Date().toISOString(), log: (result as J) ?? {} }).eq("id", run.id);
     return result;
   } catch (e) {
     if (run) await db.from("job_runs").update({ status: "failed", finished_at: new Date().toISOString(), error: e instanceof Error ? e.message : String(e) }).eq("id", run.id);
@@ -215,11 +224,23 @@ async function job<T>(db: AdminClient, params: { job: Tables<"job_runs">["job"];
   }
 }
 
-/** Forecast, plan and decisions for one outlet and date. kind = evening | dawn | live | manual. */
+/** Food cost per cover for an outlet: its own setting, else the hotel's, else unknown (0). */
+function foodCostPerCover(ctx: PropertyContext, outlet: OutletCfg): number {
+  return outlet.settings.food_cost_per_cover ?? ctx.property.settings.food_cost_per_cover ?? 0;
+}
+
+type PlanLineRow = Pick<Tables<"station_plans">, "station_id" | "wave_id" | "qty" | "status" | "approved_by" | "approved_at" | "prepped_at">;
+
+/**
+ * Forecast, plan and decisions for one outlet and date. kind = evening | dawn | live | manual.
+ * A rerun supersedes the current version, but what a person already approved is carried
+ * forward when the quantity did not move: station lines keep their status, decisions keep
+ * theirs, and a confirmed plan whose numbers did not change is left alone.
+ */
 export async function forecastOutlet(db: AdminClient, ctx: PropertyContext, outlet: OutletCfg, date: string, kind: "evening" | "dawn" | "live" | "manual" = "evening") {
   const sig = await loadSignals(db, ctx.property.id, date);
-  const history = await loadHistory(db, outlet, date);
-  const corrections = await loadCorrections(db, outlet.id, date);
+  const history = await loadHistory(db, ctx.property.id, outlet, date);
+  const corrections = await loadCorrections(db, ctx.property.id, outlet.id, date);
 
   let fc: CoversForecast;
   let plan: StationPlan;
@@ -235,15 +256,39 @@ export async function forecastOutlet(db: AdminClient, ctx: PropertyContext, outl
     const bf = forecastBanquet({ outlet, banquets });
     fc = bf;
     plan = buildBanquetPlan({ outlet, banquets, cookCount: bf.cookCount });
-    decisions = [{ rank: 1, kind: "hold", department: "kitchen", stationId: null, title: `Cook ${bf.cookCount} of ${bf.inputs.booked as number} booked`, detail: `${bf.inputs.confirmed as number} confirmed + ${Math.round((bf.inputs.bufferPct as number) * 100)}% buffer`, reason: "cook to the final count, never the booking", deltaPct: null, estSaving: Math.round(((bf.inputs.booked as number) - bf.cookCount) * 12) }];
+    const booked = bf.inputs.booked as number;
+    decisions = [{ rank: 1, kind: "hold", department: "kitchen", stationId: null, title: `Cook ${bf.cookCount} of ${booked} booked`, detail: `${bf.inputs.confirmed as number} confirmed + ${Math.round((bf.inputs.bufferPct as number) * 100)}% buffer`, reason: "cook to the final count, never the booking", deltaPct: null, estSaving: Math.round(Math.max(0, booked - bf.cookCount) * foodCostPerCover(ctx, outlet)) }];
   } else {
     fc = forecastBookings({ outlet, serviceDate: date, booking: sig.bookings.get(outlet.id) ?? null, weather: sig.weather, events: sig.events, history });
     plan = buildStationPlan({ outlet, forecast: fc, serviceDate: date, pms: sig.pms, weather: sig.weather, corrections, history });
     decisions = buildDecisions({ outlet, plan, forecast: fc, property: ctx.property, history, pms: sig.pms });
   }
 
-  // version: supersede the current one
-  const { data: prev } = await db.from("forecasts").select("id, version").eq("outlet_id", outlet.id).eq("service_date", date).order("version", { ascending: false }).limit(1).maybeSingle();
+  // the current version, and what people did with it
+  const { data: prev } = await db.from("forecasts").select("id, version, status, covers_p50, confirmed_by, confirmed_at").eq("property_id", ctx.property.id).eq("outlet_id", outlet.id).eq("service_date", date).order("version", { ascending: false }).limit(1).maybeSingle();
+  const prevLines: PlanLineRow[] = prev ? ((await db.from("station_plans").select("station_id, wave_id, qty, status, approved_by, approved_at, prepped_at").eq("forecast_id", prev.id)).data ?? []) : [];
+  const { data: prevDecisions } = prev
+    ? await db.from("decisions").select("id, title, status").eq("property_id", ctx.property.id).eq("outlet_id", outlet.id).eq("service_date", date).eq("source", "engine").in("status", ["approved", "done", "rejected"])
+    : { data: [] as { id: string; title: string; status: string }[] };
+
+  // same quantity as the line a person already acted on → the line keeps its status
+  const sameQty = (a: number, b: number) => Math.abs(a - b) <= Math.max(1, 0.02 * Math.max(a, b));
+  const carried = plan.lines.map((l) => {
+    const old = prevLines.find((p) => p.station_id === l.stationId && (p.wave_id ?? null) === (l.waveId ?? null));
+    const keep = !!old && old.status !== "proposed" && sameQty(Number(old.qty), l.qty);
+    return { line: l, status: keep ? old!.status : "proposed", approved_by: keep ? old!.approved_by : null, approved_at: keep ? old!.approved_at : null, prepped_at: keep ? old!.prepped_at : null };
+  });
+  const allCarried = carried.length > 0 && carried.every((c) => c.status !== "proposed");
+  // an approval that did not survive (the quantity moved) is what the kitchen must look at again
+  const lostApproval = carried.some((c) => c.status === "proposed" && prevLines.some((p) => p.station_id === c.line.stationId && (p.wave_id ?? null) === (c.line.waveId ?? null) && p.status !== "proposed"));
+  const confirmedBefore = prev?.status === "confirmed";
+  const p50Moved = !prev || prev.covers_p50 == null || !sameQty(Number(prev.covers_p50), fc.p50);
+
+  // a confirmed plan that the new signals do not move is left as it is (no churn at dawn)
+  if (prev && confirmedBefore && kind !== "manual" && !p50Moved && allCarried) {
+    return { forecastId: prev.id, version: prev.version, p50: fc.p50, unchanged: true, decisions: 0, lines: plan.lines.length };
+  }
+
   const version = (prev?.version ?? 0) + 1;
   if (prev) await db.from("forecasts").update({ status: "superseded" }).eq("id", prev.id);
 
@@ -264,19 +309,26 @@ export async function forecastOutlet(db: AdminClient, ctx: PropertyContext, outl
       drivers: fc.drivers as unknown as J,
       signals_read: fc.signalsRead,
       model_version: MODEL_VERSION,
-      inputs: { ...fc.inputs, headline: fc.headline, subline: fc.subline } as J,
-      status: "issued",
+      inputs: { ...fc.inputs, headline: fc.headline, subline: fc.subline, supersedes: prev?.id ?? null } as J,
+      // the confirmation survives when every approved line came through unchanged
+      status: confirmedBefore && allCarried ? "confirmed" : "issued",
+      confirmed_by: confirmedBefore && allCarried ? prev!.confirmed_by : null,
+      confirmed_at: confirmedBefore && allCarried ? prev!.confirmed_at : null,
     })
     .select("id")
     .single();
   if (error || !f) throw new Error(`forecast insert failed: ${error?.message}`);
 
-  await db.from("station_plans").insert(plan.lines.map((l) => ({ property_id: ctx.property.id, forecast_id: f.id, station_id: l.stationId, wave_id: l.waveId, qty: l.qty, unit: l.unit, usual_qty: l.usualQty, delta_pct: l.deltaPct, reason: l.reason, expected_consumption: l.expectedConsumption, uncertainty: l.uncertainty })));
-  // decisions from a previous version expire; approved ones stay
-  await db.from("decisions").update({ status: "expired" }).eq("outlet_id", outlet.id).eq("service_date", date).eq("status", "proposed").eq("source", "engine");
-  await db.from("decisions").insert(decisions.map((d) => ({ property_id: ctx.property.id, outlet_id: outlet.id, forecast_id: f.id, station_id: d.stationId, service_date: date, rank: d.rank, kind: d.kind, department: d.department, title: d.title, detail: d.detail, reason: d.reason, delta_pct: d.deltaPct, est_saving: d.estSaving, currency: ctx.property.currency, source: "engine", payload: (d.payload ?? {}) as J })));
-  await db.from("prediction_log").insert({ property_id: ctx.property.id, outlet_id: outlet.id, service_date: date, forecast_id: f.id, model_version: MODEL_VERSION, features: fc.inputs as J, prediction: { p10: fc.p10, p50: fc.p50, p90: fc.p90, waves: fc.waveSplit } as unknown as J });
-  return { forecastId: f.id, version, p50: fc.p50, decisions: decisions.length, lines: plan.lines.length };
+  await db.from("station_plans").insert(carried.map(({ line: l, status, approved_by, approved_at, prepped_at }) => ({ property_id: ctx.property.id, forecast_id: f.id, station_id: l.stationId, wave_id: l.waveId, qty: l.qty, unit: l.unit, usual_qty: l.usualQty, delta_pct: l.deltaPct, reason: l.reason, expected_consumption: l.expectedConsumption, uncertainty: l.uncertainty, status, approved_by, approved_at, prepped_at })));
+  // proposals from the previous version expire; a decision a person already took stays, and the
+  // same decision is not proposed again
+  await db.from("decisions").update({ status: "expired" }).eq("property_id", ctx.property.id).eq("outlet_id", outlet.id).eq("service_date", date).eq("status", "proposed").eq("source", "engine");
+  const decided = new Set((prevDecisions ?? []).map((d) => d.title));
+  if ((prevDecisions ?? []).length) await db.from("decisions").update({ forecast_id: f.id }).in("id", (prevDecisions ?? []).map((d) => d.id));
+  const fresh = decisions.filter((d) => !decided.has(d.title));
+  if (fresh.length) await db.from("decisions").insert(fresh.map((d) => ({ property_id: ctx.property.id, outlet_id: outlet.id, forecast_id: f.id, station_id: d.stationId, service_date: date, rank: d.rank, kind: d.kind, department: d.department, title: d.title, detail: d.detail, reason: d.reason, delta_pct: d.deltaPct, est_saving: d.estSaving, currency: ctx.property.currency, source: "engine", payload: (d.payload ?? {}) as J })));
+  await db.from("prediction_log").insert({ property_id: ctx.property.id, outlet_id: outlet.id, service_date: date, forecast_id: f.id, model_version: MODEL_VERSION, features: fc.inputs as J, prediction: { p10: fc.p10, p50: fc.p50, p90: fc.p90, waves: fc.waveSplit, version, kind } as unknown as J });
+  return { forecastId: f.id, version, p50: fc.p50, changed: p50Moved || lostApproval, decisions: fresh.length, lines: plan.lines.length };
 }
 
 /** The evening brief (18:00): every outlet of the property for the next service date. */
@@ -284,9 +336,20 @@ export async function runEveningBrief(db: AdminClient, propertyId: string, date:
   const ctx = await loadProperty(db, propertyId);
   return job(db, { job: kind === "dawn" ? "dawn_update" : "evening_brief", propertyId, serviceDate: date }, async () => {
     const results: Record<string, unknown> = {};
-    for (const o of ctx.outlets) results[o.slug] = await forecastOutlet(db, ctx, o, date, kind);
+    let changed = false;
+    for (const o of ctx.outlets) {
+      // one outlet's bad row never stops the others' plans
+      try {
+        const r = await forecastOutlet(db, ctx, o, date, kind);
+        results[o.slug] = r;
+        if ("changed" in r && r.changed) changed = true;
+        if ("version" in r && r.version === 1) changed = true;
+      } catch (e) {
+        results[o.slug] = { error: e instanceof Error ? e.message : String(e) };
+      }
+    }
     await runStaffing(db, propertyId, date, 14, ctx);
-    await notifyBrief(db, ctx, date, kind);
+    if (changed || kind === "evening") await notifyBrief(db, ctx, date, kind);
     return results;
   });
 }
@@ -306,7 +369,7 @@ export async function runStaffing(db: AdminClient, propertyId: string, from: str
     const { data: weatherRows } = await db.from("weather_daily").select("*").eq("property_id", propertyId).gte("service_date", plusDays(from, -7)).lt("service_date", to);
     const { data: bookingRows } = await db.from("bookings_daily").select("*").eq("property_id", propertyId).gte("service_date", plusDays(from, -7)).lt("service_date", to);
     const histories = new Map<string, HistoryPoint[]>();
-    for (const o of ctx.outlets) histories.set(o.id, await loadHistory(db, o, from, 60));
+    for (const o of ctx.outlets) histories.set(o.id, await loadHistory(db, propertyId, o, from, 60));
     const dayVolumes: DayVolume[] = [];
     for (let i = -7; i < days; i++) {
       const d = plusDays(from, i);
@@ -370,39 +433,67 @@ export async function runLive(db: AdminClient, propertyId: string, outletId: str
   const ctx = ctxIn ?? (await loadProperty(db, propertyId));
   const outlet = ctx.outlets.find((o) => o.id === outletId);
   if (!outlet) throw new Error("outlet not found");
-  const { data: f } = await db.from("v_latest_forecasts").select("*").eq("outlet_id", outletId).eq("service_date", date).maybeSingle();
+  const { data: f } = await db.from("v_latest_forecasts").select("*").eq("property_id", propertyId).eq("outlet_id", outletId).eq("service_date", date).maybeSingle();
   if (!f) return { skipped: "no forecast" };
   const fc: CoversForecast = { p10: f.covers_p10!, p50: f.covers_p50!, p90: f.covers_p90!, usual: f.usual_covers ?? f.covers_p50!, occupancy: f.occupancy == null ? null : Number(f.occupancy), waveSplit: asArr(f.wave_split), drivers: asArr(f.drivers), signalsRead: f.signals_read ?? 0, inputs: asObj(f.inputs), headline: "", subline: "" };
   const [{ data: pace }, { data: plans }, { data: pms }] = await Promise.all([
-    db.from("pos_pace").select("at, covers_seated").eq("outlet_id", outletId).eq("service_date", date).lte("at", localInstant(date, clock, ctx.property.timezone)).order("at"),
-    db.from("station_plans").select("station_id, status, qty, wave_id").eq("forecast_id", f.id!),
+    db.from("pos_pace").select("at, covers_seated").eq("property_id", propertyId).eq("outlet_id", outletId).eq("service_date", date).lte("at", localInstant(date, clock, ctx.property.timezone)).order("at"),
+    db.from("station_plans").select("station_id, status, qty, wave_id").eq("property_id", propertyId).eq("forecast_id", f.id!),
     db.from("pms_daily").select("nationality_mix").eq("property_id", propertyId).eq("service_date", date).maybeSingle(),
   ]);
   const proposals = [];
   const cc = coverCheck({ outlet, forecast: fc, pace: (pace ?? []).map((p) => ({ at: p.at, coversSeated: p.covers_seated })), nationalityMix: asObj(pms?.nationality_mix), clock });
   if (cc) proposals.push(cc);
   // consumption proxy per station: covers seated against the forecast, scaled by how hard the mix in
-  // house pulls on the station (a tick-off "running low" always wins)
-  const seated = (pace ?? []).at(-1)?.covers_seated ?? 0;
+  // house pulls on the station (a tick-off "running low" always wins). Without a pace count there
+  // is no proxy: nothing is "taken" or "over-stocked" on a guess.
+  const lastPace = (pace ?? []).at(-1);
+  const seated = lastPace?.covers_seated ?? null;
   const expectedNow = expectedSeatedAt(fc, outlet, clock);
-  const ahead = expectedNow > 0 ? seated / expectedNow : 1;
+  const ahead = seated != null && expectedNow > 0 ? seated / expectedNow : null;
   const natMix = asObj<Record<string, number>>(pms?.nationality_mix);
   const states = outlet.stations.map((s) => {
     const mine = (plans ?? []).filter((p) => p.station_id === s.id);
     const status = mine.some((p) => p.status === "running_low") ? "running_low" : mine.every((p) => p.status === "closed") && mine.length ? "closed" : mine.some((p) => p.status === "prepped") ? "prepped" : "proposed";
     const pull = nationalityMultiplier(s, natMix).mult;
-    const taken = fc.p50 > 0 ? Math.min(1, (expectedNow / fc.p50) * ahead * pull) : null;
+    const taken = ahead != null && fc.p50 > 0 ? Math.min(1, (expectedNow / fc.p50) * ahead * pull) : null;
     return { stationId: s.id, takenPct: taken == null ? null : +taken.toFixed(2), status };
   });
   proposals.push(...runningFast({ outlet, forecast: fc, states, clock }));
   const wr = wasteRisk({ outlet, forecast: fc, states, clock });
   if (wr) proposals.push(wr);
+  let inserted = 0;
   for (const p of proposals) {
-    const { data: exists } = await db.from("live_events").select("id").eq("outlet_id", outletId).eq("service_date", date).eq("kind", p.kind).eq("title", p.title).maybeSingle();
+    const { data: exists } = await db.from("live_events").select("id").eq("property_id", propertyId).eq("outlet_id", outletId).eq("service_date", date).eq("kind", p.kind).eq("title", p.title).maybeSingle();
     if (exists) continue;
-    await db.from("live_events").insert({ property_id: propertyId, outlet_id: outletId, service_date: date, at: localInstant(date, clock, ctx.property.timezone), kind: p.kind, title: p.title, body: p.body, proposal: p.proposal, station_id: p.stationId, status: p.proposal ? "open" : "info", payload: p.payload as J });
+    await db.from("live_events").insert({ property_id: propertyId, outlet_id: outletId, service_date: date, at: localInstant(date, clock, ctx.property.timezone), kind: p.kind, title: p.title, body: p.body, proposal: p.proposal, station_id: p.stationId, status: p.proposal ? "open" : "info", payload: { ...(p.payload as Record<string, unknown>), forecast_id: f.id } as J });
+    inserted += 1;
   }
-  return { proposals: proposals.length };
+  return { proposals: proposals.length, inserted };
+}
+
+/**
+ * The live tick (every 15 minutes): every outlet of the property that is in service at the
+ * property's clock gets its cover check, running-fast and waste-risk proposals.
+ */
+export async function runLiveTick(db: AdminClient, propertyId: string, now: Date = new Date()) {
+  const ctx = await loadProperty(db, propertyId);
+  const date = formatInTimeZone(now, ctx.property.timezone, "yyyy-MM-dd");
+  const clock = formatInTimeZone(now, ctx.property.timezone, "HH:mm");
+  const t = minutesOf(clock);
+  const open = ctx.outlets.filter((o) => o.stations.length && minutesOf(o.opensAt) <= t && t <= minutesOf(o.closesAt) + 15);
+  if (!open.length) return { skipped: "no outlet in service", clock };
+  return job(db, { job: "live", propertyId, serviceDate: date }, async () => {
+    const out: Record<string, unknown> = { clock };
+    for (const o of open) {
+      try {
+        out[o.slug] = await runLive(db, propertyId, o.id, date, clock, ctx);
+      } catch (e) {
+        out[o.slug] = { error: e instanceof Error ? e.message : String(e) };
+      }
+    }
+    return out;
+  });
 }
 
 /** The debrief (12:30): every outlet that closed a service on the date. */
@@ -411,13 +502,15 @@ export async function runDebrief(db: AdminClient, propertyId: string, date: stri
   return job(db, { job: "debrief", propertyId, serviceDate: date }, async () => {
     const out: Record<string, unknown> = {};
     for (const o of ctx.outlets) {
-      const { data: f } = await db.from("v_latest_forecasts").select("*").eq("outlet_id", o.id).eq("service_date", date).maybeSingle();
+      const { data: f } = await db.from("v_latest_forecasts").select("*").eq("property_id", propertyId).eq("outlet_id", o.id).eq("service_date", date).maybeSingle();
       const [{ data: actual }, { data: waste }, { data: decisions }, { data: plans }, { data: trailing }] = await Promise.all([
-        db.from("service_actuals").select("*").eq("outlet_id", o.id).eq("service_date", date).maybeSingle(),
-        db.from("waste_logs").select("station_id, kg, co2e_kg").eq("outlet_id", o.id).eq("service_date", date),
-        db.from("decisions").select("status").eq("outlet_id", o.id).eq("service_date", date).neq("status", "expired"),
-        f?.id ? db.from("station_plans").select("status").eq("forecast_id", f.id) : Promise.resolve({ data: [] as { status: string }[] }),
-        db.from("outcomes").select("waste_g_per_cover").eq("outlet_id", o.id).lt("service_date", date).order("service_date", { ascending: false }).limit(28),
+        db.from("service_actuals").select("*").eq("property_id", propertyId).eq("outlet_id", o.id).eq("service_date", date).maybeSingle(),
+        db.from("waste_logs").select("station_id, kg, co2e_kg").eq("property_id", propertyId).eq("outlet_id", o.id).eq("service_date", date),
+        db.from("decisions").select("status").eq("property_id", propertyId).eq("outlet_id", o.id).eq("service_date", date).neq("status", "expired"),
+        f?.id ? db.from("station_plans").select("status").eq("property_id", propertyId).eq("forecast_id", f.id) : Promise.resolve({ data: [] as { status: string }[] }),
+        // the measured baseline is the hotel's own record before ServiceFlow planned the service:
+        // closed days with a log and no forecast. It never moves with the days ServiceFlow planned.
+        db.from("outcomes").select("waste_g_per_cover").eq("property_id", propertyId).eq("outlet_id", o.id).is("forecast_id", null).gt("waste_g_per_cover", 0).lt("service_date", date).order("service_date", { ascending: false }).limit(28),
       ]);
       if (!actual && !(waste ?? []).length) {
         out[o.slug] = "no close";
@@ -434,7 +527,7 @@ export async function runDebrief(db: AdminClient, propertyId: string, date: stri
         actualCovers: actual?.actual_covers ?? null,
         waste: wasteEntries,
         trailingBaselineGPerCover: trailingBaseline,
-        foodCostPerCover: o.settings.food_cost_per_cover ?? ctx.property.settings.food_cost_per_cover ?? 6,
+        foodCostPerCover: foodCostPerCover(ctx, o),
         planFollowedPct: (plans ?? []).length ? Math.round((approvedPlans / (plans ?? []).length) * 100) : null,
         decisionsApproved: (decisions ?? []).filter((x) => x.status === "approved" || x.status === "done").length,
         decisionsTotal: (decisions ?? []).length,
@@ -471,7 +564,7 @@ export async function runDebrief(db: AdminClient, propertyId: string, date: stri
         },
         { onConflict: "outlet_id,service_date" },
       );
-      if (f?.id) await db.from("prediction_log").update({ outcome: { actual: actual?.actual_covers ?? null, mape: d.mape, within_band: d.withinBand } as Json }).eq("forecast_id", f.id);
+      if (f?.id) await db.from("prediction_log").update({ outcome: { actual: actual?.actual_covers ?? null, mape: d.mape, within_band: d.withinBand } as Json }).eq("property_id", propertyId).eq("forecast_id", f.id);
       out[o.slug] = { actual: actual?.actual_covers ?? null, mape: d.mape, wasteKg: d.wasteKg, saving: d.savingServiceflow };
     }
     return out;
@@ -483,7 +576,7 @@ export async function runNightlyReport(db: AdminClient, propertyId: string, date
   const ctx = ctxIn ?? (await loadProperty(db, propertyId));
   return job(db, { job: "nightly_report", propertyId, serviceDate: date }, async () => {
     const tomorrow = plusDays(date, 1);
-    const [{ data: outcomes }, { data: staffing }, { data: variances }, { data: energy }, { data: pms }, { data: decisionsTomorrow }, { data: roomsDone }, { data: voice }, { data: suggestions }, { data: wasteStations }, { data: revenue }] = await Promise.all([
+    const [{ data: outcomes }, { data: staffing }, { data: variances }, { data: energy }, { data: pms }, { data: decisionsTomorrow }, { data: roomsDone }, { data: voice }, { data: suggestions }, { data: wasteStations }, { data: revenue }, { data: team }] = await Promise.all([
       db.from("outcomes").select("*").eq("property_id", propertyId).eq("service_date", date),
       db.from("v_staffing_day").select("*").eq("property_id", propertyId).eq("service_date", date),
       db.from("pos_variances").select("amount, status").eq("property_id", propertyId).eq("status", "open"),
@@ -495,7 +588,13 @@ export async function runNightlyReport(db: AdminClient, propertyId: string, date
       db.from("roster_suggestions").select("*").eq("property_id", propertyId).eq("status", "proposed").gte("service_date", tomorrow).order("delta_hours").limit(3),
       db.from("waste_logs").select("station_id").eq("property_id", propertyId).eq("service_date", date),
       db.from("service_actuals").select("revenue").eq("property_id", propertyId).eq("service_date", date),
+      db.from("team_members").select("department, hourly_cost").eq("property_id", propertyId).eq("active", true).not("hourly_cost", "is", null),
     ]);
+    // an hour's cost per department, from the hotel's own rota; unknown → no money is claimed
+    const hourly = (department: string): number => {
+      const rows = (team ?? []).filter((t) => t.department === department && t.hourly_cost != null);
+      return rows.length ? rows.reduce((s, t) => s + Number(t.hourly_cost), 0) / rows.length : 0;
+    };
     const oc = outcomes ?? [];
     const mapes = oc.map((o) => (o.mape == null ? null : Number(o.mape))).filter((x): x is number => x != null);
     const wasteRatio = oc.filter((o) => o.waste_g_per_cover && o.baseline_g_per_cover).map((o) => Number(o.waste_g_per_cover) / Number(o.baseline_g_per_cover));
@@ -515,11 +614,12 @@ export async function runNightlyReport(db: AdminClient, propertyId: string, date
     for (const v of variances ?? []) candidates.push({ rank: 9, kind: "reconcile", department: "finance", stationId: null, title: "Reconcile a POS variance", detail: `${(variances ?? []).length} open · by 09:00`, reason: "unposted courses", deltaPct: null, estSaving: Number(v.amount) });
     for (const s of suggestions ?? []) {
       const hk = /housekeeping/i.test(s.title);
-      candidates.push({ rank: 9, kind: hk ? "assign" : "move", department: hk ? "housekeeping" : "kitchen", stationId: null, title: hk ? "Add a room attendant" : s.title.replace(/ is short by .*$/, ": add hours"), detail: s.detail ?? "", reason: s.title, deltaPct: null, estSaving: Math.round(Math.abs(Number(s.delta_hours ?? 0)) * 6), payload: { suggestion_id: s.id } });
+      const line = ctx.lines.find((l) => l.id === s.service_line_id);
+      candidates.push({ rank: 9, kind: hk ? "assign" : "move", department: hk ? "housekeeping" : "kitchen", stationId: null, title: hk ? "Add a room attendant" : s.title.replace(/ is short by .*$/, ": add hours"), detail: s.detail ?? "", reason: s.title, deltaPct: null, estSaving: Math.round(Math.abs(Number(s.delta_hours ?? 0)) * hourly(line?.department ?? (hk ? "housekeeping" : "kitchen"))), payload: { suggestion_id: s.id } });
     }
     // housekeeping: suites behind pace → one more attendant
     const suiteTasks = (roomsDone ?? []).filter((r) => r.minutes && r.minutes > 30);
-    if (suiteTasks.length >= 10) candidates.push({ rank: 9, kind: "assign", department: "housekeeping", stationId: null, title: "Add a suite attendant", detail: `${suiteTasks.length} rooms over 30 min · suites run slow`, reason: "minutes per room above target on the suite floors", deltaPct: null, estSaving: 41 });
+    if (suiteTasks.length >= 10) candidates.push({ rank: 9, kind: "assign", department: "housekeeping", stationId: null, title: "Add a suite attendant", detail: `${suiteTasks.length} rooms over 30 min · suites run slow`, reason: "minutes per room above target on the suite floors", deltaPct: null, estSaving: Math.round(4 * hourly("housekeeping")) });
 
     const voiceByOutlet = new Map<string, { sum: number; n: number }>();
     for (const v of voice ?? []) {
@@ -560,7 +660,11 @@ async function notifyBrief(db: AdminClient, ctx: PropertyContext, date: string, 
   const { data: members } = await db.from("memberships").select("user_id, role").eq("property_id", ctx.property.id).eq("active", true).in("role", ["gm", "fnb_mgr", "chef", "sous_chef"]);
   const { data: f } = await db.from("v_latest_forecasts").select("covers_p50, outlet_id").eq("property_id", ctx.property.id).eq("service_date", date);
   const covers = (f ?? []).reduce((s, x) => s + (x.covers_p50 ?? 0), 0);
-  const rows = (members ?? []).filter((m) => m.user_id).map((m) => ({ property_id: ctx.property.id, user_id: m.user_id!, kind: kind === "dawn" ? "dawn_update" : "brief", title: kind === "dawn" ? `Dawn update · ${date}` : `Tomorrow's plan is ready · ${date}`, body: `${covers} covers forecast across ${(f ?? []).length} outlets. ${m.role === "gm" ? "Three decisions wait for approval." : "Station pars are ready to confirm."}`, href: m.role === "gm" ? "/brief" : "/plan", channels: ["in_app"] }));
+  const title = kind === "dawn" ? `Dawn update · ${date}` : `Tomorrow's plan is ready · ${date}`;
+  // one notification per person and brief: a rerun never sends the same line twice
+  const { data: sent } = await db.from("notifications").select("user_id").eq("property_id", ctx.property.id).eq("title", title);
+  const already = new Set((sent ?? []).map((n) => n.user_id));
+  const rows = (members ?? []).filter((m) => m.user_id && !already.has(m.user_id)).map((m) => ({ property_id: ctx.property.id, user_id: m.user_id!, kind: kind === "dawn" ? "dawn_update" : "brief", title, body: `${covers} covers forecast across ${(f ?? []).length} outlets. ${m.role === "gm" ? "Decisions wait for approval." : "Station pars are ready to confirm."}`, href: m.role === "gm" ? "/brief" : "/plan", channels: ["in_app"] }));
   if (rows.length) await db.from("notifications").insert(rows);
 }
 

@@ -10,7 +10,8 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata = { title: "Team" };
 
 const DEPTS: [string, string][] = [["kitchen", "Kitchen"], ["service", "Service"], ["stewarding", "Stewarding"], ["bar", "Bar"], ["housekeeping", "Housekeeping"], ["engineering", "Engineering"], ["front_office", "Front office"], ["management", "Management"]];
-const ROLES: [string, string][] = [["gm", "General manager"], ["fnb_mgr", "F&B manager"], ["chef", "Chef"], ["sous_chef", "Sous chef"], ["prep_cook", "Prep cook"], ["hk", "Housekeeping"], ["eng", "Engineering"], ["auditor", "Auditor (read-only)"], ["owner", "Owner (read-only)"], ["admin", "Admin"]];
+// the roles a GM grants from the app; owner, VP, CEO and admin are granted outside it
+const ROLES: [string, string][] = [["gm", "General manager"], ["fnb_mgr", "F&B manager"], ["chef", "Chef"], ["sous_chef", "Sous chef"], ["prep_cook", "Prep cook"], ["hk", "Housekeeping"], ["eng", "Engineering"], ["auditor", "Auditor (read-only)"]];
 
 export default async function TeamSettings({ searchParams }: { searchParams: Promise<{ member?: string }> }) {
   const ctx = await getContext();
@@ -52,7 +53,7 @@ export default async function TeamSettings({ searchParams }: { searchParams: Pro
         })}
       </Card>
       {can(ctx, "gm") && org ? (
-        <SaveForm action={inviteMember.bind(null, ctx.property.id, org.org_id)} className="card mt-3 px-4 py-4" label="Invite">
+        <SaveForm action={inviteMember.bind(null, ctx.property.id)} className="card mt-3 px-4 py-4" label="Invite">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Email" name="email" type="email" required placeholder="chef@hotel.com" />
             <Field label="Role" name="role" options={ROLES} defaultValue="chef" />

@@ -166,7 +166,7 @@ export function forecastBreakfast(input: {
   const guests = pms.guestsInHouse > 0 ? pms.guestsInHouse : pms.roomsOccupied * GUESTS_PER_ROOM_DEFAULT;
   signals += 1;
 
-  // 1. attach by rate code
+  // 1. attach by rate code (rule 1: segmented, never flat)
   const rateMix = normalise(pms.rateCodeMix);
   const attach = attachFromRateCodes(rateMix, table);
   const biShare = rateMix.breakfast_inclusive ?? 0;
@@ -177,6 +177,14 @@ export function forecastBreakfast(input: {
       source: "PMS",
       effect: `${biShare >= 0.5 ? "+" : "−"}${Math.round(Math.abs(biShare - 0.5) * guests * 0.9)}`,
       weight: Math.abs(biShare - 0.5) * guests,
+    });
+  } else {
+    // no rate-code mix in the feed: the default attach is a flat rate, and the brief says so
+    drivers.push({
+      label: `No rate-code mix in the PMS feed: default attach ${Math.round((table.default ?? 0.6) * 100)}%`,
+      source: "PMS",
+      effect: "flat",
+      weight: guests,
     });
   }
 
@@ -392,9 +400,9 @@ export function forecastBanquet(input: { outlet: OutletCfg; banquets: BanquetSig
   const drivers: Driver[] = banquets.map((b) => ({ label: `${b.name}: ${b.confirmedCount} confirmed of ${b.bookedCount} booked`, source: "Banquets", effect: `${b.confirmedCount}`, weight: b.confirmedCount }));
   if (diets) drivers.push({ label: `${diets} dietary plates`, source: "Banquets", effect: `${diets}`, weight: diets });
   return {
-    p10: confirmed,
+    p10: Math.min(confirmed, cook),
     p50: cook,
-    p90: booked || cook,
+    p90: Math.max(booked || cook, cook),
     usual: booked || cook,
     occupancy: null,
     waveSplit: wave ? [{ waveId: wave.id, label: wave.label, startsAt: wave.startsAt, share: 1, covers: cook }] : [],

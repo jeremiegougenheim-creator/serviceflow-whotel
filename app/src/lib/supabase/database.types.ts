@@ -1343,7 +1343,7 @@ isOneToOne: false
                            },
 "sf_portfolio_ops":
 { Args: { "p_date"?: string }; Returns: {
-              "accuracy_4w": number,"cooked_vs_plan_pct": number,"covers_tomorrow": number,"hours_short": number,"keys": number,"property": string,"property_id": string,"region": string,"region_id": string,"short_lines": string
+              "mape_4w_pct": number,"off_plan_pct": number,"covers_tomorrow": number,"hours_short": number,"keys": number,"property": string,"property_id": string,"region": string,"region_id": string,"short_lines": string
             }[]
                            },
 "sf_portfolio_quarter":
