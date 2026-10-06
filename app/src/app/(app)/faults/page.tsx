@@ -1,0 +1,169 @@
+import { ActionButton } from "@/components/action-button";
+import { VoiceLogger } from "@/components/voice-logger";
+import { Card, Grid, Kpi, Note, Row, Strike, Tabs } from "@/components/ui";
+import { confirmPlannedWorks, updateWorkOrder } from "@/lib/actions/ops";
+import { getContext } from "@/lib/data/context";
+import { hhmm, num, plusDays } from "@/lib/format";
+import { createClient } from "@/lib/supabase/server";
+
+export const metadata = { title: "Maintenance" };
+
+export default async function FaultsPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+  const ctx = await getContext();
+  const sp = await searchParams;
+  const view = (["faults", "plant", "planned", "energy"].includes(sp.view ?? "") ? sp.view : "faults") as "faults" | "plant" | "planned" | "energy";
+  const supabase = await createClient();
+  const tabs = [
+    { key: "faults", label: "Faults", href: "/faults" },
+    { key: "plant", label: "Plant", href: "/faults?view=plant" },
+    { key: "planned", label: "Planned", href: "/faults?view=planned" },
+    { key: "energy", label: "Energy", href: "/faults?view=energy" },
+  ];
+  const tz = ctx.property.timezone;
+  const now = new Date(); // server render time, once per request
+  const ago = (iso: string) => {
+    const h = (now.getTime() - new Date(iso).getTime()) / 36e5;
+    return h < 1 ? `${Math.max(1, Math.round(h * 60))} min open` : h < 48 ? `${Math.round(h)} h open` : `${Math.round(h / 24)} d open`;
+  };
+
+  if (view === "faults") {
+    const { data: wos } = await supabase.from("work_orders").select("*, rooms(number), assets(name)").eq("property_id", ctx.property.id).gte("opened_at", new Date(now.getTime() - 7 * 864e5).toISOString()).order("priority").order("opened_at");
+    const all = wos ?? [];
+    const open = all.filter((w) => w.status === "open" || w.status === "in_progress");
+    const counts = { high: open.filter((w) => w.priority === "high").length, medium: open.filter((w) => w.priority === "medium").length, planned: all.filter((w) => w.status === "planned").length, closed: all.filter((w) => w.status === "closed" && w.closed_at && w.closed_at >= `${ctx.today}T00:00:00`).length };
+    const impact: Record<string, number> = { guest_facing: 0, suites: 1, in_room: 2, outlet: 3, back_of_house: 4, none: 5 };
+    open.sort((a, b) => impact[a.guest_impact] - impact[b.guest_impact] || (a.priority === "high" ? -1 : 1));
+    const due = (w: (typeof all)[number]) => (w.due_at ? (w.due_at.slice(0, 10) === ctx.today ? (hhmm(w.due_at, tz) >= "22:00" ? "tonight" : hhmm(w.due_at, tz)) : new Date(w.due_at).toLocaleDateString("en-GB", { weekday: "short", timeZone: tz })) : null);
+    return (
+      <>
+        <Tabs items={tabs} current={view} />
+        <VoiceLogger propertyId={ctx.property.id} outletId={null} serviceDate={ctx.today} department="engineering" placeholder="Log a fault or a fix" examples={["1804 door hinge stiff, guest in room", "Lift B back in service"]} />
+        <div className="mt-4">
+          <Grid cols={4}>
+            <Kpi k="High" v={counts.high} tone={counts.high ? "rd" : undefined} />
+            <Kpi k="Medium" v={counts.medium} tone={counts.medium ? "am" : undefined} />
+            <Kpi k="Planned" v={counts.planned} />
+            <Kpi k="Closed" v={counts.closed} tone="gn" />
+          </Grid>
+        </div>
+        <div className="mb-1 mt-6 flex items-baseline justify-between">
+          <h2 className="text-[20px]">Open faults</h2>
+          <span className="muted text-[12.5px]">By guest impact</span>
+        </div>
+        <Card>
+          {open.map((w) => (
+            <div key={w.id} className="row">
+              <div className="t min-w-0">
+                <b>{w.title}</b>
+                <span>{[w.detail, w.status === "in_progress" ? "in progress" : null].filter(Boolean).join(" · ")}</span>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <span className={`pill ${w.guest_impact === "guest_facing" ? "pill-rd" : w.guest_impact === "suites" || w.guest_impact === "in_room" ? "pill-am" : "pill-mt"}`}>{due(w) ?? (w.guest_impact === "suites" ? "suites" : ago(w.opened_at))}</span>
+                <ActionButton small variant="ghost" action={updateWorkOrder.bind(null, w.id, w.status === "open" ? "in_progress" : "closed")} label={w.status === "open" ? "Start" : "Close"} done={w.status === "open" ? "Started" : "Closed"} />
+              </div>
+            </div>
+          ))}
+          {!open.length ? <Row title="No open fault." /> : null}
+        </Card>
+        <Note>After the F&B pilot. Same platform, same approvals.</Note>
+      </>
+    );
+  }
+
+  if (view === "plant") {
+    const [{ data: assets }, { data: readings }] = await Promise.all([
+      supabase.from("assets").select("*").eq("property_id", ctx.property.id).eq("active", true).order("sort_order"),
+      supabase.from("asset_readings").select("asset_id, metric, value, unit, at").eq("property_id", ctx.property.id).gte("at", `${ctx.today}T00:00:00`).order("at", { ascending: false }),
+    ]);
+    const list = assets ?? [];
+    const online = list.filter((a) => a.status !== "offline").length;
+    const chiller = list.find((a) => a.kind === "chiller");
+    const loads = (readings ?? []).filter((r) => r.asset_id === chiller?.id && r.metric === "load_pct");
+    const now = loads[0] ? Number(loads[0].value) : null;
+    const peak = loads.length ? loads.reduce((m, r) => (Number(r.value) > Number(m.value) ? r : m), loads[0]) : null;
+    const impactOrder = (a: (typeof list)[number]) => (a.status === "offline" ? 0 : a.status === "watch" ? 1 : a.guest_facing ? 2 : 3);
+    return (
+      <>
+        <Tabs items={tabs} current={view} />
+        <Grid>
+          <Kpi k="Plant online" v={<>{online}<small>/{list.length}</small></>} n={list.find((a) => a.status === "offline") ? `${list.find((a) => a.status === "offline")!.name} out of service` : "all running"} tone={online < list.length ? "am" : "gn"} />
+          <Kpi k="Chiller load" v={now != null ? <>{num(now, 0)}<small>%</small></> : "—"} n={peak ? `peak ${num(peak.value, 0)}% at ${hhmm(peak.at, tz)}` : "no reading today"} />
+        </Grid>
+        <div className="mb-1 mt-6 flex items-baseline justify-between">
+          <h2 className="text-[20px]">Plant</h2>
+          <span className="muted text-[12.5px]">By guest impact</span>
+        </div>
+        <Card>
+          {[...list].sort((a, b) => impactOrder(a) - impactOrder(b)).slice(0, 8).map((a) => (
+            <Row key={a.id} title={a.name} note={[a.location, a.status_note].filter(Boolean).join(" · ")} pill={a.status === "ok" ? "ok" : a.status} tone={a.status === "ok" ? "gn" : a.status === "watch" ? "am" : a.status === "offline" ? "rd" : "mt"} />
+          ))}
+        </Card>
+      </>
+    );
+  }
+
+  if (view === "planned") {
+    const { data: works } = await supabase.from("planned_works").select("*").eq("property_id", ctx.property.id).gte("starts_at", `${ctx.today}T00:00:00`).lte("starts_at", `${plusDays(ctx.today, 7)}T23:59:59`).neq("status", "cancelled").order("starts_at");
+    const list = works ?? [];
+    const proposed = list.filter((w) => w.status === "proposed");
+    const when = (iso: string) => `${new Date(iso).toLocaleDateString("en-GB", { weekday: "short", timeZone: tz })} ${hhmm(iso, tz)}`;
+    const checks = (w: (typeof list)[number]) => (w.checks ?? {}) as Record<string, string>;
+    return (
+      <>
+        <Tabs items={tabs} current={view} />
+        <Strike
+          eyebrow="Planned this week"
+          title={`${list.length === 0 ? "No job" : list.length === 1 ? "One job" : list.length === 2 ? "Two jobs" : `${list.length} jobs`}, checked against the day.`}
+          body="Kitchen plan, room arrivals and guest notices are read before a slot is booked."
+          action={proposed.length ? <ActionButton action={confirmPlannedWorks.bind(null, ctx.property.id, proposed.map((w) => w.id))} label="Confirm the slots" done="Slots confirmed" /> : <span className="btn btn-done">Slots confirmed</span>}
+        />
+        <div className="mb-1 mt-6 flex items-baseline justify-between">
+          <h2 className="text-[20px]">Slots</h2>
+          <span className="muted text-[12.5px]">{list.length} planned</span>
+        </div>
+        <Card>
+          {list.map((w) => (
+            <Row key={w.id} title={w.title} note={`${when(w.starts_at)} · ${w.duration_min >= 60 ? `${Math.round(w.duration_min / 60)} hours` : `${w.duration_min} min`}${w.areas ? ` · ${w.areas}` : ""}`} pill={w.status === "confirmed" ? "confirmed" : w.verdict} tone={w.status === "confirmed" ? "gn" : w.verdict === "clear" ? "gn" : w.verdict === "notify" ? "am" : "rd"} />
+          ))}
+          {!list.length ? <Row title="Nothing planned this week." /> : null}
+        </Card>
+        {list[0] ? <Note>{Object.values(checks(list[0])).filter(Boolean).slice(0, 1).join(" ")}</Note> : null}
+      </>
+    );
+  }
+
+  // energy
+  const [{ data: today }, { data: month }] = await Promise.all([
+    supabase.from("energy_readings").select("*").eq("property_id", ctx.property.id).eq("service_date", ctx.today),
+    supabase.from("energy_readings").select("service_date, kwh").eq("property_id", ctx.property.id).gte("service_date", plusDays(ctx.today, -30)).lt("service_date", ctx.today),
+  ]);
+  const rows = today ?? [];
+  const used = rows.reduce((s, r) => s + Number(r.kwh), 0);
+  const baseline = Number((ctx.property.settings as Record<string, number>)?.energy_baseline_kwh_room ?? 0) || null;
+  const perRoom = used / ctx.property.keys;
+  const vs = baseline ? perRoom / baseline - 1 : null;
+  const days = new Set((month ?? []).map((m) => m.service_date)).size;
+  const monthKwh = (month ?? []).reduce((s, m) => s + Number(m.kwh), 0);
+  const saved = baseline && days ? baseline * ctx.property.keys * days - monthKwh : null;
+  const labels: Record<string, [string, string]> = { cooling: ["Cooling", "chillers and AC"], kitchens: ["Kitchens", "extract and cooking"], lifts_lighting: ["Lifts and lighting", "common areas"], other: ["Other", "laundry, pools, back of house"] };
+  return (
+    <>
+      <Tabs items={tabs} current={view} />
+      <Grid>
+        <Kpi k="Used today" v={<>{num(used / 1000, 1)}<small>MWh</small></>} n={`≈ ${num(perRoom, 0)} kWh per room`} />
+        <Kpi k="On baseline" v={vs != null ? <>{vs > 0 ? "+" : "−"}{num(Math.abs(vs) * 100, 0)}<small>%</small></> : "—"} n={saved != null ? `${num(Math.abs(saved) / 1000, 1)} MWh ${saved >= 0 ? "saved" : "over"} in 30 days` : "set a baseline in Set-up"} tone={vs != null ? (vs <= 0 ? "gn" : "am") : undefined} />
+      </Grid>
+      <div className="mb-1 mt-6 flex items-baseline justify-between">
+        <h2 className="text-[20px]">Where it goes</h2>
+        <span className="muted text-[12.5px]">MWh today</span>
+      </div>
+      <Card>
+        {[...rows].sort((a, b) => Number(b.kwh) - Number(a.kwh)).map((r) => (
+          <Row key={r.id} title={labels[r.category]?.[0] ?? r.category} note={r.note ?? labels[r.category]?.[1]} right={num(Number(r.kwh) / 1000, 1)} />
+        ))}
+        {!rows.length ? <Row title="No meter reading today." note="Import readings in Set-up → Imports." /> : null}
+      </Card>
+      <Note>Metered. Feeds the owner&rsquo;s ESG report.</Note>
+    </>
+  );
+}

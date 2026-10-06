@@ -1,0 +1,12 @@
+"use client";
+
+import { useEffect } from "react";
+
+/** Registers the service worker in production so the app installs and the last plan stays available offline. */
+export function RegisterSW() {
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
+  }, []);
+  return null;
+}

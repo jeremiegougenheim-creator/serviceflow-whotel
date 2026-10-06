@@ -1,71 +1,99 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "@fontsource/cormorant-garamond/500.css";
+@import "@fontsource/cormorant-garamond/600.css";
+@import "@fontsource/cormorant-garamond/500-italic.css";
+@import "@fontsource/jost/400.css";
+@import "@fontsource/jost/500.css";
+@import "@fontsource/jost/600.css";
 
-@layer base {
-  :root {
-    /* ── Device safe areas ─────────────────────────────────────────── */
-    --safe-area-inset-top: env(safe-area-inset-top);
-    --safe-area-inset-bottom: env(safe-area-inset-bottom);
-    --safe-area-inset-left: env(safe-area-inset-left);
-    --safe-area-inset-right: env(safe-area-inset-right);
+/* ── ServiceFlow by SparkEdge · design tokens (petrol navy, bronze, cream) ── */
+@theme {
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Jost", system-ui, sans-serif;
 
-    /* ── ServiceFlow design tokens (fallback = ServiceFlow default identity) ─────
-       Overridden at runtime by property_themes. All components MUST
-       use these variables — never hardcode hex values in JSX/CSS.
-       See CLAUDE.md §16 and app/src/lib/theme.ts.
-    ─────────────────────────────────────────────────────────────────────────── */
-    --lauds-bg-primary:     #FAF8F4;
-    --lauds-bg-card:        #FFFFFF;
-    --lauds-text-primary:   #2A2520;
-    --lauds-text-secondary: #4A453F;
-    --lauds-text-muted:     #6B6560;
-    --lauds-accent-action:  #16A6EC;  /* CTA, confirmations */
-    --lauds-accent-savings: #4A8F5E;  /* savings, ESG */
-    --lauds-accent-alert:   #E01E8C;  /* waste alerts */
-    --lauds-divider:        #E2DDD4;
-    --lauds-font-heading:    "Cormorant Garamond";
-    /* Champagne tones — not in property_themes but used as design tokens */
-    --lauds-champagne:       #A0784A;
-    --lauds-champagne-light: #C9A97A;
-  }
+  --color-ink: #0e1c24;        /* page */
+  --color-navy: #152a38;       /* cards */
+  --color-navy-mid: #1c3546;   /* raised */
+  --color-navy-line: #233f52;  /* rules */
+  --color-gold: #b8894a;
+  --color-gold-light: #d4af78;
+  --color-gold-pale: #fbefd2;
+  --color-cream: #ede7dc;
+  --color-paper: #f5f0e8;
+  --color-mist: #7a9db5;       /* secondary text on dark */
+  --color-ghost: #a9b8c4;
+  --color-green: #4eaf8c;
+  --color-amber: #d49a38;
+  --color-red: #c85a5a;
+  --color-blue: #5b8fb9;
 
-  * {
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  html,
-  body {
-    @apply antialiased;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-  }
-
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-lauds-border;
-  }
+  --radius-card: 14px;
+  --radius-pill: 999px;
 }
 
-@layer utilities {
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .pt-safe {
-    padding-top: env(safe-area-inset-top);
-  }
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+:root {
+  color-scheme: dark;
+  --sf-rule: color-mix(in oklab, var(--color-gold) 18%, transparent);
+  --sf-rule-strong: color-mix(in oklab, var(--color-gold) 32%, transparent);
 }
+
+html, body { height: 100%; }
+body {
+  background: var(--color-ink);
+  color: var(--color-cream);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  font-size: 15px;
+  line-height: 1.5;
+}
+h1, h2, h3, .display { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.01em; }
+em, .gold-em { font-style: italic; color: var(--color-gold-light); }
+::selection { background: color-mix(in oklab, var(--color-gold) 40%, transparent); }
+
+/* ── small primitives shared by every screen ── */
+.card { background: var(--color-navy); border: 1px solid var(--sf-rule); border-radius: var(--radius-card); }
+.card-raised { background: var(--color-navy-mid); border: 1px solid var(--sf-rule-strong); border-radius: var(--radius-card); }
+.eyebrow { font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--color-gold); font-weight: 500; }
+.kpi-v { font-family: var(--font-display); font-size: 34px; line-height: 1; color: var(--color-cream); }
+.kpi-v small { font-size: 16px; color: var(--color-gold-light); margin-left: 2px; }
+.muted { color: var(--color-mist); }
+.rule { border-top: 1px solid var(--sf-rule); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--radius-pill); padding: 11px 18px; font-weight: 500; font-size: 14px; line-height: 1; transition: background .15s, color .15s, opacity .15s; cursor: pointer; }
+.btn-gold { background: var(--color-gold); color: var(--color-ink); }
+.btn-gold:hover { background: var(--color-gold-light); }
+.btn-ghost { background: transparent; color: var(--color-cream); border: 1px solid var(--sf-rule-strong); }
+.btn-ghost:hover { background: color-mix(in oklab, var(--color-gold) 10%, transparent); }
+.btn-done { background: color-mix(in oklab, var(--color-green) 18%, transparent); color: var(--color-green); border: 1px solid color-mix(in oklab, var(--color-green) 40%, transparent); cursor: default; }
+.btn[disabled] { opacity: .55; cursor: default; }
+.pill { display: inline-block; border-radius: var(--radius-pill); padding: 3px 9px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 500; }
+.pill-gn { background: color-mix(in oklab, var(--color-green) 16%, transparent); color: var(--color-green); }
+.pill-am { background: color-mix(in oklab, var(--color-amber) 16%, transparent); color: var(--color-amber); }
+.pill-rd { background: color-mix(in oklab, var(--color-red) 16%, transparent); color: var(--color-red); }
+.pill-mt { background: color-mix(in oklab, var(--color-mist) 16%, transparent); color: var(--color-mist); }
+.pill-gd { background: color-mix(in oklab, var(--color-gold) 16%, transparent); color: var(--color-gold-light); }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 0; border-top: 1px solid var(--sf-rule); }
+.row:first-child { border-top: 0; }
+.row .t b { display: block; font-weight: 500; color: var(--color-cream); }
+.row .t span { display: block; font-size: 13px; color: var(--color-mist); margin-top: 2px; }
+.row .q { font-family: var(--font-display); font-size: 26px; line-height: 1; text-align: right; color: var(--color-cream); }
+.strike { background: linear-gradient(160deg, var(--color-navy-mid), var(--color-navy)); border: 1px solid var(--sf-rule-strong); border-radius: var(--radius-card); padding: 18px; }
+.strike .tt { font-family: var(--font-display); font-size: 24px; line-height: 1.15; margin-top: 6px; }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.tile { background: color-mix(in oklab, var(--color-ink) 55%, transparent); border-radius: 10px; padding: 10px 10px 8px; }
+.tile b { display: block; font-family: var(--font-display); font-size: 24px; line-height: 1; }
+.tile b small { font-size: 13px; color: var(--color-gold-light); }
+.tile span { display: block; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--color-mist); margin-top: 4px; }
+.grade { font-family: var(--font-display); font-size: 36px; line-height: 1; }
+.scroll-x { overflow-x: auto; scrollbar-width: none; }
+.scroll-x::-webkit-scrollbar { display: none; }
+.tabs { display: flex; gap: 6px; }
+.tabs a, .tabs button { border-radius: var(--radius-pill); padding: 7px 13px; font-size: 13px; color: var(--color-mist); border: 1px solid transparent; white-space: nowrap; }
+.tabs a.on, .tabs button.on { color: var(--color-gold-light); border-color: var(--sf-rule-strong); background: color-mix(in oklab, var(--color-gold) 10%, transparent); }
+.input { width: 100%; background: var(--color-ink); border: 1px solid var(--sf-rule-strong); border-radius: 10px; padding: 11px 12px; color: var(--color-cream); font: inherit; }
+.input:focus { outline: 2px solid color-mix(in oklab, var(--color-gold) 50%, transparent); outline-offset: 1px; }
+.input::placeholder { color: var(--color-mist); }
+label.lbl { display: block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--color-mist); margin-bottom: 6px; }
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th { text-align: left; font-weight: 500; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--color-mist); padding: 8px 10px; border-bottom: 1px solid var(--sf-rule-strong); }
+.table td { padding: 10px; border-bottom: 1px solid var(--sf-rule); vertical-align: top; }
+.num { font-variant-numeric: tabular-nums; }
