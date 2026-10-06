@@ -36,6 +36,8 @@ In the Supabase SQL editor run `supabase/cron.sql` with `APP_URL` and `JOBS_SECR
 
 To run a step by hand: Set-up → Engine in the app, or `curl -X POST -H "Authorization: Bearer $JOBS_SECRET" https://<app>/api/jobs/brief`.
 
+On Vercel's Hobby plan a function stops at 60 seconds and its region is fixed, so `vercel.json` pins neither. Fill or re-run the engine one hotel at a time — `-d '{"property_id":"<uuid>","hour":-1}'` — rather than the whole portfolio in one call.
+
 ## 4. First real hotel
 
 1. Set-up → Hotel: currency, time zone, food cost per cover, waste baseline, energy baseline, the three times.

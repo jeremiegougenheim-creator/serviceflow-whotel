@@ -3,7 +3,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { runDailyCycle, runDebrief, runEveningBrief, runLiveTick, runNightlyReport, runStaffing } from "@/lib/engine/run";
 import { todayIn, plusDays } from "@/lib/format";
 
-export const maxDuration = 300;
+// The Hobby plan caps a function at 60 seconds; Pro allows 300. The daily cycle is
+// therefore run one hotel at a time (POST with {"property_id": ...}), never all at once.
+export const maxDuration = 60;
 
 /**
  * Scheduled jobs. Called by pg_cron (Supabase) or Vercel Cron with the shared secret:
