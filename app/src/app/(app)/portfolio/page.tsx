@@ -1,285 +1,150 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
-import OutletTrigger from "@/components/OutletTrigger";
+import { Card, Empty, Grid, Kpi, Row, ScreenHead, Tabs } from "@/components/ui";
+import { switchProperty } from "@/lib/actions/ops";
+import { getContext } from "@/lib/data/context";
+import { greeting, num, pct, plusDays, signed, weekday } from "@/lib/format";
+import { createClient } from "@/lib/supabase/server";
 
-// ─── Data ──────────────────────────────────────────────────────────────────────
+export const metadata = { title: "Portfolio" };
 
-type BadgeKind = "live" | "q3_2026" | "q4_2026";
-
-interface OutletRow {
-  id: string;
-  name: string;
-  sub: string;
-  badge: BadgeKind;
-  href?: string; // defined only for live outlets
-}
-
-const BADGE_LABEL: Record<BadgeKind, string> = {
-  live: "Live",
-  q3_2026: "Q3 2026",
-  q4_2026: "Q4 2026",
-};
-
-const OUTLETS: OutletRow[] = [
-  {
-    id: "kitchen-table",
-    name: "The Kitchen Table",
-    sub: "9 stations · Buffet",
-    badge: "live",
-    href: "/dashboard",
-  },
-  { id: "yen", name: "YEN", sub: "Japanese restaurant", badge: "q3_2026" },
-  { id: "woobar", name: "WOOBAR", sub: "Lobby lounge", badge: "q3_2026" },
-  { id: "wet-deck", name: "WET DECK", sub: "Pool deck", badge: "q4_2026" },
-];
-
-// ─── Page ──────────────────────────────────────────────────────────────────────
-
-export default function PortfolioPage() {
-  const [comingSoonModal, setComingSoonModal] = useState(false);
+export default async function PortfolioPage({ searchParams }: { searchParams: Promise<{ lens?: string; region?: string }> }) {
+  const ctx = await getContext();
+  const sp = await searchParams;
+  const role = ctx.role;
+  const lens = role === "vp" ? "ops" : role === "owner" ? "money" : sp.lens === "ops" ? "ops" : "money";
+  const supabase = await createClient();
+  const tomorrow = plusDays(ctx.today, 1);
+  const [{ data: quarter }, { data: ops }, { data: regions }] = await Promise.all([
+    supabase.rpc("sf_portfolio_quarter"),
+    supabase.rpc("sf_portfolio_ops", { p_date: tomorrow }),
+    supabase.from("regions").select("id, name, sort_order").order("sort_order"),
+  ]);
+  const q = quarter ?? [];
+  const o = ops ?? [];
+  const regionFilter = sp.region ?? null;
+  const visibleQ = regionFilter ? q.filter((r) => r.region_id === regionFilter) : q;
+  const visibleO = regionFilter ? o.filter((r) => r.region_id === regionFilter) : o;
+  const totalRev = visibleQ.reduce((s, r) => s + Number(r.revenue ?? 0), 0);
+  const totalGop = visibleQ.reduce((s, r) => s + Number(r.gop ?? 0), 0);
+  const totalNoi = visibleQ.reduce((s, r) => s + Number(r.noi ?? 0), 0);
+  const totalAsset = visibleQ.reduce((s, r) => s + Number(r.asset_value ?? 0), 0);
+  const months = 3;
+  const gopMargin = totalRev ? totalGop / totalRev : null;
+  const noiYield = totalAsset ? (totalNoi * 12) / months / totalAsset : null;
+  const lyRev = visibleQ.reduce((s, r) => s + (r.gop_margin_ly != null ? Number(r.revenue ?? 0) : 0), 0);
+  const lyMargin = lyRev ? visibleQ.reduce((s, r) => s + Number(r.gop_margin_ly ?? 0) * Number(r.revenue ?? 0), 0) / lyRev : null;
+  const energy = visibleQ.filter((r) => r.energy_vs_baseline_pct != null);
+  const energyAvg = energy.length ? energy.reduce((s, r) => s + Number(r.energy_vs_baseline_pct), 0) / energy.length : null;
+  const keys = visibleQ.reduce((s, r) => s + (r.keys ?? 0), 0);
+  const coversT = visibleO.reduce((s, r) => s + (r.covers_tomorrow ?? 0), 0);
+  const shortHotels = visibleO.filter((r) => Number(r.hours_short) >= 1);
+  const shortHours = shortHotels.reduce((s, r) => s + Number(r.hours_short), 0);
+  const acc = visibleO.filter((r) => r.mape_4w_pct != null);
+  const accAvg = acc.length ? acc.reduce((s, r) => s + Number(r.mape_4w_pct), 0) / acc.length : null;
+  const byRegion = (regions ?? []).map((rg) => ({ ...rg, q: q.filter((r) => r.region_id === rg.id), o: o.filter((r) => r.region_id === rg.id) })).filter((rg) => rg.q.length);
+  const groupLevel = role === "ceo" && !regionFilter && byRegion.length > 1;
+  const quarterLabel = `${["first", "second", "third", "fourth"][Math.floor(new Date(ctx.today + "T12:00:00Z").getUTCMonth() / 3)]} quarter`;
+  const regionName = regionFilter ? (regions ?? []).find((r) => r.id === regionFilter)?.name : null;
+  const watch = (r: (typeof o)[number]) => (Number(r.hours_short) >= 1 ? { note: `${weekday(tomorrow)} ${String(r.short_lines ?? "kitchen").split(",")[0].toLowerCase()} short`, right: signed(-Math.round(Number(r.hours_short)), " h"), tone: "am" as const } : r.off_plan_pct != null && Number(r.off_plan_pct) >= 5 ? { note: "off the plan", right: signed(Math.round(Number(r.off_plan_pct)), "%"), tone: "am" as const } : { note: "on plan", right: "", tone: "gn" as const });
 
   return (
-    <div className="min-h-screen">
-      {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="bg-lauds-charcoal text-lauds-cream px-5 pt-14 pb-6 relative overflow-hidden">
-        <div
-          className="absolute inset-0 pointer-events-none opacity-40"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(108deg, transparent 0, transparent 44px, color-mix(in srgb, var(--lauds-champagne-light) 5%, transparent) 44px, color-mix(in srgb, var(--lauds-champagne-light) 5%, transparent) 45px)",
-          }}
-        />
-        <div
-          className="absolute bottom-0 left-0 right-0 h-px"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, var(--lauds-champagne), var(--lauds-champagne-light), var(--lauds-champagne), transparent)",
-            opacity: 0.5,
-          }}
-        />
-
-        <div className="relative z-10">
-          {/* Topbar */}
-          <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-6 h-6 border border-lauds-champagne/50 rounded-md flex items-center justify-center flex-shrink-0">
-              <span className="font-serif text-sm font-medium text-lauds-champagne-light leading-none">S</span>
-            </div>
-            <OutletTrigger />
-          </div>
-
-          <div className="flex items-center gap-2 mb-4">
-            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-lauds-champagne flex-1">
-              W Taipei · The Kitchen Table
-            </p>
-            <span className="text-[9px] font-bold tracking-[0.12em] uppercase px-2 py-0.5 rounded-full" style={{ background: "rgba(201,169,122,0.18)", color: "var(--lauds-champagne-light)" }}>
-              Founding Partner
-            </span>
-          </div>
-
-          {/* Champion profile */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-lauds-champagne/20 border border-lauds-champagne/30 flex items-center justify-center flex-shrink-0">
-              <span className="font-serif text-lg font-medium text-lauds-champagne-light leading-none">
-                B
-              </span>
-            </div>
-            <div>
-              <p className="text-[14px] font-semibold text-lauds-cream leading-tight">
-                Bastien Giannetti
-              </p>
-              <p className="text-[11px] text-lauds-cream/70 mt-0.5">
-                GM · W Taipei
-              </p>
-            </div>
-          </div>
-
-          {/* Scope */}
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-lauds-cream/60">405 keys</span>
-            <span className="w-1 h-1 rounded-full bg-lauds-cream/20" />
-            <span className="text-[11px] text-lauds-cream/60">4 outlets scoped</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Body ────────────────────────────────────────────────────────── */}
-      <div className="px-5 py-5 space-y-6 pb-32">
-
-        {/* Outlets */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-1.5 h-1.5 bg-lauds-champagne flex-shrink-0" />
-            <span className="text-[10px] font-semibold tracking-[0.24em] uppercase text-lauds-secondary">
-              W Taipei · 405 keys
-            </span>
-          </div>
-          <div className="space-y-2">
-            {OUTLETS.map((outlet) => (
-              <OutletRow
-                key={outlet.id}
-                outlet={outlet}
-                onComingSoon={() => setComingSoonModal(true)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Summary strip */}
-        <div
-          className="rounded-2xl px-5 py-4"
-          style={{
-            background: "color-mix(in srgb, var(--lauds-champagne-light) 7%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--lauds-champagne-light) 18%, transparent)",
-          }}
-        >
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-lauds-champagne-dark mb-3">
-            Portfolio savings
-          </p>
-          <div className="space-y-2">
-            <div className="flex items-baseline justify-between">
-              <span className="text-[12px] text-lauds-muted">The Kitchen Table · Live</span>
-              <span className="font-serif text-[18px] font-medium text-lauds-charcoal">
-                NT$2,896
-                <span className="text-[12px] font-sans font-normal text-lauds-muted ml-1">/ day avg</span>
-              </span>
-            </div>
-            <div
-              className="h-px w-full"
-              style={{
-                background: "linear-gradient(90deg, color-mix(in srgb, var(--lauds-champagne-light) 25%, transparent), transparent)",
-              }}
-            />
-            <div className="flex items-baseline justify-between">
-              <span className="text-[12px] text-lauds-muted">Pilot start</span>
-              <span className="font-serif text-[18px] font-medium text-lauds-charcoal">
-                Pilot 2026
-              </span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      {/* ── Bientôt disponible modal ──────────────────────────────────── */}
-      {comingSoonModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center"
-          style={{ background: "rgba(42,37,32,0.6)", backdropFilter: "blur(4px)" }}
-          onClick={() => setComingSoonModal(false)}
-        >
-          <div
-            className="bg-lauds-cream rounded-t-3xl w-full max-w-lg px-8 py-10 pb-safe text-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="font-serif text-2xl font-medium text-lauds-charcoal mb-2">
-              Bientôt disponible
-            </p>
-            <p className="text-[13px] text-lauds-muted leading-relaxed mb-6">
-              This outlet is on the roadmap. ServiceFlow will be available here in a future release.
-            </p>
-            <button
-              onClick={() => setComingSoonModal(false)}
-              className="w-full bg-lauds-charcoal text-lauds-cream rounded-[14px] py-3.5 text-[13px] font-semibold tracking-[0.08em] uppercase active:opacity-80"
-            >
-              Got it
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Sub-components ────────────────────────────────────────────────────────────
-
-function OutletRow({
-  outlet,
-  onComingSoon,
-}: {
-  outlet: OutletRow;
-  onComingSoon: () => void;
-}) {
-  const isLive = outlet.badge === "live";
-
-  const rowStyle = isLive
-    ? { background: "color-mix(in srgb, var(--lauds-accent-action) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--lauds-accent-action) 25%, transparent)" }
-    : { background: "color-mix(in srgb, var(--lauds-divider) 7%, transparent)", border: "1px solid color-mix(in srgb, var(--lauds-divider) 12%, transparent)" };
-
-  const inner = (
     <>
-      <div className="flex-1 min-w-0">
-        <p
-          className={`text-[14px] font-medium leading-tight ${
-            isLive ? "text-lauds-charcoal" : "text-lauds-secondary"
-          }`}
-        >
-          {outlet.name}
-        </p>
-        <p className="text-[11px] text-lauds-secondary mt-0.5">{outlet.sub}</p>
-      </div>
-
-      <Badge kind={outlet.badge} />
-
-      {isLive && (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.9}
-          className="w-4 h-4 flex-shrink-0 ml-1"
-          style={{ color: "var(--lauds-accent-action)" }}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
+      {lens === "money" ? (
+        <ScreenHead hi={<>Quarter to date, <em>{gopMargin != null && lyMargin != null && gopMargin >= lyMargin ? (groupLevel ? "one region to watch." : "on target.") : "behind last year."}</em></>} sub={`${regionName ? regionName + " · " : ""}${groupLevel ? `${visibleQ.length} hotels` : `${num(keys)} rooms`} · ${quarterLabel}`} />
+      ) : (
+        <ScreenHead hi={<>{greeting(ctx.clock)}, <em>{shortHotels.length === 0 ? "all on plan." : shortHotels.length === 1 ? "one to watch." : `${["", "", "two", "three", "four", "five"][shortHotels.length] ?? shortHotels.length} to watch.`}</em></>} sub={`Tomorrow · ${num(coversT)} covers · ${visibleO.length} hotels`} />
       )}
+      {role === "ceo" ? <Tabs items={[{ key: "money", label: "Money", href: `/portfolio?lens=money${regionFilter ? `&region=${regionFilter}` : ""}` }, { key: "ops", label: "Operations", href: `/portfolio?lens=ops${regionFilter ? `&region=${regionFilter}` : ""}` }]} current={lens} /> : null}
+      {regionFilter ? (
+        <p className="mb-3 text-[13px]">
+          <Link href={`/portfolio?lens=${lens}`} className="text-gold-light">← All regions</Link>
+        </p>
+      ) : null}
+
+      {lens === "money" ? (
+        <>
+          <Grid>
+            <Kpi k="GOP margin" v={gopMargin != null ? <>{num(gopMargin * 100, 1)}<small>%</small></> : "—"} n={lyMargin != null && gopMargin != null ? `${signed(Math.round((gopMargin - lyMargin) * 1000) / 10, " pts", 1)} on last year` : undefined} />
+            <Kpi k="NOI yield" v={noiYield != null ? <>{num(noiYield * 100, 1)}<small>%</small></> : "—"} n="target 6.0%" tone={noiYield != null ? (noiYield >= 0.06 ? "gn" : "am") : undefined} />
+          </Grid>
+          <div className="mb-1 mt-6 flex items-baseline justify-between">
+            <h2 className="text-[20px]">{groupLevel ? "By region" : "By hotel"}</h2>
+            <span className="muted text-[12.5px]">Quarter</span>
+          </div>
+          <Card>
+            {groupLevel
+              ? byRegion.map((rg) => {
+                  const rev = rg.q.reduce((s, r) => s + Number(r.revenue ?? 0), 0);
+                  const gop = rg.q.reduce((s, r) => s + Number(r.gop ?? 0), 0);
+                  const noi = rg.q.reduce((s, r) => s + Number(r.noi ?? 0), 0);
+                  const av = rg.q.reduce((s, r) => s + Number(r.asset_value ?? 0), 0);
+                  return <Row key={rg.id} href={`/portfolio?lens=money&region=${rg.id}`} title={rg.name} note={`${rg.q.length} hotels · GOP ${rev ? num((gop / rev) * 100, 1) : "—"}% · NOI yield`} right={<span className="text-[20px]">{av ? num(((noi * 12) / months / av) * 100, 1) + "%" : "—"} ›</span>} />;
+                })
+              : visibleQ.map((r) => (
+                  <form key={r.property_id} action={switchProperty}>
+                    <input type="hidden" name="property_id" value={r.property_id ?? ""} />
+                    <button type="submit" className="row w-full text-left hover:bg-navy-mid/40">
+                      <div className="t min-w-0">
+                        <b>{r.property}</b>
+                        <span>
+                          {num(r.keys ?? 0)} rooms · GOP {r.gop_margin != null ? num(Number(r.gop_margin) * 100, 1) : "—"}% · NOI yield
+                        </span>
+                      </div>
+                      <div className="q">{r.noi_yield != null ? num(Number(r.noi_yield) * 100, 1) + "%" : "—"}</div>
+                    </button>
+                  </form>
+                ))}
+            {!visibleQ.length ? <Row title="No financials yet." note="Import monthly P&L in Set-up → Imports." /> : null}
+          </Card>
+          <div className="mb-1 mt-6 flex items-baseline justify-between">
+            <h2 className="text-[20px]">ESG report</h2>
+          </div>
+          <Card>
+            <Row href="/waste" title="ESG report" note={energyAvg != null ? `energy ${pct(energyAvg, 0, true)} on baseline` : "energy not metered"} pill="review" tone="gd" />
+          </Card>
+        </>
+      ) : (
+        <>
+          <Grid>
+            <Kpi k="Forecast vs actual" v={accAvg != null ? <>±{num(accAvg, 0)}<small>%</small></> : "—"} n="covers, 4 weeks" />
+            <Kpi k="Kitchen hours short" v={<>{num(Math.round(shortHours))}<small>h</small></>} n={`${shortHotels.length} hotel${shortHotels.length === 1 ? "" : "s"}, ${weekday(tomorrow)}`} tone={shortHours >= 1 ? "am" : "gn"} />
+          </Grid>
+          <div className="mb-1 mt-6 flex items-baseline justify-between">
+            <h2 className="text-[20px]">{groupLevel ? "By region" : shortHotels.length ? `${["", "One", "Two", "Three", "Four", "Five"][Math.min(5, shortHotels.length)] ?? shortHotels.length} to watch` : "Hotels"}</h2>
+            <span className="muted text-[12.5px]">Tomorrow</span>
+          </div>
+          <Card>
+            {groupLevel
+              ? byRegion.map((rg) => {
+                  const covers = rg.o.reduce((s, r) => s + (r.covers_tomorrow ?? 0), 0);
+                  const short = rg.o.reduce((s, r) => s + Number(r.hours_short), 0);
+                  const lines = [...new Set(rg.o.flatMap((r) => String(r.short_lines ?? "").split(",").map((x) => x.trim()).filter(Boolean)))];
+                  return <Row key={rg.id} href={`/portfolio?lens=ops&region=${rg.id}`} title={rg.name} note={`${rg.o.length} hotels · ${num(covers)} covers · ${lines[0] ? lines[0].toLowerCase() + " short" : "on plan"}`} right={<span className="text-[20px]">{short >= 1 ? signed(-Math.round(short), " h") : "on plan"} ›</span>} />;
+                })
+              : [...visibleO].sort((a, b) => Number(b.hours_short) - Number(a.hours_short)).map((r) => {
+                  const w = watch(r);
+                  return (
+                    <form key={r.property_id} action={switchProperty}>
+                      <input type="hidden" name="property_id" value={r.property_id ?? ""} />
+                      <button type="submit" className="row w-full text-left hover:bg-navy-mid/40">
+                        <div className="t min-w-0">
+                          <b>{r.property}</b>
+                          <span>
+                            {num(r.keys ?? 0)} keys · {w.note}
+                          </span>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-1">
+                          {w.right ? <div className="q">{w.right}</div> : <span className={`pill pill-${w.tone}`}>on plan</span>}
+                        </div>
+                      </button>
+                    </form>
+                  );
+                })}
+            {!visibleO.length ? <Empty>No hotel in scope.</Empty> : null}
+          </Card>
+        </>
+      )}
+      <p className="muted mt-4 text-[12.5px]">Tap a hotel to open its own screens. Figures in {q[0]?.currency ?? ctx.properties[0]?.currency ?? "USD"}, converted at each hotel&rsquo;s rate.</p>
     </>
-  );
-
-  if (isLive && outlet.href) {
-    return (
-      <Link
-        href={outlet.href}
-        className="flex items-center gap-3 rounded-2xl px-4 py-3.5 active:opacity-80 transition-opacity"
-        style={rowStyle}
-      >
-        {inner}
-      </Link>
-    );
-  }
-
-  return (
-    <button
-      onClick={onComingSoon}
-      className="w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left active:opacity-70 transition-opacity"
-      style={rowStyle}
-    >
-      {inner}
-    </button>
-  );
-}
-
-function Badge({ kind }: { kind: BadgeKind }) {
-  const isLive = kind === "live";
-  const label = BADGE_LABEL[kind];
-
-  return (
-    <span
-      className="text-[10px] font-bold tracking-[0.12em] uppercase px-2.5 py-1 rounded-full flex-shrink-0"
-      style={
-        isLive
-          ? {
-              color: "var(--lauds-accent-action)",
-              background: "color-mix(in srgb, var(--lauds-accent-action) 10%, transparent)",
-            }
-          : {
-              color: "var(--lauds-text-muted)",
-              background: "color-mix(in srgb, var(--lauds-divider) 15%, transparent)",
-            }
-      }
-    >
-      {label}
-    </span>
   );
 }

@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ── Device safe areas ─────────────────────────────────────────── */
+    --safe-area-inset-top: env(safe-area-inset-top);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom);
+    --safe-area-inset-left: env(safe-area-inset-left);
+    --safe-area-inset-right: env(safe-area-inset-right);
+
+    /* ── ServiceFlow design tokens (fallback = ServiceFlow default identity) ─────
+       Overridden at runtime by property_themes. All components MUST
+       use these variables — never hardcode hex values in JSX/CSS.
+       See CLAUDE.md §16 and app/src/lib/theme.ts.
+    ─────────────────────────────────────────────────────────────────────────── */
+    --lauds-bg-primary:     #FAF8F4;
+    --lauds-bg-card:        #FFFFFF;
+    --lauds-text-primary:   #2A2520;
+    --lauds-text-secondary: #4A453F;
+    --lauds-text-muted:     #6B6560;
+    --lauds-accent-action:  #16A6EC;  /* CTA, confirmations */
+    --lauds-accent-savings: #4A8F5E;  /* savings, ESG */
+    --lauds-accent-alert:   #E01E8C;  /* waste alerts */
+    --lauds-divider:        #E2DDD4;
+    --lauds-font-heading:    "Cormorant Garamond";
+    /* Champagne tones — not in property_themes but used as design tokens */
+    --lauds-champagne:       #A0784A;
+    --lauds-champagne-light: #C9A97A;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html,
+  body {
+    @apply antialiased;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-lauds-border;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -1,54 +1,23 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import type { Database } from "@/types/database";
+import type { Database } from "./database.types";
+import { supabasePublishableKey, supabaseUrl } from "./env";
 
-export function createClient() {
-  const cookieStore = cookies();
-
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // setAll called from a Server Component — read-only context.
-            // Ignored; middleware handles session refresh.
-          }
-        },
+/** Server client for Server Components, Server Actions and Route Handlers. Runs as the signed-in user: RLS applies. */
+export async function createClient() {
+  const cookieStore = await cookies();
+  return createServerClient<Database>(supabaseUrl(), supabasePublishableKey(), {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
       },
-    }
-  );
-}
-
-export function createServiceClient() {
-  const cookieStore = cookies();
-
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Ignored in read-only Server Component contexts.
-          }
-        },
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+        } catch {
+          // Called from a Server Component: cookies are read-only there; the proxy refreshes the session.
+        }
       },
-    }
-  );
+    },
+  });
 }
