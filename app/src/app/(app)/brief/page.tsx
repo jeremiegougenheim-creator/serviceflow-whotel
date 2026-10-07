@@ -33,21 +33,19 @@ export default async function BriefPage({ searchParams }: { searchParams: Promis
         {decisions.length ? (
           <div className="mt-3">
             {decisions.map((d) => (
-              <div key={d.id} className="row">
+              <div key={d.id} className="row row-decision">
                 <div className="t min-w-0">
                   <b>{typo(d.title)}</b>
                   <span>{d.detail ?? d.reason}</span>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  {d.status === "proposed" && mayWrite(ctx, "decisions") ? (
-                    <>
-                      <ActionButton small variant="ghost" action={rejectDecision.bind(null, d.id)} label="Keep as is" done="Kept as is" />
-                      <ActionButton small action={approveDecision.bind(null, d.id)} label="Approve" done="Approved" />
-                    </>
-                  ) : (
-                    <span className={`pill ${d.status === "approved" || d.status === "done" ? "pill-gn" : "pill-mt"}`}>{d.status}</span>
-                  )}
-                </div>
+                {d.status === "proposed" && mayWrite(ctx, "decisions") ? (
+                  <div className="acts">
+                    <ActionButton small variant="ghost" action={rejectDecision.bind(null, d.id)} label="Keep as is" done="Kept as is" />
+                    <ActionButton small action={approveDecision.bind(null, d.id)} label="Approve" done="Approved" />
+                  </div>
+                ) : (
+                  <span className={`pill ${d.status === "approved" || d.status === "done" ? "pill-gn" : "pill-mt"}`}>{d.status}</span>
+                )}
               </div>
             ))}
           </div>

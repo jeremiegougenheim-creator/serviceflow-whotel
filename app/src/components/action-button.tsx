@@ -11,7 +11,7 @@ type Result = { ok: true; label?: string } | { ok: false; error: string };
 export function ActionButton({ action, label, done, variant = "gold", className = "", small, disabled, title }: { action: () => Promise<Result>; label: string; done: string; variant?: "gold" | "ghost"; className?: string; small?: boolean; disabled?: boolean; title?: string }) {
   const [state, formAction, pending] = useActionState(async (): Promise<Result | null> => action(), null);
   const isDone = state?.ok === true;
-  const base = `btn ${small ? "!px-3 !py-2 !text-[12.5px]" : ""} ${className}`;
+  const base = `btn ${small ? "!px-3.5 !py-2 !text-[13px]" : ""} ${className}`;
   if (isDone) {
     return (
       <span className={`${base} btn-done`} role="status">

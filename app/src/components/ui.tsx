@@ -15,7 +15,7 @@ export function Kpi({ k, v, n, tone }: { k: ReactNode; v: ReactNode; n?: ReactNo
   const color = tone === "gn" ? "text-green" : tone === "am" ? "text-amber" : tone === "rd" ? "text-red" : "";
   return (
     <div className="card px-4 py-3.5">
-      <div className="eyebrow text-[10px]">{k}</div>
+      <div className="kpi-k">{k}</div>
       <div className={`kpi-v mt-1.5 ${color}`}>{v}</div>
       {n ? <div className="muted mt-1 text-[12.5px]">{n}</div> : null}
     </div>

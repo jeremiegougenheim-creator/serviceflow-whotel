@@ -119,7 +119,7 @@ export function Shell(p: ShellProps) {
 
         <nav className="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-(--sf-rule) bg-ink/95 px-2 pb-[max(10px,env(safe-area-inset-bottom))] pt-2 backdrop-blur md:hidden" aria-label="Sections">
           {p.nav.map((n) => (
-            <Link key={n.href} href={n.href} className={`flex min-w-14 flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] font-medium uppercase tracking-[0.14em] ${active === n.href ? "text-gold-light" : "text-mist"}`} aria-current={active === n.href ? "page" : undefined}>
+            <Link key={n.href} href={n.href} className={`flex min-w-14 flex-col items-center gap-1 rounded-xl px-2 py-1 text-[11px] font-medium uppercase tracking-[0.14em] ${active === n.href ? "text-gold-light" : "text-mist"}`} aria-current={active === n.href ? "page" : undefined}>
               <Icon name={n.icon} size={22} />
               {n.label}
             </Link>

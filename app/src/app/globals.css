@@ -23,7 +23,7 @@
   --color-mist: #7a9db5;       /* secondary text on dark */
   --color-ghost: #a9b8c4;
   --color-green: #4eaf8c;
-  --color-amber: #d49a38;
+  --color-amber: #ee8a46;      /* warning: orange 24°, apart from the bronze accent 34° · 5.9:1 on cards */
   --color-red: #e07a7a;        /* 4.6:1 on cards */
   --color-blue: #5b8fb9;
 
@@ -45,6 +45,7 @@ body {
   -webkit-font-smoothing: antialiased;
   font-size: 15px;
   line-height: 1.5;
+  font-variant-numeric: lining-nums;
 }
 h1, h2, h3, .display { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.01em; }
 em, .gold-em { font-style: italic; color: var(--color-gold-light); }
@@ -53,12 +54,14 @@ em, .gold-em { font-style: italic; color: var(--color-gold-light); }
 /* ── small primitives shared by every screen ── */
 .card { background: var(--color-navy); border: 1px solid var(--sf-rule); border-radius: var(--radius-card); }
 .card-raised { background: var(--color-navy-mid); border: 1px solid var(--sf-rule-strong); border-radius: var(--radius-card); }
-.eyebrow { font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--color-gold); font-weight: 500; }
-.kpi-v { font-family: var(--font-display); font-size: 34px; line-height: 1; color: var(--color-cream); }
-.kpi-v small { font-size: 16px; color: var(--color-gold-light); margin-left: 2px; }
+.eyebrow { font-size: 11.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--color-gold); font-weight: 500; }
+.kpi-k { font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-mist); font-weight: 500; }
+/* no colour here: this file is unlayered and would override the tone utilities (text-red, text-amber, text-green) */
+.kpi-v { font-family: var(--font-display); font-size: 34px; line-height: 1; font-variant-numeric: lining-nums tabular-nums; }
+.kpi-v small { font-size: 16px; color: var(--color-mist); margin-left: 2px; }
 .muted { color: var(--color-mist); }
 .rule { border-top: 1px solid var(--sf-rule); }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--radius-pill); padding: 11px 18px; font-weight: 500; font-size: 14px; line-height: 1; transition: background .15s, color .15s, opacity .15s; cursor: pointer; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border-radius: var(--radius-pill); padding: 11px 18px; font-weight: 500; font-size: 14px; line-height: 1; transition: background .15s, color .15s, opacity .15s; cursor: pointer; }
 .btn-gold { background: var(--color-gold); color: var(--color-ink); }
 .btn-gold:hover { background: var(--color-gold-light); }
 .btn-ghost { background: transparent; color: var(--color-cream); border: 1px solid var(--sf-rule-strong); }
@@ -73,22 +76,27 @@ em, .gold-em { font-style: italic; color: var(--color-gold-light); }
 .pill-gd { background: color-mix(in oklab, var(--color-gold) 16%, transparent); color: var(--color-gold-light); }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 0; border-top: 1px solid var(--sf-rule); }
 .row:first-child { border-top: 0; }
+.row-decision { flex-wrap: wrap; }
+.row-decision > .t { flex: 1 1 220px; }
+.row-decision > .acts { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex: 1 1 100%; }
+.row-decision > .acts > * { flex: 1 1 0; }
+@media (min-width: 640px) { .row-decision > .acts { flex: 0 0 auto; } .row-decision > .acts > * { flex: 0 0 auto; } }
 .row .t b { display: block; font-weight: 500; color: var(--color-cream); }
 .row .t span { display: block; font-size: 13px; color: var(--color-mist); margin-top: 2px; }
-.row .q { font-family: var(--font-display); font-size: 26px; line-height: 1; text-align: right; color: var(--color-cream); }
+.row .q { font-family: var(--font-display); font-size: 26px; line-height: 1; text-align: right; color: var(--color-cream); font-variant-numeric: lining-nums tabular-nums; }
 .strike { background: linear-gradient(160deg, var(--color-navy-mid), var(--color-navy)); border: 1px solid var(--sf-rule-strong); border-radius: var(--radius-card); padding: 18px; }
 .strike .tt { font-family: var(--font-display); font-size: 24px; line-height: 1.15; margin-top: 6px; }
 .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
 .tile { background: color-mix(in oklab, var(--color-ink) 55%, transparent); border-radius: 10px; padding: 10px 10px 8px; }
-.tile b { display: block; font-family: var(--font-display); font-size: 24px; line-height: 1; }
-.tile b small { font-size: 13px; color: var(--color-gold-light); }
-.tile span { display: block; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--color-mist); margin-top: 4px; }
-.grade { font-family: var(--font-display); font-size: 36px; line-height: 1; }
+.tile b { display: block; font-family: var(--font-display); font-size: 24px; line-height: 1; font-variant-numeric: lining-nums tabular-nums; }
+.tile b small { font-size: 13px; color: var(--color-mist); }
+.tile span { display: block; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--color-mist); margin-top: 4px; }
+.grade { font-family: var(--font-display); font-size: 36px; line-height: 1; font-variant-numeric: lining-nums tabular-nums; }
 .scroll-x { overflow-x: auto; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); }
 .scroll-x::-webkit-scrollbar { display: none; }
 @media (min-width: 768px) { .scroll-x { -webkit-mask-image: none; mask-image: none; } }
 .tabs { display: flex; gap: 6px; }
-.tabs a, .tabs button { border-radius: var(--radius-pill); padding: 7px 13px; font-size: 13px; color: var(--color-mist); border: 1px solid transparent; white-space: nowrap; }
+.tabs a, .tabs button { display: inline-flex; align-items: center; min-height: 40px; border-radius: var(--radius-pill); padding: 8px 14px; font-size: 13.5px; color: var(--color-mist); border: 1px solid transparent; white-space: nowrap; }
 .tabs a.on, .tabs button.on { color: var(--color-gold-light); border-color: var(--sf-rule-strong); background: color-mix(in oklab, var(--color-gold) 10%, transparent); }
 .input { width: 100%; background: var(--color-ink); border: 1px solid var(--sf-rule-strong); border-radius: 10px; padding: 11px 12px; color: var(--color-cream); font: inherit; }
 .input:focus { outline: 2px solid color-mix(in oklab, var(--color-gold) 50%, transparent); outline-offset: 1px; }

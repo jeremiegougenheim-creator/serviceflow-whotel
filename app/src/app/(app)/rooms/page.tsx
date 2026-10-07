@@ -31,7 +31,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
     { key: "vip", label: "VIP", href: "/rooms?view=vip" },
     { key: "done", label: "Done", href: "/rooms?view=done" },
   ];
-  const kindPill = (t: (typeof all)[number]) => (t.vip || t.kind === "vip_arrival" ? ["VIP", "gd"] : t.kind === "departure" ? ["DEP", "am"] : t.kind === "deep_clean" ? ["DEEP", "mt"] : ["STAY", "mt"]) as [string, "gd" | "am" | "mt"];
+  const kindPill = (t: (typeof all)[number]) => (t.vip || t.kind === "vip_arrival" ? ["VIP", "gd"] : t.kind === "departure" ? ["DEP", "mt"] : t.kind === "deep_clean" ? ["DEEP", "mt"] : ["STAY", "mt"]) as [string, "gd" | "am" | "mt"];
   const line = (t: (typeof all)[number]) => {
     const parts: string[] = [];
     if (t.kind === "vip_arrival" || t.arrival_at) parts.push(`${t.vip ? "VIP " : ""}arrival ${timeShort(t.arrival_at ?? t.needed_by ?? "")}`);

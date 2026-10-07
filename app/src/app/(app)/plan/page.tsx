@@ -79,7 +79,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
                     {num(g.total, 0)}
                     {g.station.unit !== "portions" ? <small className="ml-1 text-[13px] text-gold-light">{g.station.unit}</small> : null}
                   </div>
-                  <span className={`pill ${g.deltaPct == null ? "pill-mt" : g.deltaPct > 0 ? "pill-gn" : g.deltaPct < 0 ? "pill-am" : "pill-mt"}`}>{g.deltaPct == null ? "" : g.deltaPct === 0 ? "on par" : signed(g.deltaPct, "%")}</span>
+                  <span className="pill pill-mt">{g.deltaPct == null ? "" : g.deltaPct === 0 ? "on par" : signed(g.deltaPct, "%")}</span>
                 </div>
               </div>
             ))}
@@ -148,7 +148,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
                     <div className="q">{num(g.total, g.station.unit === "L" ? 0 : 0)}</div>
-                    <span className={`pill ${g.deltaPct == null || g.deltaPct === 0 ? "pill-mt" : g.deltaPct > 0 ? "pill-gn" : "pill-am"}`}>
+                    <span className="pill pill-mt">
                       {g.deltaPct == null || g.deltaPct === 0 ? "on par" : g.station.unit === "L" ? signed(Math.round(g.total - g.usual), " L") : signed(Math.round(g.total - g.usual))}
                     </span>
                   </div>

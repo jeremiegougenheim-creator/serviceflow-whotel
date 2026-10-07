@@ -60,22 +60,22 @@ export default async function HomePage() {
           <SectionHead title="Decisions waiting" note={<Link href="/brief" className="text-gold-light">Open the brief</Link>} />
           <Card>
             {open.slice(0, 3).map((d) => (
-              <div key={d.id} className="row">
+              <div key={d.id} className="row row-decision">
                 <div className="t min-w-0">
-                  <b>{typo(d.title)}</b>
+                  <b>
+                    {typo(d.title)}
+                    {Number(d.est_saving) >= 10 ? <small className="ml-2 whitespace-nowrap text-[13px] font-normal text-green">{money(d.est_saving, d.currency ?? ctx.property.currency)}</small> : null}
+                  </b>
                   <span>{d.detail}</span>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1">
-                  {Number(d.est_saving) >= 10 ? <span className="text-[13px] text-green">{money(d.est_saving, d.currency ?? ctx.property.currency)}</span> : null}
-                  {mayWrite(ctx, "decisions") ? (
-                    <div className="flex items-center gap-1.5">
-                      <ActionButton small variant="ghost" action={rejectDecision.bind(null, d.id)} label="Keep as is" done="Kept as is" />
-                      <ActionButton small action={approveDecision.bind(null, d.id)} label="Approve" done="Approved" />
-                    </div>
-                  ) : (
-                    <span className="pill pill-mt">{d.status}</span>
-                  )}
-                </div>
+                {mayWrite(ctx, "decisions") ? (
+                  <div className="acts">
+                    <ActionButton small variant="ghost" action={rejectDecision.bind(null, d.id)} label="Keep as is" done="Kept as is" />
+                    <ActionButton small action={approveDecision.bind(null, d.id)} label="Approve" done="Approved" />
+                  </div>
+                ) : (
+                  <span className="pill pill-mt">{d.status}</span>
+                )}
               </div>
             ))}
           </Card>
