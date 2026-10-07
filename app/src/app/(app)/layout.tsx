@@ -1,13 +1,10 @@
 import { Shell } from "@/components/shell";
-import { getContext } from "@/lib/data/context";
+import { getContext, getUnreadCount } from "@/lib/data/context";
 import { NAV, ROLE_NAME, ROLE_TAG } from "@/lib/nav";
 import { signOut, switchProperty, switchRole } from "@/lib/actions/ops";
-import { createClient } from "@/lib/supabase/server";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const ctx = await getContext();
-  const supabase = await createClient();
-  const { count } = await supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", ctx.userId).is("read_at", null);
+  const [ctx, count] = await Promise.all([getContext(), getUnreadCount()]);
   return (
     <Shell
       nav={NAV[ctx.role]}

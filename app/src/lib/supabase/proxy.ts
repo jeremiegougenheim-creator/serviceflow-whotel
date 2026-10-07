@@ -4,6 +4,10 @@ import { supabasePublishableKey, supabaseUrl } from "./env";
 
 const PUBLIC_PATHS = ["/login", "/auth", "/api/jobs", "/api/health", "/manifest.webmanifest", "/icons", "/welcome"];
 
+/** Set by the proxy after it has validated the session, read by getContext() so the page does not validate it a second time. Never trusted from the client: the proxy overwrites it on every request. */
+export const USER_ID_HEADER = "x-sf-user-id";
+export const USER_EMAIL_HEADER = "x-sf-user-email";
+
 /** Refreshes the Supabase session cookie on every request and sends signed-out visitors to /login. */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -41,5 +45,16 @@ export async function updateSession(request: NextRequest) {
     url.search = "";
     return NextResponse.redirect(url);
   }
-  return response;
+
+  // Pass the validated user to the server components (one Auth round-trip per request, not two).
+  const headers = new Headers(request.headers);
+  headers.delete(USER_ID_HEADER);
+  headers.delete(USER_EMAIL_HEADER);
+  if (user) {
+    headers.set(USER_ID_HEADER, user.id);
+    if (user.email) headers.set(USER_EMAIL_HEADER, user.email);
+  }
+  const forwarded = NextResponse.next({ request: { headers } });
+  response.cookies.getAll().forEach((c) => forwarded.cookies.set(c));
+  return forwarded;
 }

@@ -1341,6 +1341,12 @@ isOneToOne: false
 "sf_my_roles":
 { Args: { "p_property": string }; Returns: (string)[]
                            },
+"sf_context":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"sf_props_can":
+{ Args: { "p_roles": string[] }; Returns: (string)[]
+                           },
 "sf_portfolio_ops":
 { Args: { "p_date"?: string }; Returns: {
               "mape_4w_pct": number,"off_plan_pct": number,"covers_tomorrow": number,"hours_short": number,"keys": number,"property": string,"property_id": string,"region": string,"region_id": string,"short_lines": string

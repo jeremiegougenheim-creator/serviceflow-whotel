@@ -1,8 +1,9 @@
 import "server-only";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { USER_EMAIL_HEADER, USER_ID_HEADER } from "@/lib/supabase/proxy";
 import type { Tables } from "@/lib/supabase/database.types";
 import { nowClock, todayIn } from "@/lib/format";
 
@@ -26,6 +27,8 @@ export interface AppContext {
   /** every property the user can see, in display order */
   properties: Pick<Tables<"properties">, "id" | "name" | "slug" | "keys" | "timezone" | "currency" | "region_id" | "settings">[];
   property: Pick<Tables<"properties">, "id" | "name" | "slug" | "keys" | "timezone" | "currency" | "region_id" | "settings">;
+  /** active outlets of the selected property, in display order */
+  outlets: Tables<"outlets">[];
   /** the role used for navigation and permissions on the selected property */
   role: Role;
   roles: Role[];
@@ -40,21 +43,76 @@ export interface AppContext {
 const PROPERTY_COOKIE = "sf_property";
 const ROLE_COOKIE = "sf_role";
 
+type PropertyRow = AppContext["properties"][number];
+
+interface ContextPayload {
+  user: { id: string; email: string; full_name: string | null } | null;
+  memberships: Membership[];
+  properties: PropertyRow[];
+  outlets: Tables<"outlets">[];
+  unread: number;
+}
+
+/**
+ * Who is signed in, what they belong to, what they can see — in one call.
+ * The proxy has already validated the session and passes the user in a request header;
+ * the database returns profile, memberships, properties and the unread count through
+ * sf_context() (RLS applies: it runs as the caller). Before that function exists, the
+ * same four queries run in parallel.
+ */
+const loadContext = cache(async (): Promise<ContextPayload> => {
+  const supabase = await createClient();
+  const h = await headers();
+  let userId = h.get(USER_ID_HEADER);
+  let email = h.get(USER_EMAIL_HEADER) ?? "";
+  if (!userId) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) redirect("/login");
+    userId = user.id;
+    email = user.email ?? "";
+  }
+
+  const rpc = await supabase.rpc("sf_context");
+  if (!rpc.error && rpc.data && typeof rpc.data === "object") {
+    const d = rpc.data as unknown as Partial<ContextPayload>;
+    return {
+      user: d.user ?? { id: userId, email, full_name: null },
+      memberships: d.memberships ?? [],
+      properties: d.properties ?? [],
+      outlets: d.outlets ?? [],
+      unread: Number(d.unread ?? 0),
+    };
+  }
+
+  const [{ data: profile }, { data: memberships }, { data: properties }, { data: outlets }, { count }] = await Promise.all([
+    supabase.from("users").select("full_name").eq("id", userId).maybeSingle(),
+    supabase.from("memberships").select("id, role, scope_type, org_id, region_id, property_id").eq("user_id", userId).eq("active", true),
+    supabase.from("properties").select("id, name, slug, keys, timezone, currency, region_id, settings").eq("active", true).order("name"),
+    supabase.from("outlets").select("*").eq("active", true).order("sort_order"),
+    supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", userId).is("read_at", null),
+  ]);
+  return {
+    user: { id: userId, email, full_name: profile?.full_name ?? null },
+    memberships: (memberships ?? []) as Membership[],
+    properties: properties ?? [],
+    outlets: outlets ?? [],
+    unread: count ?? 0,
+  };
+});
+
+/** Unread notifications for the badge; shares the context call. */
+export async function getUnreadCount(): Promise<number> {
+  return (await loadContext()).unread;
+}
+
 /** Session, memberships and the selected property. Cached per request. */
 export const getContext = cache(async (): Promise<AppContext> => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, memberships, properties, outlets } = await loadContext();
   if (!user) redirect("/login");
-
-  const [{ data: profile }, { data: memberships }, { data: properties }] = await Promise.all([
-    supabase.from("users").select("full_name").eq("id", user.id).maybeSingle(),
-    supabase.from("memberships").select("id, role, scope_type, org_id, region_id, property_id").eq("user_id", user.id).eq("active", true),
-    supabase.from("properties").select("id, name, slug, keys, timezone, currency, region_id, settings").eq("active", true).order("name"),
-  ]);
-  const ms = (memberships ?? []) as Membership[];
-  const props = properties ?? [];
+  const ms = memberships;
+  const props = properties;
   if (!ms.length || !props.length) redirect("/welcome");
 
   const cookieStore = await cookies();
@@ -84,11 +142,12 @@ export const getContext = cache(async (): Promise<AppContext> => {
 
   return {
     userId: user.id,
-    email: user.email ?? "",
-    fullName: profile?.full_name ?? null,
+    email: user.email,
+    fullName: user.full_name,
     memberships: ms,
     properties: props,
     property,
+    outlets: outlets.filter((o) => o.property_id === property.id).sort((a, b) => a.sort_order - b.sort_order),
     role,
     roles,
     heldRoles,

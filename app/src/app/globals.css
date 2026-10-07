@@ -97,3 +97,9 @@ label.lbl { display: block; font-size: 12px; letter-spacing: .08em; text-transfo
 .table th { text-align: left; font-weight: 500; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--color-mist); padding: 8px 10px; border-bottom: 1px solid var(--sf-rule-strong); }
 .table td { padding: 10px; border-bottom: 1px solid var(--sf-rule); vertical-align: top; }
 .num { font-variant-numeric: tabular-nums; }
+
+/* loading skeleton: the shell paints at once, the screen streams in */
+.skel { position: relative; overflow: hidden; background: color-mix(in oklab, var(--color-mist) 10%, transparent); border-radius: 8px; }
+.skel::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--color-cream) 6%, transparent), transparent); animation: skel 1.4s infinite; }
+@keyframes skel { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .skel::after { animation: none; } }

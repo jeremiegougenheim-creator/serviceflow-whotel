@@ -23,10 +23,9 @@ export interface WaveSplit {
   covers: number;
 }
 
+/** The property's active outlets; they travel with the context, so this costs nothing. */
 export async function getOutlets(ctx: AppContext): Promise<Outlet[]> {
-  const supabase = await createClient();
-  const { data } = await supabase.from("outlets").select("*").eq("property_id", ctx.property.id).eq("active", true).order("sort_order");
-  return data ?? [];
+  return ctx.outlets;
 }
 
 /** The service date an outlet is "on": today until it closes, then tomorrow. */
