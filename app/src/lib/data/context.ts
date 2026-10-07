@@ -133,9 +133,9 @@ export const getContext = cache(async (): Promise<AppContext> => {
   const roles = chosen ? [chosen] : heldRoles;
   const isPortfolio = chosen ? PORTFOLIO_ROLES.includes(chosen) : PORTFOLIO_ROLES.includes(role) || ms.some((m) => m.scope_type !== "property" && PORTFOLIO_ROLES.includes(m.role));
 
-  let scopeLabel = "YOUR HOTEL";
+  let scopeLabel = property.name.toUpperCase();
   const top = ms.find((m) => m.scope_type === "org" && PORTFOLIO_ROLES.includes(m.role)) ?? ms.find((m) => m.scope_type === "region" && PORTFOLIO_ROLES.includes(m.role));
-  if (chosen && !PORTFOLIO_ROLES.includes(chosen)) scopeLabel = "YOUR HOTEL";
+  if (chosen && !PORTFOLIO_ROLES.includes(chosen)) scopeLabel = property.name.toUpperCase();
   else if (role === "ceo" || (!chosen && top?.scope_type === "org")) scopeLabel = `GROUP · ${props.length} HOTELS`;
   else if (role === "vp" || (!chosen && top?.scope_type === "region")) scopeLabel = `REGION · ${props.filter((p) => p.region_id === property.region_id).length} HOTELS`;
   else if (role === "owner") scopeLabel = `PORTFOLIO · ${props.length} HOTEL${props.length > 1 ? "S" : ""}`;

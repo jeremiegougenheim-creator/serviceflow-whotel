@@ -1,8 +1,9 @@
-import { ActionButton } from "@/components/action-button";
-import { Card, Empty, Row, ScreenHead } from "@/components/ui";
-import { approveDecision, reconcileVariance } from "@/lib/actions/ops";
+import { ActionButton, ActionGroup } from "@/components/action-button";
+import { DecisionRow } from "@/components/decision-row";
+import { Card, Chip, Empty, Row, ScreenHead } from "@/components/ui";
+import { reconcileVariance } from "@/lib/actions/ops";
 import { getContext, mayWrite } from "@/lib/data/context";
-import { money, plusDays, weekday } from "@/lib/format";
+import { plusDays, typo, weekday } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Tonight" };
@@ -20,6 +21,14 @@ export default async function TonightPage({ searchParams }: { searchParams: Prom
     supabase.from("decisions").select("*").eq("property_id", ctx.property.id).eq("service_date", tomorrow).in("source", ["nightly", "engine"]).neq("status", "expired").order("est_saving", { ascending: false }).limit(12),
     supabase.from("pos_variances").select("id").eq("property_id", ctx.property.id).eq("status", "open"),
   ]);
+  // tonight's roster moves are roster suggestions: show the suggestion's own words and status
+  const sIds = (actions ?? []).map((a) => (a.payload as { suggestion_id?: string } | null)?.suggestion_id).filter((x): x is string => !!x);
+  const { data: sugg } = sIds.length ? await supabase.from("roster_suggestions").select("id, status, title").in("id", sIds) : { data: [] as { id: string; status: string; title: string }[] };
+  const linkOf = (a: { payload: unknown }) => {
+    const id = (a.payload as { suggestion_id?: string } | null)?.suggestion_id;
+    const s = id ? (sugg ?? []).find((x) => x.id === id) : null;
+    return s ? { status: s.status, title: s.title.replace(/\.$/, "") } : null;
+  };
   const grades = (report?.grades ?? {}) as Record<"fnb" | "labour" | "leakage" | "esg", Grade>;
   const summary = (report?.summary ?? {}) as { subline?: string };
   const best = report?.best_log as { outlet: string; note: string; score: string } | null;
@@ -32,13 +41,13 @@ export default async function TonightPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <ScreenHead hi={<>Tonight, <em>graded.</em></>} sub={summary.subline ?? `${ctx.property.name} · ${date}`} />
+      <ScreenHead hi={<>Tonight, <em>graded.</em></>} sub={summary.subline ?? `${ctx.property.name} · ${weekday(date)}`} />
       {report ? (
         <div className="grid grid-cols-4 gap-2">
           {order.map((k) => (
             <div key={k} className="card px-2 py-3 text-center" title={grades[k]?.note}>
               <div className={`grade ${tone(grades[k])}`}>{grades[k]?.grade ?? "—"}</div>
-              <div className="eyebrow mt-1 text-[9.5px]">{labels[k]}</div>
+              <div className="kpi-k mt-1.5 !text-[11px] !tracking-[0.1em]">{labels[k]}</div>
             </div>
           ))}
         </div>
@@ -57,29 +66,28 @@ export default async function TonightPage({ searchParams }: { searchParams: Prom
 
       <div className="mb-1 mt-6 flex items-baseline justify-between">
         <h2 className="text-[20px]">{weekday(tomorrow)}</h2>
-        <span className="muted text-[12.5px]">{three.length} actions</span>
+        <span className="muted text-[12.5px]">{three.length} {three.length === 1 ? "action" : "actions"}</span>
       </div>
       <Card>
-        {three.map((a) => (
-          <div key={a.id} className="row">
-            <div className="t min-w-0">
-              <b>{a.title}</b>
-              <span>{a.detail ?? a.reason}</span>
-            </div>
-            <div className="flex shrink-0 flex-col items-end gap-1">
-              <span className="font-display text-[20px] text-green">{Number(a.est_saving) > 0 ? money(a.est_saving, a.currency ?? ctx.property.currency) : ""}</span>
-              {a.status === "proposed" && (a.kind === "reconcile" ? mayWrite(ctx, "pos_variances") : mayWrite(ctx, "decisions")) ? (
-                a.kind === "reconcile" && variances?.[0] ? (
-                  <ActionButton small action={reconcileVariance.bind(null, variances[0].id)} label="Reconcile" done="Reconciled" />
-                ) : (
-                  <ActionButton small action={approveDecision.bind(null, a.id)} label="Approve" done="Approved" />
-                )
+        {three.map((a) =>
+          a.kind === "reconcile" ? (
+            <div key={a.id} className="row row-decision">
+              <div className="t min-w-0">
+                <b>{typo(a.title)}</b>
+                <span>{a.detail ?? a.reason}</span>
+              </div>
+              {a.status === "proposed" && variances?.[0] && mayWrite(ctx, "pos_variances") ? (
+                <ActionGroup className="acts">
+                  <ActionButton small actionKey={`${variances[0].id}:reconcile`} action={reconcileVariance.bind(null, variances[0].id)} label="Reconcile" done="Reconciled" />
+                </ActionGroup>
               ) : (
-                <span className="pill pill-gn">{a.status}</span>
+                <Chip entity="decision" status={variances?.length ? a.status : "done"} at={a.decided_at} tz={ctx.property.timezone} />
               )}
             </div>
-          </div>
-        ))}
+          ) : (
+            <DecisionRow key={a.id} d={a} ctx={ctx} linked={linkOf(a)} />
+          ),
+        )}
         {!three.length ? <Row title="No action waiting for tomorrow." /> : null}
       </Card>
 

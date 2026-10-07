@@ -13,9 +13,24 @@ import type { Json, TablesUpdate } from "@/lib/supabase/database.types";
 
 type J = NonNullable<Json>;
 
-type Result = { ok: true; label?: string } | { ok: false; error: string };
+type Result = { ok: true; label?: string; id?: string } | { ok: false; error: string; stale?: boolean };
 const fail = (e: { message: string } | null | undefined, fallback = "Not allowed"): Result => ({ ok: false, error: e?.message ?? fallback });
-const NOT_ALLOWED = "Not allowed for your role, or already decided";
+const NOT_ALLOWED = "Your role cannot make this change";
+const UNDO_MS = 10 * 60_000;
+
+type Decidable = "decisions" | "roster_suggestions" | "live_events" | "planned_works" | "pos_variances";
+const WORD: Record<string, string> = { approved: "approved", done: "done", rejected: "kept as is", applied: "applied", dismissed: "set aside", confirmed: "confirmed", reconciled: "reconciled", expired: "superseded", cancelled: "cancelled" };
+
+/**
+ * Why a write touched nothing: the row was decided by someone else (the screen is stale and
+ * refreshes), or the role may not make it. Two different messages for two different situations.
+ */
+async function refused(supabase: Awaited<ReturnType<typeof createClient>>, table: Decidable, id: string, waiting: string[]): Promise<Result> {
+  const { data } = await supabase.from(table).select("status").eq("id", id).maybeSingle();
+  const status = (data as { status?: string } | null)?.status;
+  if (!status || waiting.includes(status)) return { ok: false, error: NOT_ALLOWED };
+  return { ok: false, error: `Already ${WORD[status] ?? status.replace(/_/g, " ")} by someone else. The screen is up to date now.`, stale: true };
+}
 
 /**
  * An update that row level security filters out returns no error and no rows. Every write
@@ -41,11 +56,14 @@ async function me() {
 
 export async function switchProperty(formData: FormData) {
   const id = String(formData.get("property_id") ?? "");
+  const next = String(formData.get("next") ?? "");
   if (id) {
     const store = await cookies();
     store.set(PROPERTY_COOKIE_NAME, id, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
   }
   revalidatePath("/", "layout");
+  // from the portfolio, a tap on a hotel opens that hotel's screens
+  if (next.startsWith("/") && !next.startsWith("//")) redirect(next);
 }
 
 /** "View as": switch the role in view among the roles the user already holds on this hotel. Grants nothing. */
@@ -67,21 +85,47 @@ export async function signOut() {
 
 // ── decisions and plans (human in the loop) ─────────────────────────────────
 
+function revalidateDecisions() {
+  for (const p of ["/brief", "/home", "/tonight", "/roster", "/plan"]) revalidatePath(p);
+}
+
 export async function approveDecision(id: string): Promise<Result> {
   const { supabase, user } = await me();
+  // a roster move proposed tonight is the roster suggestion itself: approving it applies it, once
+  const { data: d } = await supabase.from("decisions").select("payload, status").eq("id", id).maybeSingle();
+  const suggestionId = (d?.payload as { suggestion_id?: string } | null)?.suggestion_id;
+  if (suggestionId && d?.status === "proposed") {
+    const applied = await applyRosterSuggestion(suggestionId);
+    if (!applied.ok) return applied;
+    revalidateDecisions();
+    return { ok: true, label: "Applied to the roster" };
+  }
   const r = touched(await supabase.from("decisions").update({ status: "approved", decided_by: user.id, decided_at: new Date().toISOString() }).eq("id", id).eq("status", "proposed").select("id"), "Approved");
-  if (!r.ok) return r;
-  revalidatePath("/brief");
-  revalidatePath("/home");
-  revalidatePath("/tonight");
+  if (!r.ok) return refused(supabase, "decisions", id, ["proposed"]);
+  revalidateDecisions();
   return r;
 }
 
 export async function rejectDecision(id: string): Promise<Result> {
   const { supabase, user } = await me();
   const r = touched(await supabase.from("decisions").update({ status: "rejected", decided_by: user.id, decided_at: new Date().toISOString() }).eq("id", id).eq("status", "proposed").select("id"), "Kept as is");
-  if (!r.ok) return r;
-  revalidatePath("/brief");
+  if (!r.ok) return refused(supabase, "decisions", id, ["proposed"]);
+  const { data: d } = await supabase.from("decisions").select("payload").eq("id", id).maybeSingle();
+  const suggestionId = (d?.payload as { suggestion_id?: string } | null)?.suggestion_id;
+  if (suggestionId) await supabase.from("roster_suggestions").update({ status: "dismissed", applied_by: user.id, applied_at: new Date().toISOString() }).eq("id", suggestionId).eq("status", "proposed").select("id");
+  revalidateDecisions();
+  return r;
+}
+
+/** Undo, for ten minutes, by the person who decided. A decision that moved shifts is not undone here. */
+export async function revertDecision(id: string): Promise<Result> {
+  const { supabase, user } = await me();
+  const since = new Date(Date.now() - UNDO_MS).toISOString();
+  const { data: d } = await supabase.from("decisions").select("payload").eq("id", id).maybeSingle();
+  if ((d?.payload as { suggestion_id?: string } | null)?.suggestion_id) return { ok: false, error: "Roster moves are undone on the roster" };
+  const r = touched(await supabase.from("decisions").update({ status: "proposed", decided_by: null, decided_at: null }).eq("id", id).in("status", ["approved", "rejected"]).eq("decided_by", user.id).gte("decided_at", since).select("id"), "Undone");
+  if (!r.ok) return { ok: false, error: "Only the person who decided can undo, within ten minutes" };
+  revalidateDecisions();
   return r;
 }
 
@@ -114,6 +158,30 @@ export async function setStationStatus(planLineId: string, status: "prepped" | "
   return r;
 }
 
+/**
+ * The chef changes one station's quantity before confirming: the opening wave moves by delta
+ * (never below zero) and the correction is kept for the next plan.
+ */
+export async function adjustStation(input: { forecastId: string; stationId: string; delta: number }): Promise<Result> {
+  const { supabase, user } = await me();
+  const [{ data: lines }, { data: f }] = await Promise.all([
+    supabase.from("station_plans").select("id, qty, status, property_id, waves(starts_at)").eq("forecast_id", input.forecastId).eq("station_id", input.stationId),
+    supabase.from("forecasts").select("outlet_id, service_date").eq("id", input.forecastId).maybeSingle(),
+  ]);
+  const list = (lines ?? []).sort((a, b) => String((a.waves as { starts_at?: string } | null)?.starts_at ?? "").localeCompare(String((b.waves as { starts_at?: string } | null)?.starts_at ?? "")));
+  const first = list[0];
+  if (!first) return { ok: false, error: "No plan line for this station" };
+  if (list.some((l) => l.status === "prepped" || l.status === "closed")) return { ok: false, error: "Already prepped: change it on Live" };
+  const total = list.reduce((s, l) => s + Number(l.qty), 0);
+  const qty = Math.max(0, Number(first.qty) + input.delta);
+  const r = touched(await supabase.from("station_plans").update({ qty, reason: `chef ${input.delta > 0 ? "+" : "−"}${Math.abs(input.delta)}` }).eq("id", first.id).select("id"), `${input.delta > 0 ? "+" : "−"}${Math.abs(input.delta)}`);
+  if (!r.ok) return r;
+  if (total > 0 && f) await supabase.from("plan_corrections").insert({ property_id: first.property_id, outlet_id: f.outlet_id, station_id: input.stationId, service_date: f.service_date, factor: Math.min(3, Math.max(0.2, Math.round(((total - Number(first.qty) + qty) / total) * 1000) / 1000)), note: "chef, before service", created_by: user.id });
+  revalidatePath("/plan");
+  revalidatePath("/live");
+  return r;
+}
+
 /** A person's correction on a station: enters the next plan through the learning loop. */
 export async function correctStation(input: { outletId: string; propertyId: string; stationId: string; serviceDate: string; factor: number; note?: string }): Promise<Result> {
   const { supabase, user } = await me();
@@ -134,7 +202,7 @@ export async function actOnLiveEvent(id: string, decision: "approved" | "dismiss
   const { supabase, user } = await me();
   const now = new Date().toISOString();
   const { data: ev } = await supabase.from("live_events").select("*").eq("id", id).eq("status", "open").maybeSingle();
-  if (!ev) return { ok: false, error: NOT_ALLOWED };
+  if (!ev) return refused(supabase, "live_events", id, ["open"]);
   let decisionId: string | null = null;
   if (decision === "approved") {
     const payload = (ev.payload ?? {}) as { add?: number; nextWave?: string; forecast_id?: string; stations?: { id: string }[] };
@@ -151,8 +219,8 @@ export async function actOnLiveEvent(id: string, decision: "approved" | "dismiss
       if (line) await supabase.from("station_plans").update({ qty: Number(line.qty) + payload.add, reason: `+${payload.add} on approval · ${ev.title}` }).eq("id", line.id).select("id");
     }
   }
-  const r = touched(await supabase.from("live_events").update({ status: decision, acted_by: user.id, acted_at: now, decision_id: decisionId }).eq("id", id).eq("status", "open").select("id"), decision === "approved" ? "Approved" : "Dismissed");
-  if (!r.ok) return r;
+  const r = touched(await supabase.from("live_events").update({ status: decision, acted_by: user.id, acted_at: now, decision_id: decisionId }).eq("id", id).eq("status", "open").select("id"), decision === "approved" ? "Approved" : "Not now");
+  if (!r.ok) return refused(supabase, "live_events", id, ["open"]);
   revalidatePath("/live");
   return r;
 }
@@ -208,7 +276,18 @@ export async function logWaste(input: WasteLogInput): Promise<Result> {
   await supabase.from("voice_logs").insert({ property_id: input.propertyId, outlet_id: input.outletId, department: "kitchen", transcript: input.transcript, language: input.language, parsed: { intent: "waste", station_id: input.stationId, kg: input.kg, reason: input.reason } as J, applied_table: "waste_logs", applied_id: data.id, confidence: 1, seconds_to_log: input.secondsToLog, logged_by: user.id });
   revalidatePath("/waste");
   revalidatePath("/live");
-  return { ok: true, label: `${input.kg} kg logged` };
+  return { ok: true, label: `${input.kg} kg logged`, id: data.id };
+}
+
+/** Undo a waste log: the author, within ten minutes (row level security allows a day). */
+export async function undoWasteLog(id: string): Promise<Result> {
+  const { supabase, user } = await me();
+  const since = new Date(Date.now() - UNDO_MS).toISOString();
+  const r = touched(await supabase.from("waste_logs").delete().eq("id", id).eq("logged_by", user.id).gte("logged_at", since).select("id"), "Removed");
+  if (!r.ok) return { ok: false, error: "Only the person who logged it can remove it, within ten minutes" };
+  revalidatePath("/waste");
+  revalidatePath("/live");
+  return r;
 }
 
 export async function logRoom(input: { propertyId: string; roomId: string; serviceDate: string; status: "done" | "in_progress" | "inspected" | "skipped"; minutes: number | null; transcript: string; language: string | null; dndLifted?: boolean }): Promise<Result> {
@@ -267,6 +346,16 @@ export async function updateRoomTask(id: string, status: "todo" | "in_progress" 
   return r;
 }
 
+/** Undo "Done" within ten minutes: the room goes back on the list where it was. */
+export async function revertRoomTask(id: string): Promise<Result> {
+  const { supabase } = await me();
+  const since = new Date(Date.now() - UNDO_MS).toISOString();
+  const r = touched(await supabase.from("room_tasks").update({ status: "todo", done_at: null, minutes: null }).eq("id", id).eq("status", "done").gte("done_at", since).select("id"), "Back on the list");
+  if (!r.ok) return { ok: false, error: "Only a room marked done in the last ten minutes can be undone" };
+  revalidatePath("/rooms");
+  return r;
+}
+
 /** "Assign the inspection": every VIP room still to do today gets a supervisor inspection task. */
 export async function assignInspections(propertyId: string, serviceDate: string): Promise<Result> {
   const { supabase } = await me();
@@ -280,14 +369,15 @@ export async function assignInspections(propertyId: string, serviceDate: string)
   }
   if ((tasks ?? []).length && !n) return { ok: false, error: NOT_ALLOWED };
   revalidatePath("/rooms");
-  return { ok: true, label: n ? `Inspection assigned · ${n} rooms` : "Nothing to assign" };
+  return { ok: true, label: n ? `Inspection assigned · ${n} ${n === 1 ? "room" : "rooms"}` : "Nothing to assign" };
 }
 
 export async function updateWorkOrder(id: string, status: "open" | "in_progress" | "planned" | "closed"): Promise<Result> {
   const { supabase } = await me();
   const patch: TablesUpdate<"work_orders"> = { status };
   if (status === "closed") patch.closed_at = new Date().toISOString();
-  const r = touched(await supabase.from("work_orders").update(patch).eq("id", id).select("id"), status === "closed" ? "Closed" : status === "in_progress" ? "In progress" : status);
+  else patch.closed_at = null;
+  const r = touched(await supabase.from("work_orders").update(patch).eq("id", id).select("id"), status === "closed" ? "Closed" : status === "in_progress" ? "Started" : status === "open" ? "Reopened" : "Planned");
   if (!r.ok) return r;
   revalidatePath("/faults");
   return r;
@@ -296,7 +386,7 @@ export async function updateWorkOrder(id: string, status: "open" | "in_progress"
 export async function confirmPlannedWorks(propertyId: string, ids: string[]): Promise<Result> {
   const { supabase, user } = await me();
   const r = touched(await supabase.from("planned_works").update({ status: "confirmed", confirmed_by: user.id, confirmed_at: new Date().toISOString() }).eq("property_id", propertyId).in("id", ids).eq("status", "proposed").select("id"), "Slots confirmed");
-  if (!r.ok) return r;
+  if (!r.ok) return ids[0] ? refused(supabase, "planned_works", ids[0], ["proposed"]) : r;
   revalidatePath("/faults");
   return r;
 }
@@ -305,7 +395,7 @@ export async function confirmPlannedWorks(propertyId: string, ids: string[]): Pr
 export async function applyRosterSuggestion(id: string): Promise<Result> {
   const { supabase, user } = await me();
   const { data: s, error } = await supabase.from("roster_suggestions").select("*").eq("id", id).eq("status", "proposed").maybeSingle();
-  if (error || !s) return error ? fail(error) : { ok: false, error: NOT_ALLOWED };
+  if (error || !s) return error ? fail(error) : refused(supabase, "roster_suggestions", id, ["proposed"]);
   // the right to apply is checked before any shift moves: a reader never half-applies a change
   const { data: allowed } = await supabase.rpc("sf_can", { p_property: s.property_id, p_roles: ["gm", "fnb_mgr", "chef", "hk"] });
   if (!allowed) return { ok: false, error: NOT_ALLOWED };
@@ -330,24 +420,30 @@ export async function applyRosterSuggestion(id: string): Promise<Result> {
     }
     await supabase.from("roster_shifts").insert({ property_id: s.property_id, service_line_id: m.service_line_id, service_date: m.to_date, starts_at: line?.starts_at ?? "06:00", ends_at: line?.ends_at ?? "14:00", hours: m.hours, status: "draft", note: m.source === "pool" ? "from the pool" : `moved from ${m.from_date}` });
   }
-  const r = touched(await supabase.from("roster_suggestions").update({ status: "applied", applied_by: user.id, applied_at: new Date().toISOString() }).eq("id", id).select("id"), "Change applied");
+  const r = touched(await supabase.from("roster_suggestions").update({ status: "applied", applied_by: user.id, applied_at: new Date().toISOString() }).eq("id", id).select("id"), "Move applied");
   if (!r.ok) return r;
+  // the same move proposed in tonight's report is now decided too
+  await supabase.from("decisions").update({ status: "approved", decided_by: user.id, decided_at: new Date().toISOString() }).eq("property_id", s.property_id).eq("payload->>suggestion_id", id).eq("status", "proposed").select("id");
   revalidatePath("/roster");
+  revalidatePath("/tonight");
+  revalidatePath("/home");
   return r;
 }
 
 export async function dismissRosterSuggestion(id: string): Promise<Result> {
   const { supabase, user } = await me();
-  const r = touched(await supabase.from("roster_suggestions").update({ status: "dismissed", applied_by: user.id, applied_at: new Date().toISOString() }).eq("id", id).eq("status", "proposed").select("id"), "Dismissed");
-  if (!r.ok) return r;
+  const r = touched(await supabase.from("roster_suggestions").update({ status: "dismissed", applied_by: user.id, applied_at: new Date().toISOString() }).eq("id", id).eq("status", "proposed").select("id"), "Set aside");
+  if (!r.ok) return refused(supabase, "roster_suggestions", id, ["proposed"]);
+  await supabase.from("decisions").update({ status: "rejected", decided_by: user.id, decided_at: new Date().toISOString() }).eq("payload->>suggestion_id", id).eq("status", "proposed").select("id");
   revalidatePath("/roster");
+  revalidatePath("/tonight");
   return r;
 }
 
 export async function reconcileVariance(id: string): Promise<Result> {
   const { supabase, user } = await me();
   const r = touched(await supabase.from("pos_variances").update({ status: "reconciled", resolved_by: user.id, resolved_at: new Date().toISOString() }).eq("id", id).eq("status", "open").select("id"), "Reconciled");
-  if (!r.ok) return r;
+  if (!r.ok) return refused(supabase, "pos_variances", id, ["open"]);
   revalidatePath("/tonight");
   return r;
 }
@@ -357,4 +453,14 @@ export async function markNotificationsRead(): Promise<Result> {
   await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("user_id", user.id).is("read_at", null);
   revalidatePath("/notifications");
   return { ok: true };
+}
+
+/** Appearance: system (follows the device), light (paper) or dark (night). Kept for a year on this device. */
+export async function setTheme(formData: FormData) {
+  const v = String(formData.get("theme") ?? "system");
+  const theme = v === "light" || v === "dark" ? v : "system";
+  const store = await cookies();
+  if (theme === "system") store.delete("sf_theme");
+  else store.set("sf_theme", theme, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+  revalidatePath("/", "layout");
 }

@@ -1,7 +1,8 @@
 import { ActionButton } from "@/components/action-button";
 import { VoiceLogger } from "@/components/voice-logger";
-import { Card, Grid, Kpi, Note, Row, ScreenHead, Strike, Tabs } from "@/components/ui";
-import { assignInspections, updateRoomTask } from "@/lib/actions/ops";
+import { Card, Chip, Grid, Kpi, Note, Row, ScreenHead, Strike, Tabs } from "@/components/ui";
+import { assignInspections, revertRoomTask, updateRoomTask } from "@/lib/actions/ops";
+import { undoable } from "@/lib/status";
 import { getContext, mayWrite } from "@/lib/data/context";
 import { num, plural, timeShort } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -18,6 +19,8 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
   const done = all.filter((t) => t.status === "done" || t.status === "inspected");
   const inspected = all.filter((t) => t.status === "inspected");
   const todo = all.filter((t) => t.status === "todo" || t.status === "in_progress");
+  // a room marked done stays in its place for ten minutes, with an Undo: the next one never slides under the thumb
+  const nextRooms = all.filter((t) => t.status === "todo" || t.status === "in_progress" || (t.status === "done" && undoable(t.done_at)));
   const vip = all.filter((t) => t.vip || t.kind === "vip_arrival");
   const deps = all.filter((t) => t.kind === "departure");
   const minutes = done.filter((t) => t.minutes).map((t) => t.minutes!);
@@ -63,7 +66,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
             <span className="muted text-[12.5px]">Priority order</span>
           </div>
           <Card>
-            {todo.slice(0, 8).map((t) => {
+            {nextRooms.slice(0, 8).map((t) => {
               const [p, tone] = kindPill(t);
               return (
                 <div key={t.id} className="row">
@@ -75,7 +78,16 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <span className={`pill pill-${tone}`}>{p}</span>
-                    {mayWrite(ctx, "room_tasks") ? <ActionButton small variant="ghost" action={updateRoomTask.bind(null, t.id, "done", undefined)} label="Done" done="Done" /> : null}
+                    {t.status === "done" ? (
+                      <>
+                        <Chip entity="room" status="done" at={t.done_at} tz={ctx.property.timezone} />
+                        {mayWrite(ctx, "room_tasks") ? <ActionButton small variant="ghost" actionKey={`${t.id}:undo:${t.done_at}`} action={revertRoomTask.bind(null, t.id)} label="Undo" done="Back on the list" /> : null}
+                      </>
+                    ) : mayWrite(ctx, "room_tasks") ? (
+                      <ActionButton small variant="tick" actionKey={`${t.id}:done`} action={updateRoomTask.bind(null, t.id, "done", undefined)} label="Done" done="Done" />
+                    ) : (
+                      <Chip entity="room" status={t.status} />
+                    )}
                   </div>
                 </div>
               );
@@ -111,7 +123,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
               { b: vip.filter((t) => t.status === "inspected").length, s: "ready" },
               { b: vip.filter((t) => t.status !== "inspected").length, s: "to do" },
             ]}
-            action={mayWrite(ctx, "room_tasks") ? <ActionButton action={assignInspections.bind(null, ctx.property.id, ctx.today)} label="Assign the inspection" done="Inspection assigned" /> : undefined}
+            action={mayWrite(ctx, "room_tasks") ? <ActionButton actionKey={`insp:${ctx.property.id}:${ctx.today}`} action={assignInspections.bind(null, ctx.property.id, ctx.today)} label="Assign the inspection" done="Inspection assigned" /> : undefined}
           />
           <div className="mb-1 mt-6 flex items-baseline justify-between">
             <h2 className="text-[20px]">Arrivals</h2>
@@ -127,7 +139,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
                   <span>{t.status === "inspected" ? `inspected ${t.inspected_at ? new Date(t.inspected_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: ctx.property.timezone }) : ""}` : line(t)}</span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {t.status === "inspected" ? <span className="pill pill-gn">ready</span> : t.status === "done" && mayWrite(ctx, "room_tasks") ? <ActionButton small action={updateRoomTask.bind(null, t.id, "inspected", undefined)} label="Inspected" done="Inspected" /> : t.status === "done" ? <span className="pill pill-mt">done</span> : <span className="text-[18px]">{timeShort(t.arrival_at ?? t.needed_by ?? "")}</span>}
+                  {t.status === "inspected" ? <span className="pill pill-gn">Ready</span> : t.status === "done" && mayWrite(ctx, "room_tasks") ? <ActionButton small variant="tick" actionKey={`${t.id}:insp`} action={updateRoomTask.bind(null, t.id, "inspected", undefined)} label="Inspected" done="Inspected" /> : t.status === "done" ? <Chip entity="room" status="done" /> : <span className="text-[18px]">{timeShort(t.arrival_at ?? t.needed_by ?? "")}</span>}
                 </div>
               </div>
             ))}

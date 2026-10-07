@@ -1,12 +1,15 @@
 import { ActionButton } from "@/components/action-button";
 import { VoiceLogger } from "@/components/voice-logger";
-import { Card, Grid, Kpi, Note, Row, ScreenHead, Strike, Tabs } from "@/components/ui";
+import { Card, Chip, Grid, Kpi, Note, Row, ScreenHead, Strike, Tabs } from "@/components/ui";
+import { undoable } from "@/lib/status";
 import { confirmPlannedWorks, updateWorkOrder } from "@/lib/actions/ops";
 import { getContext, mayWrite } from "@/lib/data/context";
 import { hhmm, num, plural, plusDays, startOfDayIn } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Maintenance" };
+
+const IMPACT: Record<string, string | null> = { guest_facing: "guest-facing", suites: "suites", in_room: "guest in room", outlet: "outlet", back_of_house: "back of house", none: null };
 
 export default async function FaultsPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const ctx = await getContext();
@@ -35,6 +38,8 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
     const counts = { high: open.filter((w) => w.priority === "high").length, medium: open.filter((w) => w.priority === "medium").length, planned: plannedCount ?? 0, closed: all.filter((w) => w.status === "closed" && w.closed_at && w.closed_at >= dayStart).length };
     const impact: Record<string, number> = { guest_facing: 0, suites: 1, in_room: 2, outlet: 3, back_of_house: 4, none: 5 };
     open.sort((a, b) => impact[a.guest_impact] - impact[b.guest_impact] || (a.priority === "high" ? -1 : 1));
+    // a fault closed in the last ten minutes keeps its place, with Reopen
+    const listed = [...open, ...all.filter((w) => w.status === "closed" && undoable(w.closed_at))];
     const due = (w: (typeof all)[number]) => (w.due_at ? (w.due_at.slice(0, 10) === ctx.today ? (hhmm(w.due_at, tz) >= "22:00" ? "tonight" : hhmm(w.due_at, tz)) : new Date(w.due_at).toLocaleDateString("en-GB", { weekday: "short", timeZone: tz })) : null);
     const guestFacing = open.filter((w) => w.guest_impact === "guest_facing" || w.guest_impact === "suites" || w.guest_impact === "in_room").length;
     return (
@@ -58,19 +63,35 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
           <span className="muted text-[12.5px]">By guest impact</span>
         </div>
         <Card>
-          {open.map((w) => (
-            <div key={w.id} className="row">
-              <div className="t min-w-0">
-                <b>{w.title}</b>
-                <span>{[w.detail, w.status === "in_progress" && !/in progress/i.test(w.detail ?? "") ? "in progress" : null].filter(Boolean).join(" · ")}</span>
+          {listed.map((w) => {
+            const pr = w.priority === "high" ? ["High", "rd"] : w.priority === "medium" ? ["Medium", "am"] : ["Low", "mt"];
+            const when = due(w);
+            const detail = w.detail?.replace(/\s*·?\s*in progress$/i, "") ?? "";
+            const impactWord = IMPACT[w.guest_impact];
+            const note = [detail, impactWord && !detail.toLowerCase().includes(impactWord) ? impactWord : null, when ? `due ${when}` : null, w.status === "closed" ? null : ago(w.opened_at)].filter(Boolean).join(" · ");
+            return (
+              <div key={w.id} className="row">
+                <div className="t min-w-0">
+                  <b>{w.title}</b>
+                  <span>{note}</span>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1.5">
+                  <div className="flex items-center gap-1.5">
+                    {w.status === "in_progress" ? <Chip entity="work_order" status="in_progress" /> : null}
+                    {w.status === "closed" ? <Chip entity="work_order" status="closed" at={w.closed_at} tz={tz} /> : <span className={`pill pill-${pr[1]}`}>{pr[0]}</span>}
+                  </div>
+                  {mayWrite(ctx, "work_orders") ? (
+                    w.status === "closed" ? (
+                      <ActionButton small variant="ghost" actionKey={`${w.id}:reopen:${w.closed_at}`} action={updateWorkOrder.bind(null, w.id, "in_progress")} label="Reopen" done="Reopened" />
+                    ) : (
+                      <ActionButton small variant="tick" actionKey={`${w.id}:${w.status}`} action={updateWorkOrder.bind(null, w.id, w.status === "open" ? "in_progress" : "closed")} label={w.status === "open" ? "Start" : "Close"} done={w.status === "open" ? "Started" : "Closed"} />
+                    )
+                  ) : null}
+                </div>
               </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
-                <span className={`pill ${w.guest_impact === "guest_facing" ? "pill-rd" : w.guest_impact === "suites" || w.guest_impact === "in_room" ? "pill-am" : "pill-mt"}`}>{due(w) ?? (w.guest_impact === "suites" ? "suites" : ago(w.opened_at))}</span>
-                {mayWrite(ctx, "work_orders") ? <ActionButton small variant="ghost" action={updateWorkOrder.bind(null, w.id, w.status === "open" ? "in_progress" : "closed")} label={w.status === "open" ? "Start" : "Close"} done={w.status === "open" ? "Started" : "Closed"} /> : null}
-              </div>
-            </div>
-          ))}
-          {!open.length ? <Row title="No open fault." /> : null}
+            );
+          })}
+          {!listed.length ? <Row title="No open fault." /> : null}
         </Card>
         <Note>Ordered by what a guest would notice first. A fault is closed by the person who fixed it.</Note>
       </>
@@ -125,7 +146,7 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
           eyebrow="Planned this week"
           title={`${list.length === 0 ? "No job" : list.length === 1 ? "One job" : list.length === 2 ? "Two jobs" : `${list.length} jobs`}, checked against the day.`}
           body="Kitchen plan, room arrivals and guest notices are read before a slot is booked."
-          action={proposed.length ? (mayWrite(ctx, "planned_works") ? <ActionButton action={confirmPlannedWorks.bind(null, ctx.property.id, proposed.map((w) => w.id))} label="Confirm the slots" done="Slots confirmed" /> : <span className="pill pill-mt">{proposed.length} proposed</span>) : <span className="btn btn-done">Slots confirmed</span>}
+          action={proposed.length ? (mayWrite(ctx, "planned_works") ? <ActionButton actionKey={`slots:${proposed.map((w) => w.id).join(",")}`} action={confirmPlannedWorks.bind(null, ctx.property.id, proposed.map((w) => w.id))} label="Confirm the slots" done="Slots confirmed" /> : <span className="pill pill-mt">{proposed.length} proposed</span>) : <span className="btn btn-done">Slots confirmed</span>}
         />
         <div className="mb-1 mt-6 flex items-baseline justify-between">
           <h2 className="text-[20px]">Slots</h2>
@@ -133,15 +154,21 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
         </div>
         <Card>
           {list.map((w) => (
-            <Row key={w.id} title={w.title} note={`${when(w.starts_at)} · ${w.duration_min >= 60 ? `${Math.round(w.duration_min / 60)} hours` : `${w.duration_min} min`}${w.areas ? ` · ${w.areas}` : ""}`} pill={w.status === "confirmed" ? "confirmed" : w.verdict} tone={w.status === "confirmed" ? "gn" : w.verdict === "clear" ? "gn" : w.verdict === "notify" ? "am" : "rd"} />
+            <Row key={w.id} title={w.title} note={`${when(w.starts_at)} · ${w.duration_min >= 60 ? `${Math.round(w.duration_min / 60)} hours` : `${w.duration_min} min`}${w.areas ? ` · ${w.areas}` : ""}`} pill={w.status === "confirmed" ? "Confirmed" : ({ clear: "Clear", notify: "Notify guests", clash: "Clash" } as Record<string, string>)[w.verdict] ?? w.verdict} tone={w.status === "confirmed" ? "gn" : w.verdict === "clear" ? "gn" : w.verdict === "notify" ? "am" : "rd"} />
           ))}
           {!list.length ? <Row title="Nothing planned this week." /> : null}
         </Card>
-        {list[0] && Object.keys(checks(list[0])).length ? (
-          <Note>
-            {list[0].title}: {Object.entries(checks(list[0])).filter(([, v]) => v).map(([k, v]) => `${label[k] ?? k} — ${v}`).join(" · ")}
-          </Note>
-        ) : null}
+        {list.filter((w) => Object.keys(checks(w)).length).slice(0, 3).map((w) => (
+          <div key={w.id} className="mt-4">
+            <div className="mb-1 text-[14px] font-medium">{w.title}: what was checked</div>
+            <Card>
+              {Object.entries(checks(w)).filter(([, v]) => v).map(([k, v]) => {
+                const clear = /not affected|clear|none|no clash|ok/i.test(String(v));
+                return <Row key={k} title={label[k] ?? k.replace(/_/g, " ")} note={String(v)} pill={clear ? "✓ clear" : "check"} tone={clear ? "gn" : "am"} />;
+              })}
+            </Card>
+          </div>
+        ))}
       </>
     );
   }

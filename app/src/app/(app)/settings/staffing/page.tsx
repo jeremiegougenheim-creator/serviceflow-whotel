@@ -39,7 +39,7 @@ export default async function StaffingSettings() {
       <SettingsNav current="staffing" />
       <div className="grid gap-3">
         {(lines ?? []).map((l) => (
-          <SaveForm key={l.id} action={saveServiceLine.bind(null, ctx.property.id, l.id)} className="card px-4 py-4">
+          <SaveForm key={l.id} action={saveServiceLine.bind(null, ctx.property.id, l.id)} className="card px-4 py-4" label="Save the line" readOnly={!editable} quiet>
             {form(l)}
           </SaveForm>
         ))}

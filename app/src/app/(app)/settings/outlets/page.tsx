@@ -57,7 +57,7 @@ export default async function OutletsSettings({ searchParams }: { searchParams: 
         </SaveForm>
       ) : (
         <>
-          <SaveForm action={saveOutlet.bind(null, ctx.property.id, current.id)} className="card px-4 py-4">
+          <SaveForm action={saveOutlet.bind(null, ctx.property.id, current.id)} className="card px-4 py-4" readOnly={!editable}>
             <fieldset disabled={!editable} className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <Field label="Name" name="name" defaultValue={current.name} required />
               <Field label="Type" name="outlet_type" options={TYPES} defaultValue={current.outlet_type} />
@@ -77,7 +77,7 @@ export default async function OutletsSettings({ searchParams }: { searchParams: 
           </div>
           <div className="grid gap-2">
             {(waves ?? []).filter((w) => w.outlet_id === current.id).map((w) => (
-              <SaveForm key={w.id} action={saveWave.bind(null, ctx.property.id, current.id, w.id)} className="card px-4 py-3" label="Save">
+              <SaveForm key={w.id} action={saveWave.bind(null, ctx.property.id, current.id, w.id)} className="card px-4 py-3" label="Save the wave" readOnly={!editable} quiet>
                 <fieldset disabled={!editable} className="grid grid-cols-2 gap-2 md:grid-cols-4">
                   <Field label="Label" name="label" defaultValue={w.label} />
                   <Field label="Starts" name="starts_at" type="time" defaultValue={w.starts_at.slice(0, 5)} />
@@ -87,7 +87,7 @@ export default async function OutletsSettings({ searchParams }: { searchParams: 
               </SaveForm>
             ))}
             {editable ? (
-              <SaveForm action={saveWave.bind(null, ctx.property.id, current.id, null)} className="card px-4 py-3" label="Add a wave">
+              <SaveForm action={saveWave.bind(null, ctx.property.id, current.id, null)} className="card px-4 py-3" label="Add a wave" quiet>
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                   <Field label="Label" name="label" placeholder="Late wave" />
                   <Field label="Starts" name="starts_at" type="time" />
@@ -116,7 +116,7 @@ export default async function OutletsSettings({ searchParams }: { searchParams: 
                     <a href={`/settings/outlets?outlet=${current.slug}&station=${s.id}`} className="btn btn-ghost !px-3 !py-2 !text-[12.5px]">
                       Edit
                     </a>
-                    <ActionButton small variant="ghost" action={deleteStation.bind(null, s.id)} label="Remove" done="Removed" />
+                    <ActionButton small variant="ghost" actionKey={`${s.id}:rm`} action={deleteStation.bind(null, s.id)} label="Remove" confirm="Tap again to remove" done="Removed" />
                   </div>
                 ) : null}
               </div>

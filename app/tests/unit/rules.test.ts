@@ -164,7 +164,7 @@ describe("staffing: hours follow the covers", () => {
   it("a short Saturday is covered from the day with spare hours", () => {
     const demand = computeDemand(lines, [{ serviceDate: "2026-10-06", coversByOutlet: { o1: 160 }, roomsToService: 150 }, { serviceDate: "2026-10-10", coversByOutlet: { o1: 200 }, roomsToService: 150 }]);
     const s = suggestRoster(lines, demand, [{ serviceLineId: "l1", serviceDate: "2026-10-06", plannedHours: 56 }, { serviceLineId: "l1", serviceDate: "2026-10-10", plannedHours: 48 }]);
-    expect(s[0].title).toMatch(/Saturday kitchen is short by 8 hours/);
+    expect(s[0].title).toMatch(/Saturday kitchen \(early shift\) is short by 8 hours/);
     expect(s[0].moves[0].from_date).toBe("2026-10-06");
   });
 });
@@ -244,5 +244,19 @@ describe("voice, in English or Chinese", () => {
     expect(parseVoice("1804 door hinge stiff, guest in room", { stations })).toMatchObject({ intent: "fault", room: "1804", priority: "high" });
     expect(parseVoice("142 seated", { stations })).toMatchObject({ intent: "pace", coversSeated: 142 });
     expect(parseVoice("Lift B back in service", { stations, assets: [{ id: "a1", name: "Lift B" }] })).toMatchObject({ intent: "fault", assetId: "a1" });
+  });
+});
+
+describe("voice: Chinese station names without set-up", () => {
+  const st = [
+    { id: "d", name: "Dim sum", slug: "dim_sum" },
+    { id: "b", name: "Bakery", slug: "bakery" },
+    { id: "c", name: "Congee & noodles", slug: "congee_noodles" },
+  ];
+  it("finds Dim sum from 點心 and Bakery from 麵包", () => {
+    const a = parseVoice("點心 剩 2 公斤", { stations: st });
+    expect(a.intent === "waste" && a.stationId).toBe("d");
+    const b = parseVoice("麵包 剩 一公斤", { stations: st });
+    expect(b.intent === "waste" && b.stationId).toBe("b");
   });
 });

@@ -50,7 +50,7 @@ export default async function TeamSettings({ searchParams }: { searchParams: Pro
                 </span>
               </div>
               {can(ctx, "gm") && !["admin", "owner", "vp", "ceo"].includes(a.role) && a.scope_type === "property" ? (
-                <ActionButton small variant="ghost" action={removeMember.bind(null, a.id)} label="Remove" done="Removed" />
+                <ActionButton small variant="ghost" actionKey={`${a.id}:rm`} action={removeMember.bind(null, a.id)} label="Remove access" confirm="Tap again to remove" done="Access removed" />
               ) : ["admin", "owner", "vp", "ceo"].includes(a.role) || a.scope_type !== "property" ? (
                 <span className="pill pill-mt">managed by the group</span>
               ) : null}

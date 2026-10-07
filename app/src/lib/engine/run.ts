@@ -660,9 +660,12 @@ async function notifyBrief(db: AdminClient, ctx: PropertyContext, date: string, 
   const { data: members } = await db.from("memberships").select("user_id, role").eq("property_id", ctx.property.id).eq("active", true).in("role", ["gm", "fnb_mgr", "chef", "sous_chef"]);
   const { data: f } = await db.from("v_latest_forecasts").select("covers_p50, outlet_id").eq("property_id", ctx.property.id).eq("service_date", date);
   const covers = (f ?? []).reduce((s, x) => s + (x.covers_p50 ?? 0), 0);
-  const title = kind === "dawn" ? `Dawn update · ${date}` : `Tomorrow's plan is ready · ${date}`;
+  const day = new Date(date + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "long", timeZone: "UTC" });
+  const title = kind === "dawn" ? `Dawn update · ${day}` : `Tomorrow's plan is ready · ${day}`;
   // one notification per person and brief: a rerun never sends the same line twice
-  const { data: sent } = await db.from("notifications").select("user_id").eq("property_id", ctx.property.id).eq("title", title);
+  // the title names the weekday, so the same words come back next week: only today's sends count
+  const since = new Date(Date.now() - 20 * 3600_000).toISOString();
+  const { data: sent } = await db.from("notifications").select("user_id").eq("property_id", ctx.property.id).eq("title", title).gte("created_at", since);
   const already = new Set((sent ?? []).map((n) => n.user_id));
   const rows = (members ?? []).filter((m) => m.user_id && !already.has(m.user_id)).map((m) => ({ property_id: ctx.property.id, user_id: m.user_id!, kind: kind === "dawn" ? "dawn_update" : "brief", title, body: `${covers} covers forecast across ${(f ?? []).length} outlets. ${m.role === "gm" ? "Decisions wait for approval." : "Station pars are ready to confirm."}`, href: m.role === "gm" ? "/brief" : "/plan", channels: ["in_app"] }));
   if (rows.length) await db.from("notifications").insert(rows);

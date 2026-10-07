@@ -6,7 +6,15 @@
 @import "@fontsource/jost/500.css";
 @import "@fontsource/jost/600.css";
 
-/* ── ServiceFlow by SparkEdge · design tokens (petrol navy, bronze, cream) ── */
+/* ── ServiceFlow by SparkEdge · design tokens ──────────────────────────────
+   Two themes on one set of roles. The names are the dark theme's colours,
+   but read them as roles everywhere:
+     ink = page · navy = card · navy-mid = raised card · cream = text
+     mist = secondary text · gold = accent text · gold-light = emphasis, links,
+     active tab · gold-fill = the gold of buttons · on-gold = text on gold-fill
+     green / amber / red = done / needs a person / at risk
+   Dark ("night") is the default; "paper" follows the device when it is light,
+   or wins when chosen in the account menu (cookie sf_theme → data-theme). */
 @theme {
   --font-display: "Cormorant Garamond", Georgia, serif;
   --font-sans: "Jost", system-ui, sans-serif;
@@ -25,7 +33,9 @@
   --color-green: #4eaf8c;
   --color-amber: #ee8a46;      /* warning: orange 24°, apart from the bronze accent 34° · 5.9:1 on cards */
   --color-red: #e07a7a;        /* 4.6:1 on cards */
-  --color-blue: #5b8fb9;
+  --color-blue: #7aa8cf;       /* in progress */
+  --color-gold-fill: #b8894a;  /* buttons, the mic, the unread dot */
+  --color-on-gold: #0e1c24;    /* 5.5:1 on gold-fill */
 
   --radius-card: 14px;
   --radius-pill: 999px;
@@ -35,7 +45,56 @@
   color-scheme: dark;
   --sf-rule: color-mix(in oklab, var(--color-gold) 18%, transparent);
   --sf-rule-strong: color-mix(in oklab, var(--color-gold) 32%, transparent);
+  --sf-shadow: none;
+  --sf-spark: #fbefd2;
 }
+
+/* Paper: warm ivory, petrol text, a darker bronze for text. Every text colour ≥ 4.5:1 on page and card. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --color-ink: #f4efe5;        /* page */
+    --color-navy: #fffdf8;       /* cards */
+    --color-navy-mid: #f8f1e3;   /* raised */
+    --color-navy-line: #e6dccb;
+    --color-cream: #15242e;      /* text 15.6:1 on cards */
+    --color-mist: #53687a;       /* 5.7:1 on cards, 5.0 on page */
+    --color-ghost: #6d7f8d;
+    --color-gold: #8a611f;       /* 5.4:1 */
+    --color-gold-light: #7d5718; /* 6.4:1 */
+    --color-gold-fill: #c39352;  /* on-gold 6.3:1 */
+    --color-green: #2a7654;      /* 5.4:1 */
+    --color-amber: #a34c14;      /* 5.6:1 */
+    --color-red: #b23838;        /* 5.9:1 */
+    --color-blue: #3c6f97;
+    --sf-rule: color-mix(in oklab, #15242e 10%, transparent);
+    --sf-rule-strong: color-mix(in oklab, #15242e 20%, transparent);
+    --sf-shadow: 0 1px 2px rgb(21 36 46 / .05), 0 6px 18px -10px rgb(21 36 46 / .12);
+    --sf-spark: #9c7438;
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-ink: #f4efe5;
+  --color-navy: #fffdf8;
+  --color-navy-mid: #f8f1e3;
+  --color-navy-line: #e6dccb;
+  --color-cream: #15242e;
+  --color-mist: #53687a;
+  --color-ghost: #6d7f8d;
+  --color-gold: #8a611f;
+  --color-gold-light: #7d5718;
+  --color-gold-fill: #c39352;
+  --color-green: #2a7654;
+  --color-amber: #a34c14;
+  --color-red: #b23838;
+  --color-blue: #3c6f97;
+  --sf-rule: color-mix(in oklab, #15242e 10%, transparent);
+  --sf-rule-strong: color-mix(in oklab, #15242e 20%, transparent);
+  --sf-shadow: 0 1px 2px rgb(21 36 46 / .05), 0 6px 18px -10px rgb(21 36 46 / .12);
+  --sf-spark: #9c7438;
+}
+.sf-spark { fill: var(--sf-spark); }
 
 html, body { height: 100%; }
 body {
@@ -49,11 +108,15 @@ body {
 }
 h1, h2, h3, .display { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.01em; }
 em, .gold-em { font-style: italic; color: var(--color-gold-light); }
+:focus-visible { outline: 2px solid var(--color-gold-light); outline-offset: 2px; border-radius: 6px; }
+.skip-link { position: absolute; left: 12px; top: -48px; z-index: 50; background: var(--color-navy-mid); color: var(--color-cream); border: 1px solid var(--sf-rule-strong); border-radius: 999px; padding: 10px 16px; font-size: 14px; }
+.skip-link:focus { top: calc(env(safe-area-inset-top, 0px) + 8px); }
+fieldset:disabled .input { opacity: .6; border-style: dashed; cursor: not-allowed; }
 ::selection { background: color-mix(in oklab, var(--color-gold) 40%, transparent); }
 
 /* ── small primitives shared by every screen ── */
-.card { background: var(--color-navy); border: 1px solid var(--sf-rule); border-radius: var(--radius-card); }
-.card-raised { background: var(--color-navy-mid); border: 1px solid var(--sf-rule-strong); border-radius: var(--radius-card); }
+.card { background: var(--color-navy); border: 1px solid var(--sf-rule); border-radius: var(--radius-card); box-shadow: var(--sf-shadow); }
+.card-raised { background: var(--color-navy-mid); border: 1px solid var(--sf-rule-strong); border-radius: var(--radius-card); box-shadow: var(--sf-shadow); }
 .eyebrow { font-size: 11.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--color-gold); font-weight: 500; }
 .kpi-k { font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-mist); font-weight: 500; }
 /* no colour here: this file is unlayered and would override the tone utilities (text-red, text-amber, text-green) */
@@ -62,18 +125,27 @@ em, .gold-em { font-style: italic; color: var(--color-gold-light); }
 .muted { color: var(--color-mist); }
 .rule { border-top: 1px solid var(--sf-rule); }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border-radius: var(--radius-pill); padding: 11px 18px; font-weight: 500; font-size: 14px; line-height: 1; transition: background .15s, color .15s, opacity .15s; cursor: pointer; }
-.btn-gold { background: var(--color-gold); color: var(--color-ink); }
-.btn-gold:hover { background: var(--color-gold-light); }
+.btn-gold { background: var(--color-gold-fill); color: var(--color-on-gold); border: 1px solid color-mix(in oklab, var(--color-gold-fill) 80%, #000); }
+.btn-gold:hover { background: color-mix(in oklab, var(--color-gold-fill) 85%, #fff); }
 .btn-ghost { background: transparent; color: var(--color-cream); border: 1px solid var(--sf-rule-strong); }
 .btn-ghost:hover { background: color-mix(in oklab, var(--color-gold) 10%, transparent); }
-.btn-done { background: color-mix(in oklab, var(--color-green) 18%, transparent); color: var(--color-green); border: 1px solid color-mix(in oklab, var(--color-green) 40%, transparent); cursor: default; }
+.btn-done { background: color-mix(in oklab, var(--color-green) 18%, transparent); color: color-mix(in oklab, var(--color-green) 72%, var(--color-cream)); border: 1px solid color-mix(in oklab, var(--color-green) 40%, transparent); cursor: default; }
 .btn[disabled] { opacity: .55; cursor: default; }
+/* "tick it off" (Prepped, Done, Start): quiet, a green check; gold stays for decisions */
+.btn-tick { background: transparent; color: var(--color-cream); border: 1px solid var(--sf-rule-strong); }
+.btn-tick::before { content: "✓"; color: var(--color-green); font-weight: 600; }
+.btn-tick:hover { background: color-mix(in oklab, var(--color-green) 10%, transparent); }
+.btn[aria-busy="true"]::after { content: ""; width: 12px; height: 12px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .btn[aria-busy="true"]::after { animation: none; } }
 .pill { display: inline-block; border-radius: var(--radius-pill); padding: 3px 9px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 500; }
-.pill-gn { background: color-mix(in oklab, var(--color-green) 16%, transparent); color: var(--color-green); }
-.pill-am { background: color-mix(in oklab, var(--color-amber) 16%, transparent); color: var(--color-amber); }
-.pill-rd { background: color-mix(in oklab, var(--color-red) 16%, transparent); color: var(--color-red); }
-.pill-mt { background: color-mix(in oklab, var(--color-mist) 16%, transparent); color: var(--color-mist); }
+/* status chips: the text leans 28 % toward the text colour, so every chip clears 4.5:1 on its own tint, in both themes */
+.pill-gn { background: color-mix(in oklab, var(--color-green) 16%, transparent); color: color-mix(in oklab, var(--color-green) 72%, var(--color-cream)); }
+.pill-am { background: color-mix(in oklab, var(--color-amber) 16%, transparent); color: color-mix(in oklab, var(--color-amber) 72%, var(--color-cream)); }
+.pill-rd { background: color-mix(in oklab, var(--color-red) 16%, transparent); color: color-mix(in oklab, var(--color-red) 72%, var(--color-cream)); }
+.pill-mt { background: color-mix(in oklab, var(--color-mist) 16%, transparent); color: color-mix(in oklab, var(--color-mist) 72%, var(--color-cream)); }
 .pill-gd { background: color-mix(in oklab, var(--color-gold) 16%, transparent); color: var(--color-gold-light); }
+.pill-bl { background: color-mix(in oklab, var(--color-blue) 16%, transparent); color: color-mix(in oklab, var(--color-blue) 72%, var(--color-cream)); }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 0; border-top: 1px solid var(--sf-rule); }
 .row:first-child { border-top: 0; }
 .row-decision { flex-wrap: wrap; }
@@ -83,8 +155,11 @@ em, .gold-em { font-style: italic; color: var(--color-gold-light); }
 @media (min-width: 640px) { .row-decision > .acts { flex: 0 0 auto; } .row-decision > .acts > * { flex: 0 0 auto; } }
 .row .t b { display: block; font-weight: 500; color: var(--color-cream); }
 .row .t span { display: block; font-size: 13px; color: var(--color-mist); margin-top: 2px; }
+@media (min-width: 768px) { .row .t span { font-size: 14px; } }
 .row .q { font-family: var(--font-display); font-size: 26px; line-height: 1; text-align: right; color: var(--color-cream); font-variant-numeric: lining-nums tabular-nums; }
-.strike { background: linear-gradient(160deg, var(--color-navy-mid), var(--color-navy)); border: 1px solid var(--sf-rule-strong); border-radius: var(--radius-card); padding: 18px; }
+.strike { background: linear-gradient(160deg, var(--color-navy-mid), var(--color-navy)); border: 1px solid var(--sf-rule-strong); border-radius: var(--radius-card); padding: 18px; box-shadow: var(--sf-shadow); }
+.strike .eyebrow { color: var(--color-gold-light); }
+.strike .muted, .card-raised .muted { color: color-mix(in oklab, var(--color-mist) 75%, var(--color-cream)); }
 .strike .tt { font-family: var(--font-display); font-size: 24px; line-height: 1.15; margin-top: 6px; }
 .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
 .tile { background: color-mix(in oklab, var(--color-ink) 55%, transparent); border-radius: 10px; padding: 10px 10px 8px; }

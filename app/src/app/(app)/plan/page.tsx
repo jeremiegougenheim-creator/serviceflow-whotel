@@ -1,6 +1,6 @@
 import { ActionButton } from "@/components/action-button";
 import { Card, Empty, Note, ScreenHead, Strike, Tabs } from "@/components/ui";
-import { confirmPlan } from "@/lib/actions/ops";
+import { adjustStation, confirmPlan } from "@/lib/actions/ops";
 import { getContext, mayWrite } from "@/lib/data/context";
 import { getDayWaste, getDecisions, getForecastVersions, getOutlets, getPlanLines, getWeekWaste, groupPlan, inputs, serviceDateFor, waveSplit, type Outlet } from "@/lib/data/fnb";
 import { kg, num, signed, timeShort, typo, weekday } from "@/lib/format";
@@ -33,6 +33,9 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
   const meta = inputs(f);
   const [weekWaste, ydayWaste, decisions] = await Promise.all([getWeekWaste(outlet.id, date), getDayWaste(outlet.id, previousDay(date)), getDecisions(ctx, date, { outletId: outlet.id, source: ["engine"] })]);
   const topDecision = decisions.find((d) => d.kind === "trim") ?? decisions[0];
+  // confirming the plan also approves the "hold" decisions: say so before the tap
+  const holds = decisions.filter((d) => d.kind === "hold" && d.status === "proposed");
+  const canAdjust = mayWrite(ctx, "plans");
   const confirmed = f?.status === "confirmed" || (groups.length > 0 && groups.every((g) => g.status !== "proposed"));
   const [label, done] = ACTION[outlet.outlet_type];
   const tabs = outlets.map((o) => ({ key: o.slug, label: o.name, href: `/plan?outlet=${o.slug}` }));
@@ -53,13 +56,19 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         <>
           <Strike
             eyebrow={previous ? `Dawn update ${timeShort((ctx.property.settings as Record<string, string>)?.dawn_update_time ?? "03:30")} · ${f.covers_p50 === previous.covers_p50 ? "covers unchanged since the brief" : `${signed(f.covers_p50 - previous.covers_p50, " covers")} since the brief`}` : `Evening brief · ${f.covers_p50} covers`}
-            title={topDecision ? `${typo(topDecision.title)}.` : `${f.covers_p50} covers, ${waves.length} waves.`}
+            title={`${f.covers_p50} covers, ${waves.length} ${waves.length === 1 ? "wave" : "waves"}.`}
+            body={
+              <>
+                {topDecision ? <>Biggest change from habit: {typo(topDecision.title)}{topDecision.reason ? `, ${topDecision.reason}` : ""}.</> : null}
+                {holds.length && !confirmed ? <> Confirming also approves: {holds.map((h) => typo(h.title)).join("; ")}.</> : null}
+              </>
+            }
             tiles={[
               { b: waves[0]?.covers ?? f.covers_p50, s: `covers at ${timeShort(waves[0]?.startsAt ?? outlet.opens_at)}` },
               { b: waves[1] ? `+${waves[1].covers}` : "—", s: `covers at ${timeShort(waves[1]?.startsAt ?? "")}` },
               { b: <>{num(ydayWaste, 1)}<small>kg</small></>, s: "waste yesterday" },
             ]}
-            action={confirmed ? <span className="btn btn-done">{done}</span> : mayWrite(ctx, "confirm_plan") ? <ActionButton action={confirmPlan.bind(null, f.id)} label={label} done={done} /> : <span className="pill pill-mt">waiting for the chef</span>}
+            action={confirmed ? <span className="btn btn-done">{done}</span> : mayWrite(ctx, "confirm_plan") ? <ActionButton actionKey={`${f.id}:confirm`} action={confirmPlan.bind(null, f.id)} label={label} done={done} /> : <span className="pill pill-mt">waiting for the chef</span>}
           />
           <div className="mb-1 mt-6 flex items-baseline justify-between">
             <h2 className="text-[20px]">Station prep</h2>
@@ -70,9 +79,13 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               <div key={g.station.id} className="row">
                 <div className="t min-w-0">
                   <b>{g.station.name}</b>
-                  <span>
-                    {g.lines.map((l, i) => `${i === 0 ? "" : " · "}${i === 0 ? num(l.qty, 0) : "+" + num(l.qty, 0)}${i === 0 ? "" : " at " + timeShort(l.waves?.starts_at ?? "")}`)}
-                  </span>
+                  <span>{g.lines.map((l, i) => `${i === 0 ? "" : "+"}${num(l.qty, 0)} at ${timeShort(l.waves?.starts_at ?? "")}`).join(" · ")}</span>
+                  {canAdjust && !confirmed && g.lines.every((l) => l.status === "proposed" || l.status === "approved") ? (
+                    <div className="mt-2 flex gap-2">
+                      <ActionButton small variant="ghost" actionKey={`${g.station.id}:−:${g.total}`} action={adjustStation.bind(null, { forecastId: f.id, stationId: g.station.id, delta: -step(g.total) })} label={`−${step(g.total)}`} done={`−${step(g.total)}`} title={`${g.station.name}: ${step(g.total)} fewer at ${timeShort(g.lines[0]?.waves?.starts_at ?? "")}`} />
+                      <ActionButton small variant="ghost" actionKey={`${g.station.id}:+:${g.total}`} action={adjustStation.bind(null, { forecastId: f.id, stationId: g.station.id, delta: step(g.total) })} label={`+${step(g.total)}`} done={`+${step(g.total)}`} title={`${g.station.name}: ${step(g.total)} more at ${timeShort(g.lines[0]?.waves?.starts_at ?? "")}`} />
+                    </div>
+                  ) : null}
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
                   <div className="q">
@@ -84,7 +97,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               </div>
             ))}
           </Card>
-          <Note>Every quantity is tomorrow&rsquo;s covers through the station&rsquo;s own history and the mix in house. The chef confirms; nothing changes without the kitchen.</Note>
+          <Note>Every quantity is tomorrow&rsquo;s covers through the station&rsquo;s own history and the mix in house. Adjust a station before confirming; the change is kept for the next plan. Nothing changes without the kitchen.</Note>
         </>
       ) : outlet.outlet_type === "banquet" ? (
         <>
@@ -96,7 +109,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               { b: num(f.covers_p50), s: "to cook" },
               { b: num(Number(meta.diets ?? 0)), s: "diets" },
             ]}
-            action={confirmed ? <span className="btn btn-done">{done}</span> : mayWrite(ctx, "confirm_plan") ? <ActionButton action={confirmPlan.bind(null, f.id)} label={label} done={done} /> : <span className="pill pill-mt">waiting for the chef</span>}
+            action={confirmed ? <span className="btn btn-done">{done}</span> : mayWrite(ctx, "confirm_plan") ? <ActionButton actionKey={`${f.id}:confirm`} action={confirmPlan.bind(null, f.id)} label={label} done={done} /> : <span className="pill pill-mt">waiting for the chef</span>}
           />
           <div className="mb-1 mt-6 flex items-baseline justify-between">
             <h2 className="text-[20px]">Courses</h2>
@@ -129,7 +142,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               { b: num(Number(meta.peakCovers ?? waves.at(-1)?.covers ?? 0)), s: `at ${timeShort(String(meta.peakAt ?? waves.at(-1)?.startsAt ?? ""))}` },
               { b: <>{num(weekWaste, 1)}<small>kg</small></>, s: "week waste" },
             ]}
-            action={confirmed ? <span className="btn btn-done">{done}</span> : mayWrite(ctx, "confirm_plan") ? <ActionButton action={confirmPlan.bind(null, f.id)} label={label} done={done} /> : <span className="pill pill-mt">waiting for the chef</span>}
+            action={confirmed ? <span className="btn btn-done">{done}</span> : mayWrite(ctx, "confirm_plan") ? <ActionButton actionKey={`${f.id}:confirm`} action={confirmPlan.bind(null, f.id)} label={label} done={done} /> : <span className="pill pill-mt">waiting for the chef</span>}
           />
           <div className="mb-1 mt-6 flex items-baseline justify-between">
             <h2 className="text-[20px]">{outlet.outlet_type === "bar" ? "Batch pars" : "Prep pars"}</h2>
@@ -170,4 +183,9 @@ function previousDay(date: string): string {
   const d = new Date(date + "T12:00:00Z");
   d.setUTCDate(d.getUTCDate() - 1);
   return d.toISOString().slice(0, 10);
+}
+
+/** One tap moves a station by about 5 % of its total, never less than one. */
+function step(total: number): number {
+  return Math.max(1, Math.round(total / 20));
 }

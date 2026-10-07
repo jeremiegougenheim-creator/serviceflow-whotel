@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, Empty, Grid, Kpi, Row, ScreenHead, Tabs } from "@/components/ui";
 import { switchProperty } from "@/lib/actions/ops";
 import { getContext } from "@/lib/data/context";
-import { greeting, num, pct, plural, plusDays, signed, weekday } from "@/lib/format";
+import { greeting, num, plural, plusDays, signed, weekday } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Portfolio" };
@@ -46,6 +46,19 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
   const yieldTarget = Number((ctx.properties.find((p) => (p.settings as Record<string, unknown>)?.noi_yield_target)?.settings as Record<string, number> | undefined)?.noi_yield_target ?? 0.06);
   const quarterLabel = `${["first", "second", "third", "fourth"][Math.floor(new Date(ctx.today + "T12:00:00Z").getUTCMonth() / 3)]} quarter`;
   const regionName = regionFilter ? (regions ?? []).find((r) => r.id === regionFilter)?.name : null;
+  // judged on the figures as shown (one decimal): 6.0 % against a 6.0 % target is on target
+  const yieldShown = noiYield != null ? Math.round(noiYield * 1000) / 1000 : null;
+  const yieldOk = yieldShown != null && yieldShown >= Math.round(yieldTarget * 1000) / 1000;
+  const marginUp = gopMargin != null && lyMargin != null && Math.round(gopMargin * 1000) >= Math.round(lyMargin * 1000);
+  const regionsBehind = byRegion.filter((rg) => {
+    const noi = rg.q.reduce((s, r) => s + Number(r.noi ?? 0), 0);
+    const av = rg.q.reduce((s, r) => s + Number(r.asset_value ?? 0), 0);
+    return av > 0 && Math.round(((noi * 12) / months / av) * 1000) < Math.round(yieldTarget * 1000);
+  }).length;
+  const moneyHeadline = groupLevel
+    ? regionsBehind === 0 ? "every region on target." : regionsBehind === 1 ? "one region to watch." : `${regionsBehind} regions to watch.`
+    : marginUp && yieldOk ? "on target." : marginUp ? "margin up, yield under target." : yieldOk ? "yield on target, margin behind last year." : "behind last year.";
+  const hotelHome = role === "owner" ? "/tonight" : role === "gm" ? "/home" : "/brief";
   const watch = (r: (typeof o)[number]) => {
     const lines = String(r.short_lines ?? "").split(" · ").map((x) => x.trim()).filter(Boolean);
     if (Number(r.hours_short) >= 1) return { note: `${weekday(tomorrow)} · ${lines.length ? lines.slice(0, 2).join(" · ").toLowerCase() : "kitchen short"}`, right: signed(-Math.round(Number(r.hours_short)), " h"), tone: "am" as const };
@@ -57,7 +70,7 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
   return (
     <>
       {lens === "money" ? (
-        <ScreenHead hi={<>Quarter to date, <em>{gopMargin != null && lyMargin != null && gopMargin >= lyMargin ? (groupLevel ? "one region to watch." : "on target.") : "behind last year."}</em></>} sub={`${regionName ? regionName + " · " : ""}${groupLevel ? plural(visibleQ.length, "hotel") : `${num(keys)} rooms`} · ${quarterLabel}`} />
+        <ScreenHead hi={<>Quarter to date, <em>{moneyHeadline}</em></>} sub={`${regionName ? regionName + " · " : ""}${groupLevel ? plural(visibleQ.length, "hotel") : `${num(keys)} rooms`} · ${quarterLabel}`} />
       ) : (
         <ScreenHead hi={<>{greeting(ctx.clock)}, <em>{shortHotels.length === 0 ? "all on plan." : shortHotels.length === 1 ? "one to watch." : `${["", "", "two", "three", "four", "five"][shortHotels.length] ?? shortHotels.length} to watch.`}</em></>} sub={`Tomorrow · ${num(coversT)} covers · ${plural(visibleO.length, "hotel")}`} />
       )}
@@ -72,7 +85,7 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
         <>
           <Grid>
             <Kpi k="GOP margin" v={gopMargin != null ? <>{num(gopMargin * 100, 1)}<small>%</small></> : "—"} n={lyMargin != null && gopMargin != null ? `${signed(Math.round((gopMargin - lyMargin) * 1000) / 10, " pts", 1)} on last year` : undefined} />
-            <Kpi k="NOI yield" v={noiYield != null ? <>{num(noiYield * 100, 1)}<small>%</small></> : "—"} n={`target ${num(yieldTarget * 100, 1)}%`} tone={noiYield != null ? (noiYield >= yieldTarget ? "gn" : "am") : undefined} />
+            <Kpi k="NOI yield" v={noiYield != null ? <>{num(noiYield * 100, 1)}<small>%</small></> : "—"} n={`target ${num(yieldTarget * 100, 1)}%`} tone={yieldShown != null ? (yieldOk ? "gn" : "am") : undefined} />
           </Grid>
           <div className="mb-1 mt-6 flex items-baseline justify-between">
             <h2 className="text-[20px]">{groupLevel ? "By region" : "By hotel"}</h2>
@@ -90,6 +103,7 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
               : visibleQ.map((r) => (
                   <form key={r.property_id} action={switchProperty}>
                     <input type="hidden" name="property_id" value={r.property_id ?? ""} />
+                    <input type="hidden" name="next" value={hotelHome} />
                     <button type="submit" className="row w-full text-left hover:bg-navy-mid/40">
                       <div className="t min-w-0">
                         <b>{r.property}</b>
@@ -97,7 +111,9 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
                           {num(r.keys ?? 0)} rooms · GOP {r.gop_margin != null ? num(Number(r.gop_margin) * 100, 1) : "—"}% · NOI yield
                         </span>
                       </div>
-                      <div className="q">{r.noi_yield != null ? num(Number(r.noi_yield) * 100, 1) + "%" : "—"}</div>
+                      <div className="q">
+                        {r.noi_yield != null ? num(Number(r.noi_yield) * 100, 1) + "%" : "—"} <span className="text-[20px] text-mist" aria-hidden="true">›</span>
+                      </div>
                     </button>
                   </form>
                 ))}
@@ -108,7 +124,7 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
             <span className="muted text-[12.5px]">Measured, not modelled</span>
           </div>
           <Card>
-            <Row href="/waste" title="Waste, CO₂e and energy report" note={energyAvg != null ? `energy ${pct(energyAvg, 0, true)} on baseline across the portfolio` : "energy not metered"} pill="open" tone="gd" />
+            <Row href="/waste" title="Waste, CO₂e and energy report" note={energyAvg != null ? `energy ${num(Math.abs(energyAvg), 0)}% ${energyAvg <= 0 ? "under" : "over"} baseline across the portfolio` : "energy not metered"} pill="open" tone="gd" />
           </Card>
         </>
       ) : (
@@ -134,6 +150,7 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
                   return (
                     <form key={r.property_id} action={switchProperty}>
                       <input type="hidden" name="property_id" value={r.property_id ?? ""} />
+                    <input type="hidden" name="next" value={hotelHome} />
                       <button type="submit" className="row w-full text-left hover:bg-navy-mid/40">
                         <div className="t min-w-0">
                           <b>{r.property}</b>
@@ -142,7 +159,7 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
                           </span>
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1">
-                          {w.right ? <div className="q">{w.right}</div> : <span className={`pill pill-${w.tone}`}>{w.tone === "gn" ? "on plan" : "no plan data"}</span>}
+                          {w.right ? <div className="q">{w.right} <span className="text-[20px] text-mist" aria-hidden="true">›</span></div> : <span className={`pill pill-${w.tone}`}>{w.tone === "gn" ? "on plan" : "no plan data"} ›</span>}
                         </div>
                       </button>
                     </form>

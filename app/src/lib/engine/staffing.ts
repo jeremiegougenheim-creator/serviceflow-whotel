@@ -74,7 +74,9 @@ export function suggestRoster(lines: StaffingLineCfg[], demand: StaffingDemandLi
     const need = Math.abs(short.delta);
     const moves: RosterSuggestion["moves"] = [];
     let detail: string;
-    const label = l.name.replace(", early shift", "").replace("Breakfast service", "breakfast").toLowerCase();
+    // "Housekeeping, morning" → "housekeeping (morning)"; "Breakfast service" → "breakfast"
+    const [base, qualifier] = l.name.split(/,\s*/);
+    const label = `${base.replace("Breakfast service", "breakfast").replace("Dinner service", "dinner").toLowerCase()}${qualifier ? ` (${qualifier.toLowerCase()})` : ""}`;
     const dept = l.department === "kitchen" ? "kitchen" : l.department;
     if (spare && spare.delta >= need) {
       const h = Math.min(spare.delta, need);

@@ -5,17 +5,23 @@ import { useActionState } from "react";
 type Result = { ok: true; label?: string } | { ok: false; error: string };
 
 /** A form whose server action takes the FormData; shows the result inline. */
-export function SaveForm({ action, children, label = "Save", className = "" }: { action: (formData: FormData) => Promise<Result>; children: React.ReactNode; label?: string; className?: string }) {
+export function SaveForm({ action, children, label = "Save", className = "", readOnly, quiet }: { action: (formData: FormData) => Promise<Result>; children: React.ReactNode; label?: string; className?: string; readOnly?: boolean; quiet?: boolean }) {
   const [state, formAction, pending] = useActionState(async (_prev: Result | null, fd: FormData) => action(fd), null);
   return (
     <form action={formAction} className={className}>
       {children}
-      <div className="mt-3 flex items-center gap-3">
-        <button type="submit" className="btn btn-gold" disabled={pending}>
-          {pending ? "…" : label}
-        </button>
-        {state ? <span className={`text-[13px] ${state.ok ? "text-green" : "text-red"}`}>{state.ok ? state.label ?? "Saved" : state.error}</span> : null}
-      </div>
+      {readOnly ? null : (
+        <div className="mt-3 flex items-center gap-3">
+          <button type="submit" className={`btn ${quiet ? "btn-ghost" : "btn-gold"}`} disabled={pending} aria-busy={pending || undefined}>
+            {label}
+          </button>
+          {state ? (
+            <span role="status" className={`text-[13px] ${state.ok ? "text-green" : "text-red"}`}>
+              {state.ok ? (state.label ?? "Saved") : state.error}
+            </span>
+          ) : null}
+        </div>
+      )}
     </form>
   );
 }

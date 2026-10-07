@@ -35,6 +35,10 @@ export default async function WastePage({ searchParams }: { searchParams: Promis
   const deltaKg = logged && baseline && covers && gPerCover != null ? ((baseline - gPerCover) * covers) / 1000 : null;
   const underKg = deltaKg != null ? Math.max(0, deltaKg) : null;
   const factor = totalKg > 0 ? totalCo2 / totalKg : Number((ctx.property.settings as Record<string, number>)?.co2e_default_factor ?? 2.5);
+  // never over-claimed: within ±2 % of the baseline is noise, and the CO₂e is rounded down
+  const baselineKg = baseline && covers ? (baseline * covers) / 1000 : null;
+  const band: "under" | "on" | "over" | null = deltaKg == null || !baselineKg ? null : Math.abs(deltaKg) / baselineKg < 0.02 ? "on" : deltaKg > 0 ? "under" : "over";
+  const co2eClaim = underKg != null ? Math.floor(underKg * factor * 10) / 10 : 0;
   const closed = !!actual;
   const err = outcome?.error_pct != null ? Number(outcome.error_pct) : f && covers ? ((covers - f.covers_p50) / f.covers_p50) * 100 : null;
   const within = outcome?.within_band ?? (f && covers ? covers >= f.covers_p10 && covers <= f.covers_p90 : null);
@@ -65,7 +69,24 @@ export default async function WastePage({ searchParams }: { searchParams: Promis
 
       <Grid>
         <Kpi k="Waste logged" v={<>{num(totalKg, 1)}<small>kg</small></>} n={gPerCover != null ? `${gPerCover} g per cover` : "no cover count yet"} />
-        <Kpi k={deltaKg != null && deltaKg < 0 ? "Over baseline" : "Under baseline"} v={deltaKg != null ? <>{num(Math.abs(deltaKg), 1)}<small>kg</small></> : "—"} n={deltaKg != null ? (deltaKg >= 0 ? `≈ ${num(underKg! * factor, 0)} kg CO₂e, ${(ctx.property.settings as Record<string, boolean>)?.winnow ? "measured by the scale" : "measured by the log"}` : `baseline ${baseline} g per cover`) : !logged ? "no log, no claim" : baseline ? `baseline ${baseline} g per cover` : "set a baseline in Set-up"} tone={deltaKg != null ? (deltaKg > 0 ? "gn" : deltaKg < 0 ? "am" : undefined) : undefined} />
+        <Kpi
+          k={band === "on" ? "On baseline" : band === "over" ? "Over baseline" : "Under baseline"}
+          v={deltaKg != null ? <>{num(Math.abs(deltaKg), 1)}<small>kg</small></> : "—"}
+          n={
+            deltaKg == null
+              ? !logged
+                ? "no log, no claim"
+                : baseline
+                  ? `baseline ${baseline} g per cover`
+                  : "set a baseline in Set-up"
+              : band === "under"
+                ? `≈ ${num(co2eClaim, 1)} kg CO₂e avoided, ${(ctx.property.settings as Record<string, boolean>)?.winnow ? "measured by the scale" : "measured by the log"}`
+                : band === "on"
+                  ? `within 2% of ${baseline} g per cover: no claim`
+                  : `baseline ${baseline} g per cover`
+          }
+          tone={band === "under" ? "gn" : band === "over" ? "am" : undefined}
+        />
       </Grid>
 
       <div className="mt-4">

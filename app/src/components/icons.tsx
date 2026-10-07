@@ -49,26 +49,27 @@ export function Icon({ name, size = 22, className }: { name: IconName; size?: nu
 }
 
 /** The ServiceFlow mark: the gold double-stroke S with its centre spark. */
-export function Mark({ size = 28 }: { size?: number }) {
+export function Mark({ size = 28, gid = "sfGold" }: { size?: number; gid?: string }) {
+  // each copy needs its own gradient id: a gradient inside a hidden copy (the sidebar on a phone) paints nothing
   return (
     <svg viewBox="0 0 120 120" width={size} height={size} fill="none" aria-hidden="true">
       <defs>
-        <linearGradient id="sfGold" gradientUnits="userSpaceOnUse" x1="20" y1="10" x2="100" y2="110">
+        <linearGradient id={gid} gradientUnits="userSpaceOnUse" x1="20" y1="10" x2="100" y2="110">
           <stop offset="0" stopColor="#E6CB9C" />
           <stop offset=".55" stopColor="#C79B5B" />
           <stop offset="1" stopColor="#9C7438" />
         </linearGradient>
       </defs>
-      <path d="M78.02 25.38A22 22 0 1 0 60 60A22 22 0 1 1 41.98 94.62" stroke="url(#sfGold)" strokeWidth="7.5" strokeLinecap="round" />
-      <path d="M60 47Q60 60 73 60Q60 60 60 73Q60 60 47 60Q60 60 60 47Z" fill="#FBEFD2" />
+      <path d="M78.02 25.38A22 22 0 1 0 60 60A22 22 0 1 1 41.98 94.62" stroke={`url(#${gid})`} strokeWidth="7.5" strokeLinecap="round" />
+      <path className="sf-spark" d="M60 47Q60 60 73 60Q60 60 60 73Q60 60 47 60Q60 60 60 47Z" fill="#FBEFD2" />
     </svg>
   );
 }
 
-export function Lockup({ scope }: { scope?: string }) {
+export function Lockup({ scope, gid }: { scope?: string; gid?: string }) {
   return (
     <div className="flex items-center gap-2.5">
-      <Mark size={30} />
+      <Mark size={30} gid={gid} />
       <div className="leading-none">
         <div className="font-display text-[22px] font-semibold tracking-[-0.01em] text-cream">
           Service<em className="text-gold-light">Flow</em>

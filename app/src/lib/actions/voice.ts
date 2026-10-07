@@ -8,10 +8,12 @@ export interface VoicePreview {
   intent: VoiceIntent;
   summary: string;
   canApply: boolean;
+  /** when only the station is missing: the outlet's stations, to pick with one tap */
+  pick?: { id: string; name: string }[];
   context: { propertyId: string; outletId: string | null; serviceDate: string; roomId: string | null };
 }
 
-type Result = { ok: true; label?: string } | { ok: false; error: string };
+type Result = { ok: true; label?: string; id?: string } | { ok: false; error: string };
 
 /** Parse a transcript in the context of an outlet (kitchen) or the property (rooms, engineering). */
 export async function previewVoice(input: { transcript: string; propertyId: string; outletId: string | null; serviceDate: string; department: "kitchen" | "housekeeping" | "engineering" }): Promise<VoicePreview> {
@@ -31,10 +33,15 @@ export async function previewVoice(input: { transcript: string; propertyId: stri
   }
   let summary: string;
   let canApply = true;
+  let pick: VoicePreview["pick"];
   switch (intent.intent) {
     case "waste":
       summary = intent.kg != null && intent.stationName ? `Log ${intent.kg} kg${intent.reason ? ` ${intent.reason}` : ""} at ${intent.stationName}` : intent.stationName ? `How many kilos at ${intent.stationName}?` : intent.kg != null ? `${intent.kg} kg — which station?` : "Which station, and how many kilos?";
       canApply = intent.kg != null && !!intent.stationId && !!input.outletId;
+      if (intent.kg != null && !intent.stationId && input.outletId) {
+        summary = `${intent.kg} kg${intent.reason ? ` ${intent.reason}` : ""}. Which station?`;
+        pick = (stations ?? []).map((s) => ({ id: s.id, name: s.name }));
+      }
       break;
     case "room_done":
       summary = roomId ? `Room ${intent.room} done${intent.minutes ? ` in ${intent.minutes} minutes` : ""}` : `Room ${intent.room} is not on the list`;
@@ -59,7 +66,7 @@ export async function previewVoice(input: { transcript: string; propertyId: stri
       summary = "Not understood. Try “Western hot over-prep 2 kg” or “2506 done, 24 minutes”.";
       canApply = false;
   }
-  return { intent, summary, canApply, context: { propertyId: input.propertyId, outletId: input.outletId, serviceDate: input.serviceDate, roomId } };
+  return { intent, summary, canApply, pick, context: { propertyId: input.propertyId, outletId: input.outletId, serviceDate: input.serviceDate, roomId } };
 }
 
 /**

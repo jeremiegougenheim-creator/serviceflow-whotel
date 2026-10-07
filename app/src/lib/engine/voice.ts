@@ -98,12 +98,27 @@ function norm(s: string): string {
     .trim();
 }
 
+/** Chinese names kitchens use for the usual stations (Traditional and Simplified); a station's own aliases come first. */
+const BUILTIN_ALIASES: [RegExp, string[]][] = [
+  [/dim.?sum/, ["點心", "点心"]],
+  [/congee|noodle/, ["粥", "粥麵", "粥面"]],
+  [/western/, ["西式熱食", "西式热食", "西餐"]],
+  [/bakery|pastr|bread/, ["麵包", "面包", "包點", "包点", "糕點", "糕点"]],
+  [/egg/, ["蛋", "雞蛋", "鸡蛋"]],
+  [/japan/, ["日式", "日本"]],
+  [/coffee|juice/, ["咖啡", "果汁"]],
+  [/fruit/, ["水果", "生果"]],
+  [/salad|cold/, ["沙律", "沙拉", "冷盤", "冷盘"]],
+  [/seafood|fish/, ["海鮮", "海鲜", "魚", "鱼"]],
+];
+
 /** Find the station the transcript names, by name, slug or alias (English words or Chinese substrings). */
 export function matchStation<T extends VoiceStation>(text: string, stations: T[]): { station: T; score: number } | null {
   const t = norm(text);
   let best: { station: T; score: number } | null = null;
   for (const st of stations) {
-    const candidates = [st.name, st.slug.replace(/_/g, " "), ...(st.aliases ?? [])].map((c) => c.toLowerCase());
+    const builtin = BUILTIN_ALIASES.filter(([re]) => re.test(st.slug) || re.test(st.name.toLowerCase())).flatMap(([, a]) => a);
+    const candidates = [st.name, st.slug.replace(/_/g, " "), ...(st.aliases ?? []), ...builtin].map((c) => c.toLowerCase());
     let score = 0;
     for (const c of candidates) {
       if (/[㐀-鿿]/.test(c)) {

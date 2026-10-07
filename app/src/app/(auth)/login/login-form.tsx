@@ -35,11 +35,11 @@ export function LoginForm({ next, error, sent }: { next: string; error?: string;
           <input id="password" className="input" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
       ) : null}
-      <button type="submit" className="btn btn-gold mt-2" disabled={state.busy}>
-        {state.busy ? "…" : mode === "link" ? "Send me the link" : "Sign in"}
+      <button type="submit" className="btn btn-gold mt-2" disabled={state.busy} aria-busy={state.busy || undefined}>
+        {mode === "link" ? "Send me the link" : "Sign in"}
       </button>
       {state.msg ? <p className={`text-[13px] ${state.ok ? "text-green" : "text-red"}`} role="status">{state.msg}</p> : null}
-      <button type="button" className="muted text-left text-[12.5px] underline-offset-4 hover:underline" onClick={() => setMode(mode === "link" ? "password" : "link")}>
+      <button type="button" className="muted -mx-2 min-h-11 self-start rounded-lg px-2 text-left text-[14px] underline underline-offset-4 hover:text-cream" onClick={() => setMode(mode === "link" ? "password" : "link")}>
         {mode === "link" ? "I have a password" : "Send me a link instead"}
       </button>
     </form>

@@ -32,7 +32,7 @@ export default async function EnginePage() {
               <b>{label}</b>
               <span>{note}</span>
             </div>
-            {editable ? <ActionButton small action={runJobNow.bind(null, ctx.property.id, job)} label="Run" done="Done" /> : null}
+            {editable ? <ActionButton small variant="ghost" actionKey={`run:${job}`} action={runJobNow.bind(null, ctx.property.id, job)} label="Run now" done="Done" /> : null}
           </div>
         ))}
       </Card>

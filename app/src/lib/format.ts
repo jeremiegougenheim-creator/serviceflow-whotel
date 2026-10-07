@@ -31,7 +31,7 @@ export function signed(n: number | null | undefined, unit = "", decimals = 0): s
   if (n == null) return "—";
   const v = Number(n);
   const s = Math.abs(v).toFixed(decimals);
-  return `${v > 0 ? "+" : v < 0 ? "−" : ""}${s}${unit}`;
+  return `${v > 0 ? "+" : v < 0 ? "−" : ""}${s}${unit.replace(/^ /, "\u00a0")}`;
 }
 
 /** Engine titles are built with "-"; print them with a minus sign: "Trim Dim sum −17%". */
@@ -53,7 +53,7 @@ export function num(n: number | string | null | undefined, decimals = 0): string
 
 export function kg(n: number | string | null | undefined, decimals = 1): string {
   if (n == null || n === "") return "—";
-  return `${num(n, decimals)} kg`;
+  return `${num(n, decimals)}\u00a0kg`;
 }
 
 export function hhmm(iso: string | null | undefined, tz: string): string {

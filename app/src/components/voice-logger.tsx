@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./icons";
 import { applyVoice, previewVoice, type VoicePreview } from "@/lib/actions/voice";
+import { undoWasteLog } from "@/lib/actions/ops";
 
 type SR = {
   lang: string;
@@ -40,7 +41,7 @@ export function VoiceLogger({ propertyId, outletId, serviceDate, department, pla
   const checked = useRef(false);
   const [preview, setPreview] = useState<VoicePreview | null>(null);
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [result, setResult] = useState<{ ok: boolean; msg: string; undoId?: string } | null>(null);
   const recRef = useRef<SR | null>(null);
   const startedAt = useRef<number | null>(null);
   const viaVoice = useRef(false);
@@ -81,13 +82,39 @@ export function VoiceLogger({ propertyId, outletId, serviceDate, department, pla
     rec.start();
   }
 
-  async function parse() {
-    if (!text.trim()) return;
+  async function parse(override?: string) {
+    const t = (override ?? text).trim();
+    if (!t) return;
     setBusy(true);
     setResult(null);
     startedAt.current ??= Date.now();
     try {
-      setPreview(await previewVoice({ transcript: text.trim(), propertyId, outletId, serviceDate, department }));
+      setPreview(await previewVoice({ transcript: t, propertyId, outletId, serviceDate, department }));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** The station was missing: one tap names it, and the line is read again. */
+  function pickStation(name: string) {
+    const t = `${name} ${text.trim()}`;
+    setText(t);
+    parse(t);
+  }
+
+  // "Logged · Undo" stays ten seconds, then the line is final
+  useEffect(() => {
+    if (!result?.undoId) return;
+    const t = setTimeout(() => setResult((r) => (r ? { ...r, undoId: undefined } : r)), 10_000);
+    return () => clearTimeout(t);
+  }, [result?.undoId]);
+
+  async function undo() {
+    if (!result?.undoId) return;
+    setBusy(true);
+    try {
+      const r = await undoWasteLog(result.undoId);
+      setResult(r.ok ? { ok: true, msg: "Removed. Nothing was logged." } : { ok: false, msg: r.error });
     } finally {
       setBusy(false);
     }
@@ -99,7 +126,7 @@ export function VoiceLogger({ propertyId, outletId, serviceDate, department, pla
     try {
       const seconds = startedAt.current ? Math.round((Date.now() - startedAt.current) / 1000) : null;
       const r = await applyVoice(preview, { transcript: text.trim(), language: lang, source: viaVoice.current ? "voice" : "manual", secondsToLog: seconds });
-      setResult(r.ok ? { ok: true, msg: r.label ?? "Logged" } : { ok: false, msg: r.error });
+      setResult(r.ok ? { ok: true, msg: r.label ?? "Logged", undoId: r.id } : { ok: false, msg: r.error });
       if (r.ok) {
         setText("");
         setPreview(null);
@@ -114,7 +141,7 @@ export function VoiceLogger({ propertyId, outletId, serviceDate, department, pla
   return (
     <div className="card-raised px-3.5 py-3" data-voice-logger data-ready={ready ? "1" : undefined}>
       <div className="flex items-center gap-2">
-        <button type="button" onClick={listen} disabled={!supported} className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${listening ? "bg-red text-cream" : supported ? "bg-gold text-ink" : "bg-navy text-mist"}`} aria-pressed={listening} aria-label={listening ? "Stop listening" : "Speak"} title={supported ? "Speak" : "Speech is not available in this browser; type instead"}>
+        <button type="button" onClick={listen} disabled={!supported} className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${listening ? "bg-red text-ink" : supported ? "bg-gold-fill text-on-gold" : "bg-navy text-mist"}`} aria-pressed={listening} aria-label={listening ? "Stop listening" : "Speak"} title={supported ? "Speak" : "Speech is not available in this browser; type instead"}>
           <Icon name="mic" size={20} />
         </button>
         <input
@@ -134,14 +161,14 @@ export function VoiceLogger({ propertyId, outletId, serviceDate, department, pla
           placeholder={placeholder}
           aria-label={placeholder}
         />
-        <button type="button" onClick={parse} disabled={busy || !text.trim()} className="btn btn-ghost !px-3.5">
+        <button type="button" onClick={() => parse()} disabled={busy || !text.trim()} className="btn btn-ghost !px-3.5">
           {busy && !preview ? "…" : "Log"}
         </button>
       </div>
       <div className="mt-2 flex items-center justify-between gap-2">
-        <div className="flex gap-1">
+        <div className="flex shrink-0 rounded-full border border-(--sf-rule-strong) p-0.5" role="radiogroup" aria-label="Language">
           {LANGS.map(([code, label]) => (
-            <button key={code} type="button" onClick={() => setLang(code)} className={`pill ${lang === code ? "pill-gd" : "pill-mt"}`} aria-pressed={lang === code}>
+            <button key={code} type="button" onClick={() => setLang(code)} role="radio" aria-checked={lang === code} className={`h-11 min-w-11 rounded-full px-3 text-[14px] ${lang === code ? "bg-gold/15 text-gold-light" : "text-mist"}`}>
               {label}
             </button>
           ))}
@@ -149,13 +176,22 @@ export function VoiceLogger({ propertyId, outletId, serviceDate, department, pla
         <span className="muted truncate text-[12px]">{listening ? "Listening…" : `“${examples[0]}”`}</span>
       </div>
       {preview ? (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-ink/60 px-3 py-2.5">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-ink/60 px-3 py-2.5">
           <span className="text-[14px]">{preview.summary}</span>
+          {preview.pick?.length ? (
+            <div className="flex w-full flex-wrap gap-2">
+              {preview.pick.map((s) => (
+                <button key={s.id} type="button" onClick={() => pickStation(s.name)} disabled={busy} className="btn btn-ghost !min-h-11 !px-3.5 !py-2 !text-[13.5px]">
+                  {s.name}
+                </button>
+              ))}
+            </div>
+          ) : null}
           {preview.canApply ? (
             <button type="button" onClick={confirm} disabled={busy} className="btn btn-gold !py-2 !text-[13px]">
               {busy ? "…" : "Confirm"}
             </button>
-          ) : (
+          ) : preview.pick?.length ? null : (
             <button type="button" onClick={() => setPreview(null)} className="btn btn-ghost !py-2 !text-[13px]">
               Edit
             </button>
@@ -163,9 +199,14 @@ export function VoiceLogger({ propertyId, outletId, serviceDate, department, pla
         </div>
       ) : null}
       {result ? (
-        <p className={`mt-2 text-[13px] ${result.ok ? "text-green" : "text-red"}`} role="status">
-          {result.msg}
-        </p>
+        <div className="mt-2 flex items-center gap-3" role="status">
+          <p className={`text-[13px] ${result.ok ? "text-green" : "text-red"}`}>{result.msg}</p>
+          {result.undoId ? (
+            <button type="button" onClick={undo} disabled={busy} className="btn btn-ghost !min-h-9 !px-3 !py-1.5 !text-[13px]">
+              Undo
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

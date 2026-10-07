@@ -1,9 +1,8 @@
-import { ActionButton } from "@/components/action-button";
+import { DecisionRow } from "@/components/decision-row";
 import { Card, Empty, Row, ScreenHead, SectionHead, Tabs } from "@/components/ui";
-import { approveDecision, rejectDecision } from "@/lib/actions/ops";
-import { getContext, mayWrite } from "@/lib/data/context";
+import { getContext } from "@/lib/data/context";
 import { drivers, getDecisions, getLatestForecast, getOutlets, inputs } from "@/lib/data/fnb";
-import { money, plusDays, typo } from "@/lib/format";
+import { money, plusDays, weekday } from "@/lib/format";
 
 export const metadata = { title: "Brief" };
 
@@ -22,31 +21,18 @@ export default async function BriefPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <ScreenHead hi={f ? <>{String(meta.headline ?? "").replace(/\.$/, "")}.</> : <>No brief yet.</>} sub={sub || `${outlet?.name ?? ""} · ${date}`} />
+      <ScreenHead hi={f ? <>{String(meta.headline ?? "").replace(/\.$/, "")}.</> : <>No brief yet.</>} sub={sub || `${outlet?.name ?? ""} · ${weekday(date)}`} />
       <Tabs items={outlets.map((o) => ({ key: o.slug, label: o.name, href: `/brief?outlet=${o.slug}&date=${date}` }))} current={outlet?.slug ?? ""} />
 
       <div className="strike">
-        <div className="eyebrow">Three decisions for {date === ctx.today ? "today" : "tomorrow"}</div>
+        <div className="eyebrow">{decisions.length === 3 ? "Three decisions" : `${decisions.length} decision${decisions.length === 1 ? "" : "s"}`} for {date === ctx.today ? "today" : weekday(date)} · {decisions.some((d) => d.status === "proposed") ? `${decisions.filter((d) => d.status === "proposed").length} waiting` : "all decided"}</div>
         <div className="tt">
           {decisions.length ? decisions.map((d) => d.kind).filter((k, i, a) => a.indexOf(k) === i).map((k) => k[0].toUpperCase() + k.slice(1)).join(", ") + "." : "Nothing to decide."}
         </div>
         {decisions.length ? (
           <div className="mt-3">
             {decisions.map((d) => (
-              <div key={d.id} className="row row-decision">
-                <div className="t min-w-0">
-                  <b>{typo(d.title)}</b>
-                  <span>{d.detail ?? d.reason}</span>
-                </div>
-                {d.status === "proposed" && mayWrite(ctx, "decisions") ? (
-                  <div className="acts">
-                    <ActionButton small variant="ghost" action={rejectDecision.bind(null, d.id)} label="Keep as is" done="Kept as is" />
-                    <ActionButton small action={approveDecision.bind(null, d.id)} label="Approve" done="Approved" />
-                  </div>
-                ) : (
-                  <span className={`pill ${d.status === "approved" || d.status === "done" ? "pill-gn" : "pill-mt"}`}>{d.status}</span>
-                )}
-              </div>
+              <DecisionRow key={d.id} d={d} ctx={ctx} />
             ))}
           </div>
         ) : null}

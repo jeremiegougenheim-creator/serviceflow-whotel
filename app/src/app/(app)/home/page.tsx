@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { ActionButton } from "@/components/action-button";
+import { DecisionRow } from "@/components/decision-row";
 import { Card, Grid, Kpi, Row, ScreenHead, SectionHead } from "@/components/ui";
-import { approveDecision, rejectDecision } from "@/lib/actions/ops";
-import { getContext, mayWrite } from "@/lib/data/context";
+import { getContext } from "@/lib/data/context";
 import { drivers, getDecisions, getLatestForecast, getOutlets, getPms, getStaffingWeek } from "@/lib/data/fnb";
-import { greeting, money, plusDays, signed, timeShort, typo, weekday, mondayOf } from "@/lib/format";
+import { greeting, plusDays, signed, timeShort, weekday, mondayOf } from "@/lib/format";
 
 export const metadata = { title: "Home" };
 
@@ -27,7 +26,11 @@ export default async function HomePage() {
   const settings = (ctx.property.settings ?? {}) as Record<string, string>;
   const briefTime = settings.brief_time ?? "18:00";
   const open = decisions.filter((d) => d.status === "proposed");
-  const ready = open.filter((d) => d.outlet_id === breakfast?.id).length || open.length;
+  // the breakfast decisions stay in their rank order whatever their status: a decided row stays where it was
+  const first = decisions.find((d) => d.outlet_id === breakfast?.id) ? breakfast?.id : decisions[0]?.outlet_id;
+  const primary = decisions.filter((d) => d.outlet_id === first).slice(0, 5);
+  const elsewhere = open.filter((d) => d.outlet_id !== first);
+  const outletName = (id: string | null) => outlets.find((o) => o.id === id)?.name ?? (id ? "" : "hotel-wide");
   const busy = occT != null && occT >= 0.88 ? "busy " : "";
 
   return (
@@ -38,10 +41,10 @@ export default async function HomePage() {
             {greeting(ctx.clock)}, <em>{busy}{weekday(tomorrow)}.</em>
           </>
         }
-        sub={f ? `${f.covers_p50} covers forecast · ${ready} decision${ready === 1 ? "" : "s"} ready` : "No forecast yet for tomorrow"}
+        sub={f ? `${f.covers_p50} covers forecast · ${open.length ? `${open.length} decision${open.length === 1 ? "" : "s"} waiting` : "every decision taken"}` : "No forecast yet for tomorrow"}
       />
       <Grid>
-        <Kpi k="Covers fcst" v={f?.covers_p50 ?? "—"} n={f ? `range ${f.covers_p10}–${f.covers_p90}` : "runs at " + briefTime} />
+        <Kpi k="Covers forecast" v={f?.covers_p50 ?? "—"} n={f ? `range ${f.covers_p10}–${f.covers_p90}` : "runs at " + briefTime} />
         <Kpi k="Occupancy" v={occT != null ? <>{Math.round(occT * 100)}<small>%</small></> : "—"} n={occT != null && occ0 != null ? `${signed(Math.round((occT - occ0) * 100), " pts")} on today` : undefined} />
         <Kpi k="Plan ready" v={f ? timeShort(briefTime) : "—"} n={f ? `approve by ${timeShort(plusHours(briefTime, 3))}` : undefined} tone={f ? "gn" : undefined} />
         <Kpi k="Staffing" v={kitchen.length ? <>{signed(Math.round(kitchenDelta), " h")}</> : "—"} n={`${weekday(tomorrow)} kitchen`} tone={kitchenDelta <= -1 ? "am" : kitchenDelta >= 1 ? "gn" : undefined} />
@@ -55,29 +58,21 @@ export default async function HomePage() {
         {!f ? <Row title="The evening brief runs at the configured hour." note="Set-up → Hotel to change it." /> : null}
       </Card>
 
-      {open.length ? (
+      {primary.length ? (
         <>
-          <SectionHead title="Decisions waiting" note={<Link href="/brief" className="text-gold-light">Open the brief</Link>} />
+          <SectionHead title={open.length ? "Decisions waiting" : "Decisions"} note={<Link href="/brief" className="text-gold-light">Open the brief</Link>} />
           <Card>
-            {open.slice(0, 3).map((d) => (
-              <div key={d.id} className="row row-decision">
-                <div className="t min-w-0">
-                  <b>
-                    {typo(d.title)}
-                    {Number(d.est_saving) >= 10 ? <small className="ml-2 whitespace-nowrap text-[13px] font-normal text-green">{money(d.est_saving, d.currency ?? ctx.property.currency)}</small> : null}
-                  </b>
-                  <span>{d.detail}</span>
-                </div>
-                {mayWrite(ctx, "decisions") ? (
-                  <div className="acts">
-                    <ActionButton small variant="ghost" action={rejectDecision.bind(null, d.id)} label="Keep as is" done="Kept as is" />
-                    <ActionButton small action={approveDecision.bind(null, d.id)} label="Approve" done="Approved" />
-                  </div>
-                ) : (
-                  <span className="pill pill-mt">{d.status}</span>
-                )}
-              </div>
+            {primary.map((d) => (
+              <DecisionRow key={d.id} d={d} ctx={ctx} />
             ))}
+            {elsewhere.length ? (
+              <Link href="/brief" className="row text-[14px] text-gold-light">
+                <span>
+                  {elsewhere.length} more waiting · {[...new Set(elsewhere.map((d) => outletName(d.outlet_id)))].filter(Boolean).join(", ")}
+                </span>
+                <span aria-hidden="true">›</span>
+              </Link>
+            ) : null}
           </Card>
         </>
       ) : null}

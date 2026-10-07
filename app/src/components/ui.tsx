@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { statusChip, withTime, type Entity } from "@/lib/status";
 
 export function ScreenHead({ hi, sub, eyebrow }: { hi?: ReactNode; sub?: ReactNode; eyebrow?: ReactNode }) {
   return (
@@ -36,7 +37,7 @@ export function SectionHead({ title, note }: { title: ReactNode; note?: ReactNod
   );
 }
 
-export function Row({ title, note, right, pill, tone, href }: { title: ReactNode; note?: ReactNode; right?: ReactNode; pill?: ReactNode; tone?: "gn" | "am" | "rd" | "mt" | "gd"; href?: string }) {
+export function Row({ title, note, right, pill, tone, href }: { title: ReactNode; note?: ReactNode; right?: ReactNode; pill?: ReactNode; tone?: "gn" | "am" | "rd" | "mt" | "gd" | "bl"; href?: string }) {
   const inner = (
     <>
       <div className="t min-w-0">
@@ -103,4 +104,10 @@ export function Note({ children }: { children: ReactNode }) {
 
 export function Empty({ children }: { children: ReactNode }) {
   return <div className="card px-4 py-6 text-center text-[14px] text-mist">{children}</div>;
+}
+
+/** A status as a person reads it: "Waiting", "Approved 18:42", "In progress". Never the database word. */
+export function Chip({ entity, status, at, tz, className = "" }: { entity: Entity; status: string | null | undefined; at?: string | null; tz?: string; className?: string }) {
+  const c = statusChip(entity, status);
+  return <span className={`pill pill-${c.tone} whitespace-nowrap ${className}`}>{tz && at ? withTime(c.label, at, tz) : c.label}</span>;
 }

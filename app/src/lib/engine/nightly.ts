@@ -71,7 +71,7 @@ export function computeNightly(n: NightlyInput): NightlyOutput {
   const energyScore = n.esg.energyVsBaseline == null ? 0.75 : clamp(0.75 - n.esg.energyVsBaseline * 2, 0, 1); // −12% → 0.99
   const logScore = n.esg.wasteLoggedShare == null ? 0.7 : clamp(n.esg.wasteLoggedShare, 0, 1);
   const esgScore = 0.6 * energyScore + 0.4 * logScore;
-  const esgNote = n.esg.energyVsBaseline != null ? `energy ${Math.round(-n.esg.energyVsBaseline * 100)}% on baseline · ${Math.round(n.esg.co2eAvoidedKg)} kg CO₂e avoided` : "energy not metered";
+  const esgNote = n.esg.energyVsBaseline != null ? `energy ${Math.round(Math.abs(n.esg.energyVsBaseline) * 100)}% ${n.esg.energyVsBaseline <= 0 ? "under" : "over"} baseline · ${Math.floor(n.esg.co2eAvoidedKg)} kg CO₂e avoided` : "energy not metered";
 
   const grades = {
     fnb: { grade: gradeFromScore(fnbScore), score: fnbScore, note: fnbNote },

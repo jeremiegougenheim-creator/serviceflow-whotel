@@ -1,5 +1,5 @@
-import { ActionButton } from "@/components/action-button";
-import { Card, Empty, Note, Row, ScreenHead, Strike, Tabs } from "@/components/ui";
+import { ActionButton, ActionGroup } from "@/components/action-button";
+import { Card, Chip, Empty, Note, Row, ScreenHead, Strike, Tabs } from "@/components/ui";
 import { applyRosterSuggestion, dismissRosterSuggestion } from "@/lib/actions/ops";
 import { getContext, mayWrite } from "@/lib/data/context";
 import { getStaffingWeek } from "@/lib/data/fnb";
@@ -46,15 +46,16 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
       <Tabs items={[{ key: "this", label: "This week", href: "/roster" }, { key: "next", label: "Next week", href: "/roster?week=next" }]} current={isNext ? "next" : "this"} />
       {top ? (
         <Strike
+          key={top.id}
           eyebrow={isNext ? "Draft roster · next week" : "Before the week starts"}
           title={top.title}
           body={top.detail}
           action={
             mayWrite(ctx, "roster_suggestions") ? (
-              <div className="flex gap-2">
-                <ActionButton action={applyRosterSuggestion.bind(null, top.id)} label="Approve the move" done="Move approved" />
-                <ActionButton variant="ghost" action={dismissRosterSuggestion.bind(null, top.id)} label="Not now" done="Dismissed" />
-              </div>
+              <ActionGroup className="flex flex-wrap gap-2">
+                <ActionButton actionKey={`${top.id}:apply`} action={applyRosterSuggestion.bind(null, top.id)} label="Approve the move" done="Move applied" />
+                <ActionButton variant="ghost" actionKey={`${top.id}:dismiss`} action={dismissRosterSuggestion.bind(null, top.id)} label="Not now" done="Set aside" />
+              </ActionGroup>
             ) : undefined
           }
         />
@@ -67,7 +68,7 @@ export default async function RosterPage({ searchParams }: { searchParams: Promi
             <div className="text-[14.5px] font-medium">{s.title}</div>
             <div className="muted text-[13px]">{s.detail}</div>
           </div>
-          {mayWrite(ctx, "roster_suggestions") ? <ActionButton small action={applyRosterSuggestion.bind(null, s.id)} label="Approve" done="Approved" /> : <span className="pill pill-mt">proposed</span>}
+          {mayWrite(ctx, "roster_suggestions") ? <ActionButton small actionKey={`${s.id}:apply`} action={applyRosterSuggestion.bind(null, s.id)} label="Approve" done="Applied" /> : <Chip entity="roster" status="proposed" />}
         </div>
       ))}
 

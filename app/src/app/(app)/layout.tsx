@@ -1,10 +1,11 @@
 import { Shell } from "@/components/shell";
 import { getContext, getUnreadCount } from "@/lib/data/context";
 import { NAV, ROLE_NAME, ROLE_TAG } from "@/lib/nav";
-import { signOut, switchProperty, switchRole } from "@/lib/actions/ops";
+import { setTheme, signOut, switchProperty, switchRole } from "@/lib/actions/ops";
+import { readTheme } from "@/lib/theme";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [ctx, count] = await Promise.all([getContext(), getUnreadCount()]);
+  const [ctx, count, theme] = await Promise.all([getContext(), getUnreadCount(), readTheme()]);
   return (
     <Shell
       nav={NAV[ctx.role]}
@@ -20,6 +21,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       role={ctx.role}
       switchProperty={switchProperty}
       switchRole={switchRole}
+      theme={theme}
+      canSetUp={ctx.roles.some((r) => ["gm", "fnb_mgr", "chef", "hk", "eng", "admin"].includes(r))}
+      setTheme={setTheme}
       signOut={signOut}
     >
       {children}

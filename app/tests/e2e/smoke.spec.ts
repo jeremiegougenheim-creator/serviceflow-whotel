@@ -61,7 +61,7 @@ test("the CEO reads the group by region and drills into a hotel", async ({ page 
 test("a chef never sees another hotel", async ({ page }) => {
   await signIn(page, "chef@demo.serviceflow");
   await page.goto("/settings/team");
-  await expect(page.getByText("HARBOUR HOTEL", { exact: true })).toBeVisible();
+  await expect(page.getByRole("banner").getByText("HARBOUR HOTEL", { exact: true })).toBeVisible();
   await expect(page.getByText("Townhouse")).toHaveCount(0);
 });
 
@@ -82,4 +82,31 @@ test("a reader is offered no tap the database would refuse", async ({ page }) =>
   await page.goto("/waste");
   await expect(page.getByPlaceholder("Log a station’s waste")).toHaveCount(0);
   await expect(page.getByText(/Measured by the log, not modelled/).first()).toBeVisible();
+});
+
+test("a decision kept as is reads in words, stays in place and can be undone", async ({ page }) => {
+  await signIn(page, "gm@demo.serviceflow");
+  await page.goto("/brief?outlet=restaurant");
+  const keep = page.getByRole("button", { name: "Keep as is" }).first();
+  if (!(await keep.isVisible())) return; // every decision already taken on this copy
+  const row = keep.locator("xpath=ancestor::div[contains(@class,'row-decision')]");
+  const title = (await row.locator("b").first().innerText()).split("\n")[0];
+  await keep.click();
+  const same = page.locator(".row-decision", { hasText: title });
+  await expect(same.getByText(/^Kept as is/)).toBeVisible();
+  await expect(page.getByText(/rejected/i)).toHaveCount(0);
+  await same.getByRole("button", { name: "Undo" }).click();
+  await expect(same.getByRole("button", { name: "Approve" })).toBeVisible();
+});
+
+test("approving a roster move never marks the next one as done", async ({ page }) => {
+  await signIn(page, "gm@demo.serviceflow");
+  await page.goto("/roster");
+  const approve = page.getByRole("button", { name: "Approve the move" });
+  if (!(await approve.isVisible())) return;
+  const first = await page.locator(".strike .tt").innerText();
+  await approve.click();
+  await page.waitForLoadState("networkidle");
+  const now = page.locator(".strike .tt");
+  if ((await now.innerText()) !== first) await expect(page.locator(".strike").getByText("Move applied")).toHaveCount(0);
 });
