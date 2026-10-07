@@ -15,8 +15,12 @@ export interface ShellProps {
   propertyId: string;
   userLabel: string;
   unread: number;
+  /** the roles this person holds on the hotel, with their names; more than one shows "View as" */
+  roles: { value: string; label: string }[];
+  role: string;
   children: React.ReactNode;
   switchProperty: (formData: FormData) => Promise<void>;
+  switchRole: (formData: FormData) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -30,6 +34,7 @@ export function Shell(p: ShellProps) {
     <div className="min-h-dvh md:grid md:grid-cols-[240px_1fr]">
       <aside className="hidden md:flex md:flex-col md:gap-6 md:border-r md:border-(--sf-rule) md:px-5 md:py-6 md:sticky md:top-0 md:h-dvh">
         <Lockup scope={p.scope} />
+        {p.roles.length > 1 ? <ViewAs roles={p.roles} role={p.role} action={p.switchRole} id="sf-view-as-side" /> : null}
         <nav className="flex flex-col gap-1" aria-label="Sections">
           {p.nav.map((n) => (
             <Link key={n.href} href={n.href} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] ${active === n.href ? "bg-gold/10 text-gold-light" : "text-mist hover:text-cream"}`}>
@@ -73,6 +78,11 @@ export function Shell(p: ShellProps) {
           {menu ? (
             <div className="absolute right-4 top-14 z-30 w-72 rounded-2xl border border-(--sf-rule-strong) bg-navy-mid p-3 shadow-2xl" role="menu">
               <div className="px-2 pb-2 text-[12px] text-mist">{p.userLabel}</div>
+              {p.roles.length > 1 ? (
+                <div className="px-2 pb-2">
+                  <ViewAs roles={p.roles} role={p.role} action={p.switchRole} id="sf-view-as-menu" />
+                </div>
+              ) : null}
               {p.properties.length > 1 ? (
                 <form action={p.switchProperty} className="px-2 pb-2">
                   <label className="lbl" htmlFor="sf-property">Hotel</label>
@@ -112,5 +122,22 @@ export function Shell(p: ShellProps) {
         </nav>
       </div>
     </div>
+  );
+}
+
+function ViewAs({ roles, role, action, id }: { roles: { value: string; label: string }[]; role: string; action: (formData: FormData) => Promise<void>; id: string }) {
+  return (
+    <form action={action}>
+      <label className="lbl" htmlFor={id}>
+        View as
+      </label>
+      <select id={id} name="role" defaultValue={role} className="input" onChange={(e) => e.currentTarget.form?.requestSubmit()}>
+        {roles.map((r) => (
+          <option key={r.value} value={r.value}>
+            {r.label}
+          </option>
+        ))}
+      </select>
+    </form>
   );
 }

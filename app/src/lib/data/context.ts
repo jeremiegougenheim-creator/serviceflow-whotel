@@ -29,6 +29,8 @@ export interface AppContext {
   /** the role used for navigation and permissions on the selected property */
   role: Role;
   roles: Role[];
+  /** every role the user holds on the selected property, before any "view as" choice */
+  heldRoles: Role[];
   isPortfolio: boolean;
   scopeLabel: string;
   today: string;
@@ -36,6 +38,7 @@ export interface AppContext {
 }
 
 const PROPERTY_COOKIE = "sf_property";
+const ROLE_COOKIE = "sf_role";
 
 /** Session, memberships and the selected property. Cached per request. */
 export const getContext = cache(async (): Promise<AppContext> => {
@@ -60,16 +63,23 @@ export const getContext = cache(async (): Promise<AppContext> => {
 
   const rolesFor = (propertyId: string, regionId: string | null) =>
     ms.filter((m) => (m.scope_type === "property" && m.property_id === propertyId) || (m.scope_type === "region" && m.region_id === regionId) || m.scope_type === "org").map((m) => m.role);
-  const roles = rolesFor(property.id, property.region_id);
+  const heldRoles = [...new Set(rolesFor(property.id, property.region_id))];
   // the most operational role first: a chef who is also owner lands on the plan
   const order: Role[] = ["chef", "sous_chef", "prep_cook", "fnb_mgr", "gm", "hk", "eng", "auditor", "admin", "vp", "ceo", "owner"];
-  const role = order.find((r) => roles.includes(r)) ?? roles[0] ?? "auditor";
-  const isPortfolio = PORTFOLIO_ROLES.includes(role) || ms.some((m) => m.scope_type !== "property" && PORTFOLIO_ROLES.includes(m.role));
+  heldRoles.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  // "View as": someone holding several roles picks the one in view. The screens then offer
+  // only what that role may do; the database still decides every write.
+  const viewAs = cookieStore.get(ROLE_COOKIE)?.value as Role | undefined;
+  const chosen = viewAs && heldRoles.includes(viewAs) ? viewAs : null;
+  const role = chosen ?? heldRoles[0] ?? "auditor";
+  const roles = chosen ? [chosen] : heldRoles;
+  const isPortfolio = chosen ? PORTFOLIO_ROLES.includes(chosen) : PORTFOLIO_ROLES.includes(role) || ms.some((m) => m.scope_type !== "property" && PORTFOLIO_ROLES.includes(m.role));
 
   let scopeLabel = "YOUR HOTEL";
   const top = ms.find((m) => m.scope_type === "org" && PORTFOLIO_ROLES.includes(m.role)) ?? ms.find((m) => m.scope_type === "region" && PORTFOLIO_ROLES.includes(m.role));
-  if (role === "ceo" || top?.scope_type === "org") scopeLabel = `GROUP · ${props.length} HOTELS`;
-  else if (role === "vp" || top?.scope_type === "region") scopeLabel = `REGION · ${props.filter((p) => p.region_id === property.region_id).length} HOTELS`;
+  if (chosen && !PORTFOLIO_ROLES.includes(chosen)) scopeLabel = "YOUR HOTEL";
+  else if (role === "ceo" || (!chosen && top?.scope_type === "org")) scopeLabel = `GROUP · ${props.length} HOTELS`;
+  else if (role === "vp" || (!chosen && top?.scope_type === "region")) scopeLabel = `REGION · ${props.filter((p) => p.region_id === property.region_id).length} HOTELS`;
   else if (role === "owner") scopeLabel = `PORTFOLIO · ${props.length} HOTEL${props.length > 1 ? "S" : ""}`;
 
   return {
@@ -81,6 +91,7 @@ export const getContext = cache(async (): Promise<AppContext> => {
     property,
     role,
     roles,
+    heldRoles,
     isPortfolio,
     scopeLabel,
     today: todayIn(property.timezone),
@@ -113,3 +124,4 @@ export function mayWrite(ctx: AppContext, what: keyof typeof WRITES): boolean {
 }
 
 export const PROPERTY_COOKIE_NAME = PROPERTY_COOKIE;
+export const ROLE_COOKIE_NAME = ROLE_COOKIE;

@@ -78,6 +78,9 @@ export const NAV: Record<Role, NavItem[]> = {
 
 export const ROLE_TAG: Record<Role, string> = { gm: "GM", fnb_mgr: "F&B", chef: "CHEF", sous_chef: "SOUS CHEF", prep_cook: "PREP", hk: "H&K", eng: "ENG", auditor: "AUDIT", admin: "ADMIN", owner: "OWNER", vp: "VP", ceo: "CEO" };
 
+/** Full names for the "View as" menu. */
+export const ROLE_NAME: Record<Role, string> = { gm: "General Manager", fnb_mgr: "F&B Manager", chef: "Head Chef", sous_chef: "Sous Chef", prep_cook: "Prep Cook", hk: "Housekeeping", eng: "Engineering", auditor: "Auditor", admin: "Set-up (admin)", owner: "Owner", vp: "Regional VP", ceo: "Group CEO" };
+
 /** Pages reachable through an in-screen tab keep their parent lit in the bottom nav. */
 export function activeHref(pathname: string, items: NavItem[]): string | null {
   const exact = items.find((i) => pathname === i.href || pathname.startsWith(i.href + "/"));

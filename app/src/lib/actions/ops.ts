@@ -5,7 +5,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { PROPERTY_COOKIE_NAME } from "@/lib/data/context";
+import { getContext, PROPERTY_COOKIE_NAME, ROLE_COOKIE_NAME, type Role } from "@/lib/data/context";
+import { homeFor } from "@/lib/nav";
 import { runLive } from "@/lib/engine/run";
 import { nowClock, todayIn } from "@/lib/format";
 import type { Json, TablesUpdate } from "@/lib/supabase/database.types";
@@ -45,6 +46,17 @@ export async function switchProperty(formData: FormData) {
     store.set(PROPERTY_COOKIE_NAME, id, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
   }
   revalidatePath("/", "layout");
+}
+
+/** "View as": switch the role in view among the roles the user already holds on this hotel. Grants nothing. */
+export async function switchRole(formData: FormData) {
+  const role = String(formData.get("role") ?? "") as Role;
+  const ctx = await getContext();
+  if (!ctx.heldRoles.includes(role)) throw new Error("you do not hold that role on this hotel");
+  const store = await cookies();
+  store.set(ROLE_COOKIE_NAME, role, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax", httpOnly: true });
+  revalidatePath("/", "layout");
+  redirect(homeFor(role));
 }
 
 export async function signOut() {
