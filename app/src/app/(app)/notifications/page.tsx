@@ -26,7 +26,7 @@ export default async function NotificationsPage() {
                   <b className={n.read_at ? "!text-mist" : ""}>{n.title}</b>
                   <span>{n.body}</span>
                 </div>
-                <span className="muted shrink-0 text-[12px]">{new Date(n.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: ctx.property.timezone })}</span>
+                <span className="muted shrink-0 text-[12px]">{new Date(n.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: ctx.property.timezone }) === new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: ctx.property.timezone }) ? new Date(n.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: ctx.property.timezone }) : new Date(n.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: ctx.property.timezone })}</span>
               </Link>
             ))}
           </Card>

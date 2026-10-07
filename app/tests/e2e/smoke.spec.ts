@@ -35,7 +35,7 @@ test("the chef confirms the plan and logs waste by text", async ({ page }) => {
   await page.goto("/live");
   await page.waitForLoadState("networkidle");
   await page.locator("[data-voice-logger][data-ready]").first().waitFor();
-  await page.getByPlaceholder("Log a station, in English or Chinese").fill("Bakery over-prep 1.5 kg");
+  await page.getByPlaceholder("Log a count, a station or a fix").fill("Bakery over-prep 1.5 kg");
   await page.getByRole("button", { name: "Log" }).click();
   await expect(page.getByText(/Log 1.5 kg over-prep at Bakery/)).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
@@ -80,6 +80,6 @@ test("a reader is offered no tap the database would refuse", async ({ page }) =>
   await page.goto("/brief");
   await expect(page.getByRole("button", { name: "Approve" })).toHaveCount(0);
   await page.goto("/waste");
-  await expect(page.getByPlaceholder("Log a station, in English or Chinese")).toHaveCount(0);
-  await expect(page.getByText(/Measured by the bin/).first()).toBeVisible();
+  await expect(page.getByPlaceholder("Log a station’s waste")).toHaveCount(0);
+  await expect(page.getByText(/Measured by the log, not modelled/).first()).toBeVisible();
 });

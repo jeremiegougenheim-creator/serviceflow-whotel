@@ -1,6 +1,6 @@
 import { ActionButton } from "@/components/action-button";
 import { VoiceLogger } from "@/components/voice-logger";
-import { Card, Empty, Tabs } from "@/components/ui";
+import { Card, Empty, ScreenHead, Tabs } from "@/components/ui";
 import { actOnLiveEvent, setStationStatus } from "@/lib/actions/ops";
 import { getContext, mayWrite } from "@/lib/data/context";
 import { getLatestForecast, getOutlets, getPlanLines, groupPlan, serviceDateFor } from "@/lib/data/fnb";
@@ -32,13 +32,10 @@ export default async function LivePage({ searchParams }: { searchParams: Promise
 
   return (
     <>
-      <div className="mb-3 flex items-baseline justify-between">
-        <h1 className="text-[26px]">{outlet.name} · live</h1>
-        <span className="muted text-[12.5px]">
-          {seated != null ? `${seated} seated` : ""}
-          {f ? ` · ${f.covers_p50} forecast` : ""}
-        </span>
-      </div>
+      <ScreenHead
+        hi={<>{outlet.name}, <em>{seated != null && f ? (seated > f.covers_p50 * 1.05 ? "running ahead." : seated < f.covers_p50 * 0.9 && ctx.clock > outlet.closes_at.slice(0, 5) ? "closed under forecast." : "on pace.") : f ? "live." : "no plan yet."}</em></>}
+        sub={`${seated != null ? `${seated} seated` : "no cover count yet"}${f ? ` · ${f.covers_p50} forecast` : ""} · ${ctx.clock}`}
+      />
       <Tabs items={tabs} current="live" />
       {outlets.length > 1 ? (
         <div className="scroll-x -mx-4 mb-4 px-4">
@@ -52,7 +49,7 @@ export default async function LivePage({ searchParams }: { searchParams: Promise
         </div>
       ) : null}
 
-      {mayWrite(ctx, "waste_logs") ? <VoiceLogger propertyId={ctx.property.id} outletId={outlet.id} serviceDate={date} department="kitchen" placeholder="Log a station, in English or Chinese" examples={["Western hot over-prep 2 kg", "142 seated", "eggs ready"]} /> : null}
+      {mayWrite(ctx, "waste_logs") ? <VoiceLogger propertyId={ctx.property.id} outletId={outlet.id} serviceDate={date} department="kitchen" placeholder="Log a count, a station or a fix" examples={["Western hot over-prep 2 kg", "142 seated", "eggs ready"]} /> : null}
 
       <div className="mt-5">
         {(events ?? []).length === 0 ? (
@@ -93,7 +90,7 @@ export default async function LivePage({ searchParams }: { searchParams: Promise
                 <div className="t min-w-0">
                   <b>{g.station.name}</b>
                   <span>
-                    {g.lines.map((l) => `${timeShort(l.waves?.starts_at ?? "")} ${num(l.qty, g.station.unit === "L" ? 1 : 0)}`).join(" · ")} {g.station.unit !== "portions" ? g.station.unit : ""}
+                    {g.lines.map((l, i) => `${i === 0 ? "" : "+"}${num(l.qty, g.station.unit === "L" ? 1 : 0)}${g.station.unit !== "portions" ? ` ${g.station.unit}` : ""} at ${timeShort(l.waves?.starts_at ?? "")}`).join(" · ")}
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">

@@ -1,9 +1,9 @@
 import { ActionButton } from "@/components/action-button";
 import { VoiceLogger } from "@/components/voice-logger";
-import { Card, Grid, Kpi, Note, Row, Strike, Tabs } from "@/components/ui";
+import { Card, Grid, Kpi, Note, Row, ScreenHead, Strike, Tabs } from "@/components/ui";
 import { assignInspections, updateRoomTask } from "@/lib/actions/ops";
 import { getContext, mayWrite } from "@/lib/data/context";
-import { num, timeShort } from "@/lib/format";
+import { num, plural, timeShort } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Rooms" };
@@ -41,16 +41,21 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
     return parts.join(" · ");
   };
 
+  const vipTodo = vip.filter((t) => t.status === "todo" || t.status === "in_progress").length;
   return (
     <>
+      <ScreenHead
+        hi={<>{weekdayLabel(ctx.today)}, <em>{todo.length === 0 ? "every room done." : vipTodo ? `${plural(vipTodo, "VIP room")} to go.` : `${plural(todo.length, "room")} to go.`}</em></>}
+        sub={`${done.length} of ${all.length} done · ${deps.length} departures · ${vip.length} VIP today`}
+      />
       <Tabs items={tabs} current={view} />
       {view === "all" ? (
         <>
-          {mayWrite(ctx, "room_tasks") ? <VoiceLogger propertyId={ctx.property.id} outletId={null} serviceDate={ctx.today} department="housekeeping" placeholder="Log a room, in English or Chinese" examples={["2506 done, 24 minutes", "2506 完成 24 分钟"]} /> : null}
+          {mayWrite(ctx, "room_tasks") ? <VoiceLogger propertyId={ctx.property.id} outletId={null} serviceDate={ctx.today} department="housekeeping" placeholder="Log a room" examples={["2506 done, 24 minutes", "2506 完成 24 分钟"]} /> : null}
           <div className="mt-4">
             <Grid>
               <Kpi k="Min per room" v={avgMin != null ? num(avgMin, 1) : "—"} n={`target ${tLo}–${tHi}`} tone={avgMin != null && avgMin > tHi ? "am" : undefined} />
-              <Kpi k="Rooms done" v={<>{done.length}<small>/{all.length}</small></>} n={`${all.filter((t) => t.vip || t.kind === "vip_arrival" || t.rooms?.is_suite).length} VIP and suites`} />
+              <Kpi k="Rooms done" v={<>{done.length}<small>/{all.length}</small></>} n={`${vip.length} VIP · ${all.filter((t) => t.rooms?.is_suite).length} suites`} />
             </Grid>
           </div>
           <div className="mb-1 mt-6 flex items-baseline justify-between">
@@ -77,7 +82,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
             })}
             {!todo.length ? <Row title="Every room is done." /> : null}
           </Card>
-          <Note>After the F&B pilot. Same platform, same approvals.</Note>
+          <Note>VIP arrivals first, then stayovers, then departures. Minutes per room are logged by the attendant, not timed.</Note>
         </>
       ) : view === "departures" ? (
         <>
@@ -163,4 +168,8 @@ function floorBands(tasks: { status: string; minutes: number | null; rooms: { fl
     const m = done.filter((x) => x.minutes).map((x) => x.minutes!);
     return { label: b.label, total: t.length, done: done.length, avg: m.length ? m.reduce((s, x) => s + x, 0) / m.length : null, suites: t.some((x) => x.rooms?.is_suite), target: t[0]?.rooms?.target_minutes ?? 25 };
   }).slice(0, 5);
+}
+
+function weekdayLabel(date: string): string {
+  return new Date(date + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "long", timeZone: "UTC" });
 }

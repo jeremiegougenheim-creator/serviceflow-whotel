@@ -3,7 +3,7 @@ import { Card, Empty, Note, ScreenHead, Strike, Tabs } from "@/components/ui";
 import { confirmPlan } from "@/lib/actions/ops";
 import { getContext, mayWrite } from "@/lib/data/context";
 import { getDayWaste, getDecisions, getForecastVersions, getOutlets, getPlanLines, getWeekWaste, groupPlan, inputs, serviceDateFor, waveSplit, type Outlet } from "@/lib/data/fnb";
-import { kg, num, signed, timeShort, weekday } from "@/lib/format";
+import { kg, num, signed, timeShort, typo, weekday } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Plan" };
@@ -43,21 +43,21 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
 
   return (
     <>
+      <ScreenHead hi={<>{weekday(date)}&rsquo;s <em>plan.</em></>} sub={f ? `${outlet.name} · ${f.covers_p50} covers · version ${f.version} (${f.kind})` : `${outlet.name} · no plan yet`} />
       <Tabs items={tabs} current={outlet.slug} />
       {!f ? (
         <>
-          <ScreenHead hi={<>{outlet.name}</>} sub={`${weekday(date)} · no plan yet`} />
           <Empty>The plan for {weekday(date)} is built at the brief hour from the PMS and the bookings. Nothing to prepare yet.</Empty>
         </>
       ) : outlet.outlet_type === "breakfast" ? (
         <>
           <Strike
-            eyebrow={previous ? `Updated ${timeShort((ctx.property.settings as Record<string, string>)?.dawn_update_time ?? "03:30")} · ${f.covers_p50 === previous.covers_p50 ? "no change" : signed(f.covers_p50 - previous.covers_p50, " covers")}` : `${weekday(date)} · ${f.covers_p50} covers`}
-            title={topDecision ? `${topDecision.title}.` : `${f.covers_p50} covers, ${waves.length} waves.`}
+            eyebrow={previous ? `Dawn update ${timeShort((ctx.property.settings as Record<string, string>)?.dawn_update_time ?? "03:30")} · ${f.covers_p50 === previous.covers_p50 ? "covers unchanged since the brief" : `${signed(f.covers_p50 - previous.covers_p50, " covers")} since the brief`}` : `Evening brief · ${f.covers_p50} covers`}
+            title={topDecision ? `${typo(topDecision.title)}.` : `${f.covers_p50} covers, ${waves.length} waves.`}
             tiles={[
-              { b: waves[0]?.covers ?? f.covers_p50, s: `${timeShort(waves[0]?.startsAt ?? outlet.opens_at)} open` },
-              { b: waves[1] ? `+${waves[1].covers}` : "—", s: `${timeShort(waves[1]?.startsAt ?? "")} wave` },
-              { b: <>{num(ydayWaste, 1)}<small>kg</small></>, s: "waste yday" },
+              { b: waves[0]?.covers ?? f.covers_p50, s: `covers at ${timeShort(waves[0]?.startsAt ?? outlet.opens_at)}` },
+              { b: waves[1] ? `+${waves[1].covers}` : "—", s: `covers at ${timeShort(waves[1]?.startsAt ?? "")}` },
+              { b: <>{num(ydayWaste, 1)}<small>kg</small></>, s: "waste yesterday" },
             ]}
             action={confirmed ? <span className="btn btn-done">{done}</span> : mayWrite(ctx, "confirm_plan") ? <ActionButton action={confirmPlan.bind(null, f.id)} label={label} done={done} /> : <span className="pill pill-mt">waiting for the chef</span>}
           />
@@ -84,7 +84,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               </div>
             ))}
           </Card>
-          <Note>Every quantity is tomorrow&rsquo;s covers through the station&rsquo;s own history and the mix in house. The chef confirms; nothing changes without him.</Note>
+          <Note>Every quantity is tomorrow&rsquo;s covers through the station&rsquo;s own history and the mix in house. The chef confirms; nothing changes without the kitchen.</Note>
         </>
       ) : outlet.outlet_type === "banquet" ? (
         <>

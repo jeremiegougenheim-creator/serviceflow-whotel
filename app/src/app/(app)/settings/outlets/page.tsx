@@ -10,7 +10,7 @@ export const metadata = { title: "Outlets" };
 
 const TYPES: [string, string][] = [["breakfast", "Breakfast buffet"], ["restaurant", "Restaurant, à la carte"], ["bar", "Bar"], ["banquet", "Banquets"], ["room_service", "Room service"], ["other", "Other"]];
 const KINDS: [string, string][] = [["buffet", "Buffet station"], ["dish", "À la carte dish"], ["batch", "Batch"], ["course", "Banquet course"]];
-const CATS: [string, string][] = [["default", "Default"], ["bread_pastry", "Bread & pastry"], ["meat", "Meat"], ["dairy", "Dairy & eggs"], ["vegetables", "Vegetables"], ["seafood", "Seafood"], ["rice_noodles", "Rice & noodles"], ["fruit", "Fruit"], ["beverage", "Beverage"]];
+const CATS: [string, string][] = [["default", "Default"], ["bread_pastry", "Bread & pastry"], ["meat", "Mixed meat (pork, poultry)"], ["beef_lamb", "Beef & lamb"], ["dairy", "Dairy & eggs"], ["vegetables", "Vegetables"], ["seafood", "Seafood"], ["rice_noodles", "Rice & noodles"], ["fruit", "Fruit"], ["beverage", "Beverage"]];
 
 export default async function OutletsSettings({ searchParams }: { searchParams: Promise<{ outlet?: string; station?: string; add?: string }> }) {
   const ctx = await getContext();
@@ -46,7 +46,7 @@ export default async function OutletsSettings({ searchParams }: { searchParams: 
 
       {sp.add === "outlet" || !current ? (
         <SaveForm action={saveOutlet.bind(null, ctx.property.id, null)} className="card px-4 py-4" label="Add the outlet">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Field label="Name" name="name" required placeholder="Breakfast" />
             <Field label="Type" name="outlet_type" options={TYPES} />
             <Field label="Opens" name="opens_at" type="time" defaultValue="06:30" />
@@ -58,7 +58,7 @@ export default async function OutletsSettings({ searchParams }: { searchParams: 
       ) : (
         <>
           <SaveForm action={saveOutlet.bind(null, ctx.property.id, current.id)} className="card px-4 py-4">
-            <fieldset disabled={!editable} className="grid grid-cols-2 gap-3">
+            <fieldset disabled={!editable} className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <Field label="Name" name="name" defaultValue={current.name} required />
               <Field label="Type" name="outlet_type" options={TYPES} defaultValue={current.outlet_type} />
               <Field label="Opens" name="opens_at" type="time" defaultValue={current.opens_at.slice(0, 5)} />
@@ -78,7 +78,7 @@ export default async function OutletsSettings({ searchParams }: { searchParams: 
           <div className="grid gap-2">
             {(waves ?? []).filter((w) => w.outlet_id === current.id).map((w) => (
               <SaveForm key={w.id} action={saveWave.bind(null, ctx.property.id, current.id, w.id)} className="card px-4 py-3" label="Save">
-                <fieldset disabled={!editable} className="grid grid-cols-4 gap-2">
+                <fieldset disabled={!editable} className="grid grid-cols-2 gap-2 md:grid-cols-4">
                   <Field label="Label" name="label" defaultValue={w.label} />
                   <Field label="Starts" name="starts_at" type="time" defaultValue={w.starts_at.slice(0, 5)} />
                   <Field label="Default share" name="share_default" type="number" step="0.01" defaultValue={Number(w.share_default)} />
@@ -88,10 +88,10 @@ export default async function OutletsSettings({ searchParams }: { searchParams: 
             ))}
             {editable ? (
               <SaveForm action={saveWave.bind(null, ctx.property.id, current.id, null)} className="card px-4 py-3" label="Add a wave">
-                <div className="grid grid-cols-4 gap-2">
-                  <Field label="Label" name="label" placeholder="09:30" />
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                  <Field label="Label" name="label" placeholder="Late wave" />
                   <Field label="Starts" name="starts_at" type="time" />
-                  <Field label="Default share" name="share_default" type="number" step="0.01" defaultValue={0.3} />
+                  <Field label="Default share" name="share_default" type="number" step="0.01" placeholder="0.30" help="shares of the day's covers add up to 1" />
                   <Field label="Order" name="sort_order" type="number" defaultValue={(waves ?? []).filter((w) => w.outlet_id === current.id).length + 1} />
                 </div>
               </SaveForm>
@@ -126,7 +126,7 @@ export default async function OutletsSettings({ searchParams }: { searchParams: 
           {editable ? (
             <SaveForm key={editing?.id ?? "new"} action={saveStation.bind(null, ctx.property.id, current.id, editing?.id ?? null)} className="card mt-3 px-4 py-4" label={editing ? "Save the station" : "Add a station"}>
               <div className="eyebrow mb-3">{editing ? `Editing ${editing.name}` : "New station"}</div>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                 <Field label="Name" name="name" defaultValue={editing?.name} required placeholder="Western hot" />
                 <Field label="Kind" name="station_kind" options={KINDS} defaultValue={editing?.station_kind} />
                 <Field label="Food category" name="food_category" options={CATS} defaultValue={editing?.food_category} />

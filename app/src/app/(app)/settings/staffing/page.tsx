@@ -19,7 +19,7 @@ export default async function StaffingSettings() {
   const editable = can(ctx, "gm", "fnb_mgr", "chef", "hk", "eng");
   const outletOptions: [string, string][] = [["", "Whole hotel"], ...(outlets ?? []).map((o) => [o.id, o.name] as [string, string])];
   const form = (l: NonNullable<typeof lines>[number] | null) => (
-    <fieldset disabled={!editable} className="grid grid-cols-2 gap-3 md:grid-cols-4">
+    <fieldset disabled={!editable} className="grid grid-cols-1 gap-3 md:grid-cols-4">
       <Field label="Name" name="name" defaultValue={l?.name} required placeholder="Kitchen, early shift" />
       <Field label="Department" name="department" options={DEPTS} defaultValue={l?.department} />
       <Field label="Outlet" name="outlet_id" options={outletOptions} defaultValue={l?.outlet_id ?? ""} />

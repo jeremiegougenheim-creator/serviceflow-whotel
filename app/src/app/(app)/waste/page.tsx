@@ -65,11 +65,11 @@ export default async function WastePage({ searchParams }: { searchParams: Promis
 
       <Grid>
         <Kpi k="Waste logged" v={<>{num(totalKg, 1)}<small>kg</small></>} n={gPerCover != null ? `${gPerCover} g per cover` : "no cover count yet"} />
-        <Kpi k={deltaKg != null && deltaKg < 0 ? "Over baseline" : "Under baseline"} v={deltaKg != null ? <>{num(Math.abs(deltaKg), 1)}<small>kg</small></> : "—"} n={deltaKg != null ? (deltaKg >= 0 ? `≈ ${num(underKg! * factor, 0)} kg CO₂e, measured by the bin` : `baseline ${baseline} g per cover`) : !logged ? "no log, no claim" : baseline ? `baseline ${baseline} g per cover` : "set a baseline in Set-up"} tone={deltaKg != null ? (deltaKg > 0 ? "gn" : deltaKg < 0 ? "am" : undefined) : undefined} />
+        <Kpi k={deltaKg != null && deltaKg < 0 ? "Over baseline" : "Under baseline"} v={deltaKg != null ? <>{num(Math.abs(deltaKg), 1)}<small>kg</small></> : "—"} n={deltaKg != null ? (deltaKg >= 0 ? `≈ ${num(underKg! * factor, 0)} kg CO₂e, ${(ctx.property.settings as Record<string, boolean>)?.winnow ? "measured by the scale" : "measured by the log"}` : `baseline ${baseline} g per cover`) : !logged ? "no log, no claim" : baseline ? `baseline ${baseline} g per cover` : "set a baseline in Set-up"} tone={deltaKg != null ? (deltaKg > 0 ? "gn" : deltaKg < 0 ? "am" : undefined) : undefined} />
       </Grid>
 
       <div className="mt-4">
-        {mayWrite(ctx, "waste_logs") ? <VoiceLogger propertyId={ctx.property.id} outletId={outlet.id} serviceDate={date} department="kitchen" placeholder="Log a station, in English or Chinese" examples={["Bakery plate waste 1.5 kg", "點心 剩 一公斤"]} /> : <Note>Measured by the bin — not modelled. The kitchen logs; this view reads.</Note>}
+        {mayWrite(ctx, "waste_logs") ? <VoiceLogger propertyId={ctx.property.id} outletId={outlet.id} serviceDate={date} department="kitchen" placeholder="Log a station’s waste" examples={["Bakery plate waste 1.5 kg", "點心 剩 一公斤"]} /> : <Note>Measured by the log, not modelled. The kitchen logs; this view reads.</Note>}
       </div>
 
       <div className="mb-1 mt-6 flex items-baseline justify-between">
@@ -78,7 +78,7 @@ export default async function WastePage({ searchParams }: { searchParams: Promis
       </div>
       <Card>
         {(byStation ?? []).filter((s) => Number(s.kg) > 0 || Number(s.avg_kg) > 0).map((s) => (
-          <Row key={s.station_id ?? s.station} title={s.station ?? ""} note={Number(s.avg_kg) > 0 ? `avg ${num(s.avg_kg, 1)} kg` : "no history"} right={fmtKg(s.kg)} pill={s.delta_pct == null ? "new" : signed(Number(s.delta_pct), "%")} tone={s.delta_pct == null ? "mt" : Number(s.delta_pct) <= -10 ? "gn" : Number(s.delta_pct) >= 10 ? "rd" : "mt"} />
+          <Row key={s.station_id ?? s.station} title={s.station ?? ""} note={Number(s.avg_kg) > 0 ? `avg ${num(s.avg_kg, 1)} kg` : "no history"} right={fmtKg(s.kg)} pill={s.delta_pct == null ? "new" : Math.abs(Number(s.delta_pct)) < 1 ? "on par" : signed(Number(s.delta_pct), "%")} tone={s.delta_pct == null ? "mt" : Number(s.delta_pct) <= -10 ? "gn" : Number(s.delta_pct) >= 10 ? "rd" : "mt"} />
         ))}
         {!(byStation ?? []).length ? <Row title="Nothing logged yet today." /> : null}
       </Card>

@@ -40,10 +40,10 @@ export const NAV: Record<Role, NavItem[]> = {
   ],
   hk: [
     { icon: "rooms", label: "Rooms", href: "/rooms" },
-    { icon: "maint", label: "Maint.", href: "/faults" },
+    { icon: "maint", label: "Faults", href: "/faults" },
   ],
   eng: [
-    { icon: "maint", label: "Maint.", href: "/faults" },
+    { icon: "maint", label: "Faults", href: "/faults" },
     { icon: "rooms", label: "Rooms", href: "/rooms" },
   ],
   auditor: [
@@ -76,7 +76,7 @@ export const NAV: Record<Role, NavItem[]> = {
   ],
 };
 
-export const ROLE_TAG: Record<Role, string> = { gm: "GM", fnb_mgr: "F&B", chef: "CHEF", sous_chef: "SOUS CHEF", prep_cook: "PREP", hk: "H&K", eng: "ENG", auditor: "AUDIT", admin: "ADMIN", owner: "OWNER", vp: "VP", ceo: "CEO" };
+export const ROLE_TAG: Record<Role, string> = { gm: "GM", fnb_mgr: "F&B", chef: "CHEF", sous_chef: "SOUS CHEF", prep_cook: "PREP", hk: "HK", eng: "ENG", auditor: "AUDIT", admin: "ADMIN", owner: "OWNER", vp: "VP", ceo: "CEO" };
 
 /** Full names for the "View as" menu. */
 export const ROLE_NAME: Record<Role, string> = { gm: "General Manager", fnb_mgr: "F&B Manager", chef: "Head Chef", sous_chef: "Sous Chef", prep_cook: "Prep Cook", hk: "Housekeeping", eng: "Engineering", auditor: "Auditor", admin: "Set-up (admin)", owner: "Owner", vp: "Regional VP", ceo: "Group CEO" };

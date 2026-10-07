@@ -110,7 +110,7 @@ export function buildStationPlan(input: {
     const wx = weatherMultiplier(st, weather);
     const learn = learningFactor(st.id, corrections, history);
     // suite-heavy houses order more à la carte and take less from the hot buffet
-    const suitePenalty = st.kind === "buffet" && (st.foodCategory === "meat" || st.slug.includes("western")) ? 1 - clamp(suites - 0.08, 0, 0.3) * 0.5 : 1;
+    const suitePenalty = st.kind === "buffet" && (st.foodCategory === "meat" || st.foodCategory === "beef_lamb" || st.slug.includes("western")) ? 1 - clamp(suites - 0.08, 0, 0.3) * 0.5 : 1;
 
     const usualQty = st.basePar; // habit: the same par every day
     const reasons: string[] = [];
@@ -191,7 +191,7 @@ export function buildDecisions(input: { outlet: OutletCfg; plan: StationPlan; fo
   if (trims[0]) {
     const st = byId.get(trims[0].stationId)!;
     const saved = Math.max(0, (trims[0].usualQty - trims[0].qty) * st.costPerUnit);
-    decisions.push({ rank: 1, kind: "trim", department: "kitchen", stationId: st.id, title: `Trim ${st.name} ${trims[0].deltaPct}%`, detail: trims[0].reason, reason: forecast.drivers[0]?.label ?? trims[0].reason, deltaPct: trims[0].deltaPct, estSaving: Math.round(saved) });
+    decisions.push({ rank: 1, kind: "trim", department: "kitchen", stationId: st.id, title: `Trim ${st.name} −${Math.abs(trims[0].deltaPct)}%`, detail: trims[0].reason, reason: forecast.drivers[0]?.label ?? trims[0].reason, deltaPct: trims[0].deltaPct, estSaving: Math.round(saved) });
   }
   if (boosts[0]) {
     const st = byId.get(boosts[0].stationId)!;
@@ -214,7 +214,7 @@ export function buildDecisions(input: { outlet: OutletCfg; plan: StationPlan; fo
     if (decisions.length >= 3) break;
     const st = byId.get(t.stationId)!;
     const isTrim = t.deltaPct < 0;
-    decisions.push({ rank: rank++, kind: isTrim ? "trim" : "boost", department: "kitchen", stationId: st.id, title: `${isTrim ? "Trim" : "Boost"} ${st.name} ${t.deltaPct > 0 ? "+" : ""}${t.deltaPct}%`, detail: t.reason, reason: t.reason, deltaPct: t.deltaPct, estSaving: isTrim ? Math.round(Math.max(0, (t.usualQty - t.qty) * st.costPerUnit)) : 0 });
+    decisions.push({ rank: rank++, kind: isTrim ? "trim" : "boost", department: "kitchen", stationId: st.id, title: `${isTrim ? "Trim" : "Boost"} ${st.name} ${t.deltaPct > 0 ? "+" : t.deltaPct < 0 ? "−" : ""}${Math.abs(t.deltaPct)}%`, detail: t.reason, reason: t.reason, deltaPct: t.deltaPct, estSaving: isTrim ? Math.round(Math.max(0, (t.usualQty - t.qty) * st.costPerUnit)) : 0 });
   }
   if (decisions.length === 0) {
     decisions.push({ rank: 1, kind: "hold", department: "kitchen", stationId: null, title: "Hold the usual pars", detail: "forecast within 5% of habit", reason: "no signal moved the plan", deltaPct: 0, estSaving: 0 });

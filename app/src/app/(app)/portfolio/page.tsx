@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, Empty, Grid, Kpi, Row, ScreenHead, Tabs } from "@/components/ui";
 import { switchProperty } from "@/lib/actions/ops";
 import { getContext } from "@/lib/data/context";
-import { greeting, num, pct, plusDays, signed, weekday } from "@/lib/format";
+import { greeting, num, pct, plural, plusDays, signed, weekday } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Portfolio" };
@@ -43,16 +43,23 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
   const accAvg = acc.length ? acc.reduce((s, r) => s + Number(r.mape_4w_pct), 0) / acc.length : null;
   const byRegion = (regions ?? []).map((rg) => ({ ...rg, q: q.filter((r) => r.region_id === rg.id), o: o.filter((r) => r.region_id === rg.id) })).filter((rg) => rg.q.length);
   const groupLevel = role === "ceo" && !regionFilter && byRegion.length > 1;
+  const yieldTarget = Number((ctx.properties.find((p) => (p.settings as Record<string, unknown>)?.noi_yield_target)?.settings as Record<string, number> | undefined)?.noi_yield_target ?? 0.06);
   const quarterLabel = `${["first", "second", "third", "fourth"][Math.floor(new Date(ctx.today + "T12:00:00Z").getUTCMonth() / 3)]} quarter`;
   const regionName = regionFilter ? (regions ?? []).find((r) => r.id === regionFilter)?.name : null;
-  const watch = (r: (typeof o)[number]) => (Number(r.hours_short) >= 1 ? { note: `${weekday(tomorrow)} ${String(r.short_lines ?? "kitchen").split(",")[0].toLowerCase()} short`, right: signed(-Math.round(Number(r.hours_short)), " h"), tone: "am" as const } : r.off_plan_pct != null && Number(r.off_plan_pct) >= 5 ? { note: "off the plan", right: signed(Math.round(Number(r.off_plan_pct)), "%"), tone: "am" as const } : { note: "on plan", right: "", tone: "gn" as const });
+  const watch = (r: (typeof o)[number]) => {
+    const lines = String(r.short_lines ?? "").split(" · ").map((x) => x.trim()).filter(Boolean);
+    if (Number(r.hours_short) >= 1) return { note: `${weekday(tomorrow)} · ${lines.length ? lines.slice(0, 2).join(" · ").toLowerCase() : "kitchen short"}`, right: signed(-Math.round(Number(r.hours_short)), " h"), tone: "am" as const };
+    if (r.off_plan_pct != null && Number(r.off_plan_pct) >= 5) return { note: "prepped off the confirmed plan, 4 weeks", right: signed(Math.round(Number(r.off_plan_pct)), "%"), tone: "am" as const };
+    if (r.off_plan_pct == null && r.mape_4w_pct != null) return { note: "hours on demand · plan not confirmed in the app", right: "", tone: "mt" as const };
+    return { note: "hours on demand · on plan", right: "", tone: "gn" as const };
+  };
 
   return (
     <>
       {lens === "money" ? (
-        <ScreenHead hi={<>Quarter to date, <em>{gopMargin != null && lyMargin != null && gopMargin >= lyMargin ? (groupLevel ? "one region to watch." : "on target.") : "behind last year."}</em></>} sub={`${regionName ? regionName + " · " : ""}${groupLevel ? `${visibleQ.length} hotels` : `${num(keys)} rooms`} · ${quarterLabel}`} />
+        <ScreenHead hi={<>Quarter to date, <em>{gopMargin != null && lyMargin != null && gopMargin >= lyMargin ? (groupLevel ? "one region to watch." : "on target.") : "behind last year."}</em></>} sub={`${regionName ? regionName + " · " : ""}${groupLevel ? plural(visibleQ.length, "hotel") : `${num(keys)} rooms`} · ${quarterLabel}`} />
       ) : (
-        <ScreenHead hi={<>{greeting(ctx.clock)}, <em>{shortHotels.length === 0 ? "all on plan." : shortHotels.length === 1 ? "one to watch." : `${["", "", "two", "three", "four", "five"][shortHotels.length] ?? shortHotels.length} to watch.`}</em></>} sub={`Tomorrow · ${num(coversT)} covers · ${visibleO.length} hotels`} />
+        <ScreenHead hi={<>{greeting(ctx.clock)}, <em>{shortHotels.length === 0 ? "all on plan." : shortHotels.length === 1 ? "one to watch." : `${["", "", "two", "three", "four", "five"][shortHotels.length] ?? shortHotels.length} to watch.`}</em></>} sub={`Tomorrow · ${num(coversT)} covers · ${plural(visibleO.length, "hotel")}`} />
       )}
       {role === "ceo" ? <Tabs items={[{ key: "money", label: "Money", href: `/portfolio?lens=money${regionFilter ? `&region=${regionFilter}` : ""}` }, { key: "ops", label: "Operations", href: `/portfolio?lens=ops${regionFilter ? `&region=${regionFilter}` : ""}` }]} current={lens} /> : null}
       {regionFilter ? (
@@ -65,7 +72,7 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
         <>
           <Grid>
             <Kpi k="GOP margin" v={gopMargin != null ? <>{num(gopMargin * 100, 1)}<small>%</small></> : "—"} n={lyMargin != null && gopMargin != null ? `${signed(Math.round((gopMargin - lyMargin) * 1000) / 10, " pts", 1)} on last year` : undefined} />
-            <Kpi k="NOI yield" v={noiYield != null ? <>{num(noiYield * 100, 1)}<small>%</small></> : "—"} n="target 6.0%" tone={noiYield != null ? (noiYield >= 0.06 ? "gn" : "am") : undefined} />
+            <Kpi k="NOI yield" v={noiYield != null ? <>{num(noiYield * 100, 1)}<small>%</small></> : "—"} n={`target ${num(yieldTarget * 100, 1)}%`} tone={noiYield != null ? (noiYield >= yieldTarget ? "gn" : "am") : undefined} />
           </Grid>
           <div className="mb-1 mt-6 flex items-baseline justify-between">
             <h2 className="text-[20px]">{groupLevel ? "By region" : "By hotel"}</h2>
@@ -97,17 +104,18 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
             {!visibleQ.length ? <Row title="No financials yet." note="Import monthly P&L in Set-up → Imports." /> : null}
           </Card>
           <div className="mb-1 mt-6 flex items-baseline justify-between">
-            <h2 className="text-[20px]">ESG report</h2>
+            <h2 className="text-[20px]">ESG</h2>
+            <span className="muted text-[12.5px]">Measured, not modelled</span>
           </div>
           <Card>
-            <Row href="/waste" title="ESG report" note={energyAvg != null ? `energy ${pct(energyAvg, 0, true)} on baseline` : "energy not metered"} pill="review" tone="gd" />
+            <Row href="/waste" title="Waste, CO₂e and energy report" note={energyAvg != null ? `energy ${pct(energyAvg, 0, true)} on baseline across the portfolio` : "energy not metered"} pill="open" tone="gd" />
           </Card>
         </>
       ) : (
         <>
           <Grid>
             <Kpi k="Forecast vs actual" v={accAvg != null ? <>±{num(accAvg, 0)}<small>%</small></> : "—"} n="covers, 4 weeks" />
-            <Kpi k="Kitchen hours short" v={<>{num(Math.round(shortHours))}<small>h</small></>} n={`${shortHotels.length} hotel${shortHotels.length === 1 ? "" : "s"}, ${weekday(tomorrow)}`} tone={shortHours >= 1 ? "am" : "gn"} />
+            <Kpi k="Kitchen hours short" v={<>{num(Math.round(shortHours))}<small>h</small></>} n={`${plural(shortHotels.length, "hotel")} · kitchen lines · ${weekday(tomorrow)}`} tone={shortHours >= 1 ? "am" : "gn"} />
           </Grid>
           <div className="mb-1 mt-6 flex items-baseline justify-between">
             <h2 className="text-[20px]">{groupLevel ? "By region" : shortHotels.length ? `${["", "One", "Two", "Three", "Four", "Five"][Math.min(5, shortHotels.length)] ?? shortHotels.length} to watch` : "Hotels"}</h2>
@@ -118,7 +126,7 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
               ? byRegion.map((rg) => {
                   const covers = rg.o.reduce((s, r) => s + (r.covers_tomorrow ?? 0), 0);
                   const short = rg.o.reduce((s, r) => s + Number(r.hours_short), 0);
-                  const lines = [...new Set(rg.o.flatMap((r) => String(r.short_lines ?? "").split(",").map((x) => x.trim()).filter(Boolean)))];
+                  const lines = [...new Set(rg.o.flatMap((r) => String(r.short_lines ?? "").split(" · ").map((x) => x.trim()).filter(Boolean)))];
                   return <Row key={rg.id} href={`/portfolio?lens=ops&region=${rg.id}`} title={rg.name} note={`${rg.o.length} hotels · ${num(covers)} covers · ${lines[0] ? lines[0].toLowerCase() + " short" : "on plan"}`} right={<span className="text-[20px]">{short >= 1 ? signed(-Math.round(short), " h") : "on plan"} ›</span>} />;
                 })
               : [...visibleO].sort((a, b) => Number(b.hours_short) - Number(a.hours_short)).map((r) => {
@@ -134,7 +142,7 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
                           </span>
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1">
-                          {w.right ? <div className="q">{w.right}</div> : <span className={`pill pill-${w.tone}`}>on plan</span>}
+                          {w.right ? <div className="q">{w.right}</div> : <span className={`pill pill-${w.tone}`}>{w.tone === "gn" ? "on plan" : "no plan data"}</span>}
                         </div>
                       </button>
                     </form>
@@ -144,7 +152,10 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
           </Card>
         </>
       )}
-      <p className="muted mt-4 text-[12.5px]">Tap a hotel to open its own screens. Figures in {q[0]?.currency ?? ctx.properties[0]?.currency ?? "USD"}, converted at each hotel&rsquo;s rate.</p>
+      <p className="muted mt-4 text-[12.5px]">
+        {groupLevel ? "Tap a region to see its hotels." : "Tap a hotel to open its own screens."}
+        {lens === "money" ? ` Figures in ${q[0]?.currency ?? ctx.properties[0]?.currency ?? "USD"}, converted at each hotel’s rate.` : " Hours are tomorrow’s kitchen lines against the covers forecast."}
+      </p>
     </>
   );
 }

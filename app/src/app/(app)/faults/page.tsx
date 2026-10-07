@@ -1,9 +1,9 @@
 import { ActionButton } from "@/components/action-button";
 import { VoiceLogger } from "@/components/voice-logger";
-import { Card, Grid, Kpi, Note, Row, Strike, Tabs } from "@/components/ui";
+import { Card, Grid, Kpi, Note, Row, ScreenHead, Strike, Tabs } from "@/components/ui";
 import { confirmPlannedWorks, updateWorkOrder } from "@/lib/actions/ops";
 import { getContext, mayWrite } from "@/lib/data/context";
-import { hhmm, num, plusDays, startOfDayIn } from "@/lib/format";
+import { hhmm, num, plural, plusDays, startOfDayIn } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Maintenance" };
@@ -28,15 +28,21 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
   };
 
   if (view === "faults") {
+    const { count: plannedCount } = await supabase.from("planned_works").select("id", { count: "exact", head: true }).eq("property_id", ctx.property.id).gte("starts_at", startOfDayIn(ctx.today, tz)).lte("starts_at", startOfDayIn(plusDays(ctx.today, 8), tz)).neq("status", "cancelled");
     const { data: wos } = await supabase.from("work_orders").select("*, rooms(number), assets(name)").eq("property_id", ctx.property.id).gte("opened_at", new Date(now.getTime() - 7 * 864e5).toISOString()).order("priority").order("opened_at");
     const all = wos ?? [];
     const open = all.filter((w) => w.status === "open" || w.status === "in_progress");
-    const counts = { high: open.filter((w) => w.priority === "high").length, medium: open.filter((w) => w.priority === "medium").length, planned: all.filter((w) => w.status === "planned").length, closed: all.filter((w) => w.status === "closed" && w.closed_at && w.closed_at >= dayStart).length };
+    const counts = { high: open.filter((w) => w.priority === "high").length, medium: open.filter((w) => w.priority === "medium").length, planned: plannedCount ?? 0, closed: all.filter((w) => w.status === "closed" && w.closed_at && w.closed_at >= dayStart).length };
     const impact: Record<string, number> = { guest_facing: 0, suites: 1, in_room: 2, outlet: 3, back_of_house: 4, none: 5 };
     open.sort((a, b) => impact[a.guest_impact] - impact[b.guest_impact] || (a.priority === "high" ? -1 : 1));
     const due = (w: (typeof all)[number]) => (w.due_at ? (w.due_at.slice(0, 10) === ctx.today ? (hhmm(w.due_at, tz) >= "22:00" ? "tonight" : hhmm(w.due_at, tz)) : new Date(w.due_at).toLocaleDateString("en-GB", { weekday: "short", timeZone: tz })) : null);
+    const guestFacing = open.filter((w) => w.guest_impact === "guest_facing" || w.guest_impact === "suites" || w.guest_impact === "in_room").length;
     return (
       <>
+        <ScreenHead
+          hi={<>Maintenance, <em>{open.length === 0 ? "nothing open." : guestFacing ? `${plural(guestFacing, "fault")} a guest can feel.` : `${plural(open.length, "fault")} open.`}</em></>}
+          sub={`${counts.high} high · ${counts.medium} medium · ${counts.closed} closed today`}
+        />
         <Tabs items={tabs} current={view} />
         {mayWrite(ctx, "work_orders_raise") ? <VoiceLogger propertyId={ctx.property.id} outletId={null} serviceDate={ctx.today} department="engineering" placeholder="Log a fault or a fix" examples={["1804 door hinge stiff, guest in room", "Lift B back in service"]} /> : null}
         <div className="mt-4">
@@ -56,7 +62,7 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
             <div key={w.id} className="row">
               <div className="t min-w-0">
                 <b>{w.title}</b>
-                <span>{[w.detail, w.status === "in_progress" ? "in progress" : null].filter(Boolean).join(" · ")}</span>
+                <span>{[w.detail, w.status === "in_progress" && !/in progress/i.test(w.detail ?? "") ? "in progress" : null].filter(Boolean).join(" · ")}</span>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
                 <span className={`pill ${w.guest_impact === "guest_facing" ? "pill-rd" : w.guest_impact === "suites" || w.guest_impact === "in_room" ? "pill-am" : "pill-mt"}`}>{due(w) ?? (w.guest_impact === "suites" ? "suites" : ago(w.opened_at))}</span>
@@ -66,7 +72,7 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
           ))}
           {!open.length ? <Row title="No open fault." /> : null}
         </Card>
-        <Note>After the F&B pilot. Same platform, same approvals.</Note>
+        <Note>Ordered by what a guest would notice first. A fault is closed by the person who fixed it.</Note>
       </>
     );
   }
@@ -85,6 +91,7 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
     const impactOrder = (a: (typeof list)[number]) => (a.status === "offline" ? 0 : a.status === "watch" ? 1 : a.guest_facing ? 2 : 3);
     return (
       <>
+        <ScreenHead hi={<>Plant, <em>{online < list.length ? `${plural(list.length - online, "unit")} out.` : "all running."}</em></>} sub={`${online} of ${list.length} online · readings since midnight`} />
         <Tabs items={tabs} current={view} />
         <Grid>
           <Kpi k="Plant online" v={<>{online}<small>/{list.length}</small></>} n={list.find((a) => a.status === "offline") ? `${list.find((a) => a.status === "offline")!.name} out of service` : "all running"} tone={online < list.length ? "am" : "gn"} />
@@ -104,13 +111,15 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
   }
 
   if (view === "planned") {
-    const { data: works } = await supabase.from("planned_works").select("*").eq("property_id", ctx.property.id).gte("starts_at", `${ctx.today}T00:00:00`).lte("starts_at", `${plusDays(ctx.today, 7)}T23:59:59`).neq("status", "cancelled").order("starts_at");
+    const { data: works } = await supabase.from("planned_works").select("*").eq("property_id", ctx.property.id).gte("starts_at", dayStart).lt("starts_at", startOfDayIn(plusDays(ctx.today, 8), tz)).neq("status", "cancelled").order("starts_at");
     const list = works ?? [];
     const proposed = list.filter((w) => w.status === "proposed");
     const when = (iso: string) => `${new Date(iso).toLocaleDateString("en-GB", { weekday: "short", timeZone: tz })} ${hhmm(iso, tz)}`;
     const checks = (w: (typeof list)[number]) => (w.checks ?? {}) as Record<string, string>;
+    const label: Record<string, string> = { kitchen: "Kitchen plan", rooms: "Room arrivals", guests: "Guest notices", noise: "Noise", energy: "Energy", arrivals: "Arrivals", vip: "VIP" };
     return (
       <>
+        <ScreenHead hi={<>Planned works, <em>{proposed.length ? `${plural(proposed.length, "slot")} to confirm.` : list.length ? "slots confirmed." : "nothing this week."}</em></>} sub={`${plural(list.length, "job")} in the next seven days`} />
         <Tabs items={tabs} current={view} />
         <Strike
           eyebrow="Planned this week"
@@ -128,7 +137,11 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
           ))}
           {!list.length ? <Row title="Nothing planned this week." /> : null}
         </Card>
-        {list[0] ? <Note>{Object.values(checks(list[0])).filter(Boolean).slice(0, 1).join(" ")}</Note> : null}
+        {list[0] && Object.keys(checks(list[0])).length ? (
+          <Note>
+            {list[0].title}: {Object.entries(checks(list[0])).filter(([, v]) => v).map(([k, v]) => `${label[k] ?? k} — ${v}`).join(" · ")}
+          </Note>
+        ) : null}
       </>
     );
   }
@@ -149,6 +162,7 @@ export default async function FaultsPage({ searchParams }: { searchParams: Promi
   const labels: Record<string, [string, string]> = { cooling: ["Cooling", "chillers and AC"], kitchens: ["Kitchens", "extract and cooking"], lifts_lighting: ["Lifts and lighting", "common areas"], other: ["Other", "laundry, pools, back of house"] };
   return (
     <>
+      <ScreenHead hi={<>Energy, <em>{vs == null ? "no baseline yet." : vs <= 0 ? `${num(Math.abs(vs) * 100, 0)}% under baseline.` : `${num(vs * 100, 0)}% over baseline.`}</em></>} sub={`${num(used / 1000, 1)} MWh today · ${ctx.property.keys} rooms`} />
       <Tabs items={tabs} current={view} />
       <Grid>
         <Kpi k="Used today" v={<>{num(used / 1000, 1)}<small>MWh</small></>} n={`≈ ${num(perRoom, 0)} kWh per room`} />

@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { ActionButton } from "@/components/action-button";
 import { Card, Grid, Kpi, Row, ScreenHead, SectionHead } from "@/components/ui";
-import { approveDecision } from "@/lib/actions/ops";
+import { approveDecision, rejectDecision } from "@/lib/actions/ops";
 import { getContext, mayWrite } from "@/lib/data/context";
 import { drivers, getDecisions, getLatestForecast, getOutlets, getPms, getStaffingWeek } from "@/lib/data/fnb";
-import { greeting, money, plusDays, signed, timeShort, weekday, mondayOf } from "@/lib/format";
+import { greeting, money, plusDays, signed, timeShort, typo, weekday, mondayOf } from "@/lib/format";
 
 export const metadata = { title: "Home" };
 
@@ -43,7 +43,7 @@ export default async function HomePage() {
       <Grid>
         <Kpi k="Covers fcst" v={f?.covers_p50 ?? "—"} n={f ? `range ${f.covers_p10}–${f.covers_p90}` : "runs at " + briefTime} />
         <Kpi k="Occupancy" v={occT != null ? <>{Math.round(occT * 100)}<small>%</small></> : "—"} n={occT != null && occ0 != null ? `${signed(Math.round((occT - occ0) * 100), " pts")} on today` : undefined} />
-        <Kpi k="Plan ready" v={f ? timeShort(briefTime) : "—"} n={f ? "approve by 21:30" : undefined} tone={f ? "gn" : undefined} />
+        <Kpi k="Plan ready" v={f ? timeShort(briefTime) : "—"} n={f ? `approve by ${timeShort(plusHours(briefTime, 3))}` : undefined} tone={f ? "gn" : undefined} />
         <Kpi k="Staffing" v={kitchen.length ? <>{signed(Math.round(kitchenDelta), " h")}</> : "—"} n={`${weekday(tomorrow)} kitchen`} tone={kitchenDelta <= -1 ? "am" : kitchenDelta >= 1 ? "gn" : undefined} />
       </Grid>
 
@@ -62,12 +62,19 @@ export default async function HomePage() {
             {open.slice(0, 3).map((d) => (
               <div key={d.id} className="row">
                 <div className="t min-w-0">
-                  <b>{d.title}</b>
+                  <b>{typo(d.title)}</b>
                   <span>{d.detail}</span>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
-                  {Number(d.est_saving) > 0 ? <span className="text-[13px] text-green">{money(d.est_saving, d.currency ?? ctx.property.currency)}</span> : null}
-                  {mayWrite(ctx, "decisions") ? <ActionButton small action={approveDecision.bind(null, d.id)} label="Approve" done="Approved" /> : <span className="pill pill-mt">{d.status}</span>}
+                  {Number(d.est_saving) >= 10 ? <span className="text-[13px] text-green">{money(d.est_saving, d.currency ?? ctx.property.currency)}</span> : null}
+                  {mayWrite(ctx, "decisions") ? (
+                    <div className="flex items-center gap-1.5">
+                      <ActionButton small variant="ghost" action={rejectDecision.bind(null, d.id)} label="Keep as is" done="Kept as is" />
+                      <ActionButton small action={approveDecision.bind(null, d.id)} label="Approve" done="Approved" />
+                    </div>
+                  ) : (
+                    <span className="pill pill-mt">{d.status}</span>
+                  )}
                 </div>
               </div>
             ))}
@@ -76,4 +83,10 @@ export default async function HomePage() {
       ) : null}
     </>
   );
+}
+
+/** "18:00" + 3 → "21:00". */
+function plusHours(hhmm: string, h: number): string {
+  const [hh, mm] = hhmm.split(":").map(Number);
+  return `${String(((hh ?? 0) + h) % 24).padStart(2, "0")}:${String(mm ?? 0).padStart(2, "0")}`;
 }

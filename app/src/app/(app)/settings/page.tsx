@@ -16,7 +16,7 @@ export default async function SettingsPage() {
       <SettingsNav current="hotel" />
       {!editable ? <p className="muted mb-4 text-[13px]">Only the general manager changes these settings.</p> : null}
       <SaveForm action={saveProperty.bind(null, ctx.property.id)} className="card px-4 py-4">
-        <fieldset disabled={!editable} className="grid grid-cols-2 gap-3">
+        <fieldset disabled={!editable} className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Field label="Hotel name" name="name" defaultValue={ctx.property.name} required />
           <Field label="Rooms (keys)" name="keys" type="number" defaultValue={ctx.property.keys} />
           <Field label="Currency" name="currency" defaultValue={ctx.property.currency} help="ISO code: USD, HKD, TWD…" />
@@ -29,7 +29,7 @@ export default async function SettingsPage() {
           <Field label="Evening brief at" name="brief_time" type="time" defaultValue={(s.brief_time as string) ?? "18:00"} />
           <Field label="Dawn update at" name="dawn_update_time" type="time" defaultValue={(s.dawn_update_time as string) ?? "03:30"} />
           <Field label="Debrief at" name="debrief_time" type="time" defaultValue={(s.debrief_time as string) ?? "12:30"} />
-          <Field label="Saving points, total / ServiceFlow" name="saving_points_total" type="number" step="1" defaultValue={(s.saving_points_total as number) ?? 4} help="4 points of food cost in all; 3 are the forecast's" />
+          <Field label="Saving points of food cost, total" name="saving_points_total" type="number" step="1" defaultValue={(s.saving_points_total as number) ?? 4} help="ServiceFlow claims 3 of them; with a bin scale the fourth is the scale's" />
           <input type="hidden" name="saving_points_serviceflow" value={(s.saving_points_serviceflow as number) ?? 3} />
           <div className="col-span-2 pt-1">
             <Check label="A bin scale (Winnow or similar) is in place: its reactive point is credited to the scale, never to ServiceFlow" name="winnow" defaultChecked={!!s.winnow} />

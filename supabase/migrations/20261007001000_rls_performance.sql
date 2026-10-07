@@ -298,7 +298,7 @@ LANGUAGE sql STABLE SECURITY INVOKER SET search_path = public AS $$
     -- kitchen lines only: the tile is labelled "kitchen hours short"
     SELECT property_id,
            sum(GREATEST(0, -delta_hours)) FILTER (WHERE department = 'kitchen') AS hours_short,
-           string_agg(service_line || ' ' || to_char(-delta_hours, 'FM999990.0') || ' h', ', ' ORDER BY delta_hours)
+           string_agg(service_line || ' −' || round(-delta_hours)::text || ' h', ' · ' ORDER BY (department = 'kitchen') DESC, delta_hours)
              FILTER (WHERE delta_hours < -0.5) AS short_lines
     FROM v_staffing_day WHERE service_date = p_date GROUP BY property_id
   ), acc AS (

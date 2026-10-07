@@ -11,6 +11,8 @@ export interface ShellProps {
   roleTag: string;
   scope: string;
   hotel: string;
+  /** the hotel whose screens are shown, even when the scope is a region or the group */
+  propertyName: string;
   properties: { id: string; name: string }[];
   propertyId: string;
   userLabel: string;
@@ -63,9 +65,12 @@ export function Shell(p: ShellProps) {
       <div className="flex min-h-dvh flex-col">
         <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-(--sf-rule) bg-ink/90 px-4 py-3 backdrop-blur md:px-8">
           <div className="md:hidden">
-            <Lockup scope={p.hotel.toUpperCase()} />
+            <Lockup scope={(pathname.startsWith("/portfolio") ? p.hotel : p.propertyName).toUpperCase()} />
           </div>
-          <div className="hidden text-[11px] font-medium uppercase tracking-[0.2em] text-mist md:block">{p.hotel}</div>
+          <div className="hidden text-[11px] font-medium uppercase tracking-[0.2em] text-mist md:block">
+            {p.propertyName}
+            {p.hotel !== p.propertyName ? <span className="ml-2 text-gold/80">· {p.hotel}</span> : null}
+          </div>
           <div className="flex items-center gap-2">
             <Link href="/notifications" className="relative rounded-full p-2 text-mist hover:text-cream md:hidden" aria-label="Notifications">
               <Icon name="bell" size={20} />
@@ -110,7 +115,7 @@ export function Shell(p: ShellProps) {
           ) : null}
         </header>
 
-        <main className="mx-auto w-full max-w-[720px] flex-1 px-4 pb-28 pt-4 md:px-8 md:pb-10 md:pt-8">{p.children}</main>
+        <main className="mx-auto w-full max-w-[720px] flex-1 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 md:px-8 md:pb-10 md:pt-8">{p.children}</main>
 
         <nav className="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-(--sf-rule) bg-ink/95 px-2 pb-[max(10px,env(safe-area-inset-bottom))] pt-2 backdrop-blur md:hidden" aria-label="Sections">
           {p.nav.map((n) => (

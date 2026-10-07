@@ -34,6 +34,17 @@ export function signed(n: number | null | undefined, unit = "", decimals = 0): s
   return `${v > 0 ? "+" : v < 0 ? "−" : ""}${s}${unit}`;
 }
 
+/** Engine titles are built with "-"; print them with a minus sign: "Trim Dim sum −17%". */
+export function typo(s: string | null | undefined): string {
+  if (!s) return "";
+  return s.replace(/(^|[\s(])-(\d)/g, "$1−$2");
+}
+
+/** "1 hotel", "7 hotels". */
+export function plural(n: number, one: string, many = one + "s"): string {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
 export function num(n: number | string | null | undefined, decimals = 0): string {
   if (n == null || n === "") return "—";
   const v = typeof n === "string" ? Number(n) : n;

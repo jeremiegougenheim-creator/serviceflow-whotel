@@ -19,7 +19,7 @@ export default async function TeamSettings({ searchParams }: { searchParams: Pro
   const supabase = await createClient();
   const [{ data: members }, { data: apps }, { data: org }] = await Promise.all([
     supabase.from("team_members").select("*").eq("property_id", ctx.property.id).eq("active", true).order("department").order("name"),
-    supabase.from("memberships").select("id, role, invited_email, user_id, users(email, full_name)").eq("property_id", ctx.property.id).eq("active", true),
+    supabase.from("memberships").select("id, role, scope_type, invited_email, user_id, users(email, full_name)").eq("property_id", ctx.property.id).eq("active", true),
     supabase.from("properties").select("org_id").eq("id", ctx.property.id).single(),
   ]);
   const editable = can(ctx, "gm", "fnb_mgr", "chef", "hk", "eng");
@@ -44,17 +44,23 @@ export default async function TeamSettings({ searchParams }: { searchParams: Pro
               <div className="t min-w-0">
                 <b>{u?.full_name ?? u?.email ?? a.invited_email}</b>
                 <span>
-                  {ROLE_TAG[a.role]} {!a.user_id ? "· invited, not signed in yet" : ""}
+                  {ROLE_TAG[a.role]}
+                  {u?.email && u?.full_name ? ` · ${u.email}` : ""}
+                  {!a.user_id ? " · invited, not signed in yet" : ""}
                 </span>
               </div>
-              {can(ctx, "gm") ? <ActionButton small variant="ghost" action={removeMember.bind(null, a.id)} label="Remove" done="Removed" /> : null}
+              {can(ctx, "gm") && !["admin", "owner", "vp", "ceo"].includes(a.role) && a.scope_type === "property" ? (
+                <ActionButton small variant="ghost" action={removeMember.bind(null, a.id)} label="Remove" done="Removed" />
+              ) : ["admin", "owner", "vp", "ceo"].includes(a.role) || a.scope_type !== "property" ? (
+                <span className="pill pill-mt">managed by the group</span>
+              ) : null}
             </div>
           );
         })}
       </Card>
       {can(ctx, "gm") && org ? (
         <SaveForm action={inviteMember.bind(null, ctx.property.id)} className="card mt-3 px-4 py-4" label="Invite">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Field label="Email" name="email" type="email" required placeholder="chef@hotel.com" />
             <Field label="Role" name="role" options={ROLES} defaultValue="chef" />
           </div>
@@ -78,7 +84,7 @@ export default async function TeamSettings({ searchParams }: { searchParams: Pro
       {editable ? (
         <SaveForm key={editing?.id ?? "new"} action={saveTeamMember.bind(null, ctx.property.id, editing?.id ?? null)} className="card px-4 py-4" label={editing ? "Save" : "Add to the team"}>
           <div className="eyebrow mb-3">{editing ? `Editing ${editing.name}` : "New team member"}</div>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <Field label="Name" name="name" defaultValue={editing?.name} required />
             <Field label="Department" name="department" options={DEPTS} defaultValue={editing?.department} />
             <Field label="Role" name="role" defaultValue={editing?.role ?? "cook"} placeholder="cook, steward, attendant…" />

@@ -40,7 +40,7 @@ export function Row({ title, note, right, pill, tone, href }: { title: ReactNode
   const inner = (
     <>
       <div className="t min-w-0">
-        <b className="truncate">{title}</b>
+        <b className="break-words">{title}</b>
         {note ? <span>{note}</span> : null}
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">

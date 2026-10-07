@@ -11,6 +11,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       roleTag={ROLE_TAG[ctx.role]}
       scope={ctx.scopeLabel}
       hotel={ctx.isPortfolio ? ctx.scopeLabel : ctx.property.name}
+      propertyName={ctx.property.name}
       properties={ctx.properties.map((p) => ({ id: p.id, name: p.name }))}
       propertyId={ctx.property.id}
       userLabel={ctx.fullName ?? ctx.email}
