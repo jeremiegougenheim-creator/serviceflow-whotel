@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { DecisionRow } from "@/components/decision-row";
 import { Card, Empty, Row, ScreenHead, SectionHead, Tabs } from "@/components/ui";
 import { getContext } from "@/lib/data/context";
@@ -24,6 +25,7 @@ export default async function BriefPage({ searchParams }: { searchParams: Promis
       <ScreenHead hi={f ? <>{String(meta.headline ?? "").replace(/\.$/, "")}.</> : <>No brief yet.</>} sub={sub || `${outlet?.name ?? ""} · ${weekday(date)}`} />
       <Tabs items={outlets.map((o) => ({ key: o.slug, label: o.name, href: `/brief?outlet=${o.slug}&date=${date}` }))} current={outlet?.slug ?? ""} />
 
+      <div className="xl:grid xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] xl:items-start xl:gap-8">
       <div className="strike">
         <div className="eyebrow">{decisions.length === 3 ? "Three decisions" : `${decisions.length} decision${decisions.length === 1 ? "" : "s"}`} for {date === ctx.today ? "today" : weekday(date)} · {decisions.some((d) => d.status === "proposed") ? `${decisions.filter((d) => d.status === "proposed").length} waiting` : "all decided"}</div>
         <div className="tt">
@@ -42,6 +44,7 @@ export default async function BriefPage({ searchParams }: { searchParams: Promis
         </div>
       </div>
 
+      <div className="min-w-0 xl:[&>*:first-child]:!mt-0">
       <SectionHead title="Why it moved" note={f ? `${f.signals_read} signals read` : undefined} />
       {ds.length ? (
         <Card>
@@ -54,9 +57,14 @@ export default async function BriefPage({ searchParams }: { searchParams: Promis
       )}
       {f ? (
         <p className="muted mt-4 text-[12.5px]">
-          Forecast {f.covers_p10}–{f.covers_p90}, median {f.covers_p50} · habit would have planned {f.usual_covers ?? "—"} · version {f.version} ({f.kind}) · model {f.model_version}
+          Forecast {f.covers_p10}–{f.covers_p90}, median {f.covers_p50} · habit would have planned {f.usual_covers ?? "—"} · version {f.version} ({f.kind}) · model {f.model_version} ·{" "}
+          <Link href="/backtest" className="text-gold-light underline decoration-(--sf-rule-strong) underline-offset-4">
+            how close it has run
+          </Link>
         </p>
       ) : null}
+      </div>
+      </div>
     </>
   );
 }

@@ -1,6 +1,6 @@
 import { Shell } from "@/components/shell";
 import { getContext, getUnreadCount } from "@/lib/data/context";
-import { NAV, ROLE_NAME, ROLE_TAG } from "@/lib/nav";
+import { BACKTEST_ROLES, NAV, ROLE_NAME, ROLE_TAG } from "@/lib/nav";
 import { setTheme, signOut, switchProperty, switchRole } from "@/lib/actions/ops";
 import { readTheme } from "@/lib/theme";
 
@@ -23,6 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       switchRole={switchRole}
       theme={theme}
       canSetUp={ctx.roles.some((r) => ["gm", "fnb_mgr", "chef", "hk", "eng", "admin"].includes(r))}
+      canBacktest={BACKTEST_ROLES.includes(ctx.role)}
       setTheme={setTheme}
       signOut={signOut}
     >

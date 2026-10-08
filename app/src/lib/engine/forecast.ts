@@ -124,6 +124,25 @@ export function waveSplitFromSources(sourceMix: Record<string, number>, departur
   return out;
 }
 
+/**
+ * Calibration: a steady miss (a default attach table, a walk-in share that does not fit this
+ * outlet) is corrected by the median ratio of actual covers to the model's own raw forecast over
+ * the last 28 services. Measured on the raw forecast, before any earlier correction, so the whole
+ * miss is removed instead of a third of it: a correction measured on corrected forecasts chases
+ * its own tail. Under 14 services the correction is scaled down; it never exceeds 15 %.
+ */
+export function calibration(history: HistoryPoint[]): { adj: number; label: string; effect: string } | null {
+  const recent = history.filter((h) => h.actualCovers && (h.forecastRaw ?? h.forecastP50)).slice(-28);
+  if (recent.length < 7) return null;
+  const ratios = recent.map((h) => h.actualCovers! / (h.forecastRaw ?? h.forecastP50)!).sort((a, b) => a - b);
+  const mid = ratios.length >> 1;
+  const median = ratios.length % 2 ? ratios[mid] : (ratios[mid - 1] + ratios[mid]) / 2;
+  const adj = clamp((median - 1) * Math.min(1, recent.length / 14), -0.15, 0.15);
+  if (Math.abs(adj) < 0.005) return null;
+  const pct = Math.round(Math.abs(adj) * 100);
+  return { adj, label: `Last ${recent.length} services ran ${pct}% ${adj > 0 ? "above" : "below"} the model`, effect: `${adj > 0 ? "+" : "−"}${pct}%` };
+}
+
 /** Uncertainty band from the outlet's own history: the spread of past forecast errors. */
 export function errorBand(history: HistoryPoint[]): number {
   const errs = history
@@ -262,16 +281,13 @@ export function forecastBreakfast(input: {
     if (longHaul >= 0.3) drivers.push({ label: `Earlier peak, 07:15: ${Math.round(longHaul * 100)}% long-haul guests`, source: "PMS", effect: "earlier", weight: 2 });
   }
 
-  // 9. learning: bias of recent forecasts (corrections enter the next plan)
-  const recent = history.filter((h) => h.forecastP50 && h.actualCovers).slice(-14);
-  if (recent.length >= 7) {
-    const bias = recent.reduce((s, h) => s + (h.actualCovers! - h.forecastP50!) / h.forecastP50!, 0) / recent.length;
-    const adj = clamp(bias, -0.08, 0.08) * 0.5;
-    if (Math.abs(adj) >= 0.005) {
-      signals += 1;
-      drivers.push({ label: `Recent services ran ${adj > 0 ? "above" : "below"} forecast`, source: "History", effect: `${adj > 0 ? "+" : "−"}${Math.round(Math.abs(adj) * 100)}%`, weight: Math.abs(adj) * covers });
-      covers *= 1 + adj;
-    }
+  // 9. calibration against this outlet's own record
+  const raw = covers;
+  const cal = calibration(history);
+  if (cal) {
+    signals += 1;
+    drivers.push({ label: cal.label, source: "History", effect: cal.effect, weight: Math.abs(cal.adj) * covers });
+    covers *= 1 + cal.adj;
   }
 
   const capacity = outlet.capacity ? outlet.capacity * 2.4 : Infinity; // turns over the service
@@ -303,7 +319,7 @@ export function forecastBreakfast(input: {
     waveSplit: waves,
     drivers: drivers.slice(0, 6),
     signalsRead: signals,
-    inputs: { guests, attach: +attach.toFixed(3), fatigue: +fatigue.toFixed(3), loungeGuests: r0(loungeGuests), groupCovers: r0(groupCovers), weather: w.mult, band: +band.toFixed(3) },
+    inputs: { guests, attach: +attach.toFixed(3), fatigue: +fatigue.toFixed(3), loungeGuests: r0(loungeGuests), groupCovers: r0(groupCovers), weather: w.mult, band: +band.toFixed(3), raw: +raw.toFixed(1), calibration: +(covers / Math.max(1e-9, raw) - 1).toFixed(3) },
     headline: `${dayName(pms.serviceDate)}, ${p50} covers.`,
     subline: `Breakfast forecast ± ${p90 - p50} · ${signals} signals read`,
   };
@@ -353,6 +369,15 @@ export function forecastBookings(input: {
       covers *= e.lift;
     }
   }
+  const raw = covers;
+  if (booking) {
+    const cal = calibration(history);
+    if (cal) {
+      signals += 1;
+      drivers.push({ label: cal.label, source: "History", effect: cal.effect, weight: Math.abs(cal.adj) * covers });
+      covers *= 1 + cal.adj;
+    }
+  }
   const p50 = r0(covers);
   const band = errorBand(history);
   const p10 = r0(p50 * (1 - band));
@@ -382,7 +407,7 @@ export function forecastBookings(input: {
     waveSplit,
     drivers: drivers.slice(0, 5),
     signalsRead: signals,
-    inputs: { usual, band: +band.toFixed(3), peakAt, peakCovers },
+    inputs: { usual, band: +band.toFixed(3), peakAt, peakCovers, raw: +raw.toFixed(1) },
     headline: `${label} tomorrow`,
     subline: `${p50} covers · ${peakCovers} at ${peakAt ?? waveSplit.at(-1)?.startsAt ?? ""}`,
   };

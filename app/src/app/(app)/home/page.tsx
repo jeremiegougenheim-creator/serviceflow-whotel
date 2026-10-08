@@ -43,13 +43,15 @@ export default async function HomePage() {
         }
         sub={f ? `${f.covers_p50} covers forecast · ${open.length ? `${open.length} decision${open.length === 1 ? "" : "s"} waiting` : "every decision taken"}` : "No forecast yet for tomorrow"}
       />
-      <Grid>
+      <Grid cols={4}>
         <Kpi k="Covers forecast" v={f?.covers_p50 ?? "—"} n={f ? `range ${f.covers_p10}–${f.covers_p90}` : "runs at " + briefTime} />
         <Kpi k="Occupancy" v={occT != null ? <>{Math.round(occT * 100)}<small>%</small></> : "—"} n={occT != null && occ0 != null ? `${signed(Math.round((occT - occ0) * 100), " pts")} on today` : undefined} />
         <Kpi k="Plan ready" v={f ? timeShort(briefTime) : "—"} n={f ? `approve by ${timeShort(plusHours(briefTime, 3))}` : undefined} tone={f ? "gn" : undefined} />
         <Kpi k="Staffing" v={kitchen.length ? <>{signed(Math.round(kitchenDelta), " h")}</> : "—"} n={`${weekday(tomorrow)} kitchen`} tone={kitchenDelta <= -1 ? "am" : kitchenDelta >= 1 ? "gn" : undefined} />
       </Grid>
 
+      <div className="xl:mt-6 xl:grid xl:grid-cols-2 xl:items-start xl:gap-8">
+      <div className="min-w-0 xl:[&>*:first-child]:!mt-0">
       <SectionHead title="Why it moved" note={f ? `${f.signals_read} signals read` : undefined} />
       <Card>
         {drivers(f).slice(0, 4).map((d, i) => (
@@ -57,9 +59,10 @@ export default async function HomePage() {
         ))}
         {!f ? <Row title="The evening brief runs at the configured hour." note="Set-up → Hotel to change it." /> : null}
       </Card>
+      </div>
 
       {primary.length ? (
-        <>
+        <div className="min-w-0 xl:order-first xl:[&>*:first-child]:!mt-0">
           <SectionHead title={open.length ? "Decisions waiting" : "Decisions"} note={<Link href="/brief" className="text-gold-light">Open the brief</Link>} />
           <Card>
             {primary.map((d) => (
@@ -74,8 +77,9 @@ export default async function HomePage() {
               </Link>
             ) : null}
           </Card>
-        </>
+        </div>
       ) : null}
+      </div>
     </>
   );
 }

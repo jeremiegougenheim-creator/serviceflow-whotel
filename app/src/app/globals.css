@@ -154,8 +154,8 @@ fieldset:disabled .input { opacity: .6; border-style: dashed; cursor: not-allowe
 .row-decision > .acts > * { flex: 1 1 0; }
 @media (min-width: 640px) { .row-decision > .acts { flex: 0 0 auto; } .row-decision > .acts > * { flex: 0 0 auto; } }
 .row .t b { display: block; font-weight: 500; color: var(--color-cream); }
-.row .t span { display: block; font-size: 13px; color: var(--color-mist); margin-top: 2px; }
-@media (min-width: 768px) { .row .t span { font-size: 14px; } }
+.row .t > span { display: block; font-size: 13px; color: var(--color-mist); margin-top: 2px; }
+@media (min-width: 768px) { .row .t > span { font-size: 14px; } }
 .row .q { font-family: var(--font-display); font-size: 26px; line-height: 1; text-align: right; color: var(--color-cream); font-variant-numeric: lining-nums tabular-nums; }
 .strike { background: linear-gradient(160deg, var(--color-navy-mid), var(--color-navy)); border: 1px solid var(--sf-rule-strong); border-radius: var(--radius-card); padding: 18px; box-shadow: var(--sf-shadow); }
 .strike .eyebrow { color: var(--color-gold-light); }
@@ -180,7 +180,7 @@ label.lbl { display: block; font-size: 12px; letter-spacing: .08em; text-transfo
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .table th { text-align: left; font-weight: 500; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--color-mist); padding: 8px 10px; border-bottom: 1px solid var(--sf-rule-strong); }
 .table td { padding: 10px; border-bottom: 1px solid var(--sf-rule); vertical-align: top; }
-.num { font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: lining-nums tabular-nums; }
 
 /* loading skeleton: the shell paints at once, the screen streams in */
 .skel { position: relative; overflow: hidden; background: color-mix(in oklab, var(--color-mist) 10%, transparent); border-radius: 8px; }

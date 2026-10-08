@@ -137,6 +137,8 @@ export interface BanquetSignal {
 export interface HistoryPoint {
   serviceDate: string;
   forecastP50: number | null;
+  /** the model's forecast before calibration (forecast inputs.raw), when it was recorded */
+  forecastRaw?: number | null;
   actualCovers: number | null;
   roomsOccupied: number | null;
   wasteKg: number | null;

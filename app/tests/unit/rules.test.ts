@@ -8,6 +8,7 @@ import { buildDecisions, buildStationPlan } from "@/lib/engine/plan";
 import { computeDemand, suggestRoster } from "@/lib/engine/staffing";
 import { gradeFromScore, computeNightly } from "@/lib/engine/nightly";
 import { parseChineseNumber, parseVoice } from "@/lib/engine/voice";
+import { replayOutlet, WARMUP_DAYS, type ReplayDay } from "@/lib/engine/backtest";
 import { coverCheck, expectedSeatedAt, runningFast, wasteFill } from "./helpers";
 import type { OutletCfg, PmsSignals, PropertyCfg, StationCfg } from "@/lib/engine/types";
 
@@ -167,6 +168,12 @@ describe("staffing: hours follow the covers", () => {
     expect(s[0].title).toMatch(/Saturday kitchen \(early shift\) is short by 8 hours/);
     expect(s[0].moves[0].from_date).toBe("2026-10-06");
   });
+  it("never takes hours from a day already gone: past spare hours go to the pool instead", () => {
+    const demand = computeDemand(lines, [{ serviceDate: "2026-10-06", coversByOutlet: { o1: 160 }, roomsToService: 150 }, { serviceDate: "2026-10-10", coversByOutlet: { o1: 200 }, roomsToService: 150 }]);
+    const s = suggestRoster(lines, demand, [{ serviceLineId: "l1", serviceDate: "2026-10-06", plannedHours: 56 }, { serviceLineId: "l1", serviceDate: "2026-10-10", plannedHours: 48 }], 8, "2026-10-09");
+    expect(s[0].moves.every((m) => m.from_date == null || m.from_date >= "2026-10-09")).toBe(true);
+    expect(s[0].moves[0].source).toBe("pool");
+  });
 });
 
 describe("tonight, graded", () => {
@@ -258,5 +265,39 @@ describe("voice: Chinese station names without set-up", () => {
     expect(a.intent === "waste" && a.stationId).toBe("d");
     const b = parseVoice("麵包 剩 一公斤", { stations: st });
     expect(b.intent === "waste" && b.stationId).toBe("b");
+  });
+});
+
+describe("nothing ships without a backtest", () => {
+  // 60 days of a house whose breakfast runs 10% above what the default attach table says
+  const days = (shift = 0): ReplayDay[] =>
+    Array.from({ length: 60 }, (_, i) => {
+      const date = new Date(Date.UTC(2026, 7, 1 + i)).toISOString().slice(0, 10);
+      const p = pms({ serviceDate: date, groupManifest: [], guestsInHouse: 260 + ((i * 37) % 50), roomsOccupied: 165 + ((i * 23) % 30) });
+      const raw = forecastBreakfast({ outlet: outlet({ capacity: null }), pms: p, weather: null, events: [], history: [] }).inputs.raw as number;
+      return { date, pms: p, weather: null, events: [], booking: null, actual: Math.round(raw * 1.1) + (i === 40 ? shift : 0) };
+    });
+
+  it("is out of sample: a day's own covers never change that day's forecast or any before it", () => {
+    const a = replayOutlet(outlet({ capacity: null }), days(0)).points;
+    const b = replayOutlet(outlet({ capacity: null }), days(500)).points;
+    const d40 = new Date(Date.UTC(2026, 7, 41)).toISOString().slice(0, 10);
+    for (const p of a.filter((x) => x.date <= d40)) expect(b.find((x) => x.date === p.date)!.p50).toBe(p.p50);
+    // the days after do read it: one odd day widens the range (the median calibration ignores it)
+    expect(b.some((x) => x.date > d40 && x.p90 !== a.find((y) => y.date === x.date)!.p90)).toBe(true);
+  });
+
+  it("calibration removes a steady miss instead of a third of it", () => {
+    const { summary } = replayOutlet(outlet({ capacity: null }), days(0));
+    expect(summary).not.toBeNull();
+    expect(Math.abs(summary!.engine.bias)).toBeLessThan(0.015);
+    expect(summary!.engine.mape).toBeLessThan(0.02);
+  });
+
+  it("scores against habit and the capture rate on the same days", () => {
+    const { summary } = replayOutlet(outlet({ capacity: null }), days(0));
+    expect(summary!.n).toBe(60 - WARMUP_DAYS);
+    expect(summary!.simple?.n).toBe(summary!.n);
+    expect(summary!.closerThanHabit + summary!.sameAsHabit).toBeLessThanOrEqual(summary!.n);
   });
 });

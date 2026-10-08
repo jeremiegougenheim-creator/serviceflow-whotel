@@ -6,6 +6,9 @@ import { useEffect, useRef, useState } from "react";
 import { Icon, Lockup } from "./icons";
 import { activeHref, type NavItem } from "@/lib/nav";
 
+/** Screens laid out for a desktop as well as a phone. */
+const WIDE = ["/portfolio", "/backtest", "/home", "/brief", "/live", "/roster"];
+
 export interface ShellProps {
   nav: NavItem[];
   roleTag: string;
@@ -22,6 +25,8 @@ export interface ShellProps {
   role: string;
   /** Set-up is shown only to roles that can change something in it */
   canSetUp: boolean;
+  /** the backtest, for the roles that plan on the forecast or judge it */
+  canBacktest: boolean;
   children: React.ReactNode;
   switchProperty: (formData: FormData) => Promise<void>;
   switchRole: (formData: FormData) => Promise<void>;
@@ -38,6 +43,8 @@ export interface ShellProps {
 export function Shell(p: ShellProps) {
   const pathname = usePathname();
   const active = activeHref(pathname, p.nav);
+  // tables and side-by-side columns get the room a desktop has; reading screens keep a reading width
+  const wide = WIDE.some((w) => pathname === w || pathname.startsWith(w + "/"));
   const [menu, setMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -94,6 +101,12 @@ export function Shell(p: ShellProps) {
             <Icon name="bell" size={18} />
             Notifications{p.unread ? <span className="pill pill-gd ml-auto">{p.unread}</span> : null}
           </Link>
+          {p.canBacktest ? (
+            <Link href="/backtest" aria-current={pathname.startsWith("/backtest") ? "page" : undefined} className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 ${pathname.startsWith("/backtest") ? "bg-gold/10 text-gold-light" : "text-mist hover:text-cream"}`}>
+              <Icon name="chart" size={18} />
+              Backtest
+            </Link>
+          ) : null}
           {p.canSetUp ? (
             <Link href="/settings" className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-mist hover:text-cream">
               <Icon name="settings" size={18} />
@@ -176,6 +189,11 @@ export function Shell(p: ShellProps) {
                   ))}
                 </form>
               </div>
+              {p.canBacktest ? (
+                <Link href="/backtest" className="flex min-h-11 items-center rounded-lg px-2 text-[14px] text-cream hover:bg-ink/50">
+                  Backtest: how close the forecast runs
+                </Link>
+              ) : null}
               {p.canSetUp ? (
                 <Link href="/settings" className="flex min-h-11 items-center rounded-lg px-2 text-[14px] text-cream hover:bg-ink/50">
                   Set-up and imports
@@ -193,7 +211,7 @@ export function Shell(p: ShellProps) {
           ) : null}
         </header>
 
-        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[720px] flex-1 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 outline-none md:px-8 lg:pb-10 lg:pt-8">
+        <main id="main" tabIndex={-1} className={`mx-auto w-full ${wide ? "max-w-[720px] lg:max-w-[1180px]" : "max-w-[720px]"} flex-1 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 outline-none md:px-8 lg:pb-10 lg:pt-8`}>
           {p.children}
         </main>
 

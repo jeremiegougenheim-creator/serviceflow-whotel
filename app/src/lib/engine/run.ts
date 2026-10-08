@@ -6,6 +6,7 @@
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import type { AdminClient } from "@/lib/supabase/admin";
 import type { Json, Tables } from "@/lib/supabase/database.types";
+export { toPropertyCfg } from "./rows";
 
 type J = NonNullable<Json>;
 import { computeDebrief, type WasteEntry } from "./debrief";
@@ -14,6 +15,7 @@ import { coverCheck, expectedSeatedAt, runningFast, wasteRisk } from "./live";
 import { computeNightly } from "./nightly";
 import { buildBanquetPlan, buildDecisions, buildStationPlan, nationalityMultiplier } from "./plan";
 import { computeDemand, suggestRoster, type DayVolume, type PlannedHours } from "./staffing";
+import { asArr, asObj, toBooking, toEvent, toOutletCfg, toPms, toPropertyCfg, toWeather } from "./rows";
 import type {
   BanquetSignal,
   BookingSignal,
@@ -23,15 +25,14 @@ import type {
   EventSignal,
   HistoryPoint,
   OutletCfg,
-  PmsSignals,
   PropertyCfg,
   StaffingLineCfg,
-  StationCfg,
   StationPlan,
   WeatherSignal,
 } from "./types";
 
-export const MODEL_VERSION = "sf-2.0";
+import { MODEL_VERSION } from "./version";
+export { MODEL_VERSION };
 /** Calendar arithmetic in UTC: the process time zone never moves a service date. */
 const plusDays = (date: string, n: number) => {
   const d = new Date(date + "T12:00:00Z");
@@ -42,88 +43,13 @@ const plusDays = (date: string, n: number) => {
 const localInstant = (date: string, clock: string, tz: string) => fromZonedTime(`${date}T${clock}:00`, tz).toISOString();
 const minutesOf = (clock: string) => Number(clock.slice(0, 2)) * 60 + Number(clock.slice(3, 5));
 
-// ── mapping rows → engine config ────────────────────────────────────────────
-
-type PropertyRow = Tables<"properties">;
-type OutletRow = Tables<"outlets">;
-type StationRow = Tables<"stations">;
-type WaveRow = Tables<"waves">;
-
-function asObj<T extends object>(j: Json | null | undefined): T {
-  return (j && typeof j === "object" && !Array.isArray(j) ? (j as T) : ({} as T)) as T;
-}
-function asArr<T>(j: Json | null | undefined): T[] {
-  return Array.isArray(j) ? (j as T[]) : [];
-}
-
-export function toPropertyCfg(p: PropertyRow): PropertyCfg {
-  return { id: p.id, name: p.name, keys: p.keys, timezone: p.timezone, currency: p.currency, settings: asObj(p.settings) };
-}
-
-function toStationCfg(s: StationRow): StationCfg {
-  return {
-    id: s.id,
-    name: s.name,
-    slug: s.slug,
-    kind: s.station_kind as StationCfg["kind"],
-    foodCategory: s.food_category,
-    unit: s.unit,
-    basePar: Number(s.base_par),
-    usualCovers: s.usual_covers == null ? null : Number(s.usual_covers),
-    costPerUnit: Number(s.cost_per_unit),
-    kgPerUnit: Number(s.kg_per_unit),
-    highValue: s.high_value,
-    nationalityPriors: asObj(s.nationality_priors),
-    dowProfile: asObj(s.dow_profile),
-    weatherProfile: asObj(s.weather_profile),
-    settings: asObj(s.settings),
-    sortOrder: s.sort_order,
-  };
-}
-
-function toOutletCfg(o: OutletRow, waves: WaveRow[], stations: StationRow[]): OutletCfg {
-  return {
-    id: o.id,
-    name: o.name,
-    slug: o.slug,
-    type: o.outlet_type as OutletCfg["type"],
-    opensAt: o.opens_at.slice(0, 5),
-    closesAt: o.closes_at.slice(0, 5),
-    capacity: o.capacity_pax,
-    settings: asObj(o.settings),
-    waves: waves.filter((w) => w.outlet_id === o.id).map((w) => ({ id: w.id, label: w.label, startsAt: w.starts_at.slice(0, 5), shareDefault: Number(w.share_default), sortOrder: w.sort_order })),
-    stations: stations.filter((s) => s.outlet_id === o.id && s.active).sort((a, b) => a.sort_order - b.sort_order).map(toStationCfg),
-  };
-}
-
-function toPms(r: Tables<"pms_daily">): PmsSignals {
-  return {
-    serviceDate: r.service_date,
-    roomsOccupied: r.rooms_occupied,
-    roomsTotal: r.rooms_total,
-    guestsInHouse: r.guests_in_house,
-    arrivals: r.arrivals,
-    departures: r.departures,
-    departuresAm: r.departures_am,
-    lateArrivalsPrev: r.late_arrivals_prev,
-    earlyCheckins: r.early_checkins,
-    loungeEligible: r.lounge_eligible,
-    vipArrivals: r.vip_arrivals,
-    suitesOccupied: r.suites_occupied,
-    rateCodeMix: asObj(r.rate_code_mix),
-    loyaltyTierMix: asObj(r.loyalty_tier_mix),
-    travelSourceMix: asObj(r.travel_source_mix),
-    nationalityMix: asObj(r.nationality_mix),
-    losDistribution: asObj(r.los_distribution),
-    groupManifest: asArr(r.group_manifest),
-  };
-}
+// row mapping lives in ./rows (shared with the backtest screen)
 
 // ── loading ─────────────────────────────────────────────────────────────────
 
 export interface PropertyContext {
   property: PropertyCfg;
-  row: PropertyRow;
+  row: Tables<"properties">;
   outlets: OutletCfg[];
   lines: StaffingLineCfg[];
 }
@@ -154,9 +80,9 @@ async function loadSignals(db: AdminClient, propertyId: string, date: string) {
     db.from("bookings_daily").select("*").eq("property_id", propertyId).eq("service_date", date),
     db.from("banquet_events").select("*").eq("property_id", propertyId).eq("service_date", date).neq("status", "cancelled"),
   ]);
-  const w: WeatherSignal | null = weather ? { tempC: weather.temp_c == null ? null : Number(weather.temp_c), rainProb: weather.rain_prob == null ? null : Number(weather.rain_prob), condition: weather.condition } : null;
-  const ev: EventSignal[] = (events ?? []).map((e) => ({ label: e.label, kind: e.kind, size: e.size, startsAt: e.starts_at, lift: Number(e.lift), outletId: e.outlet_id }));
-  const bk = new Map<string, BookingSignal>((bookings ?? []).map((b) => [b.outlet_id, { coversBooked: b.covers_booked, walkInExpected: b.walk_in_expected, largestParty: b.largest_party, largestPartyAt: b.largest_party_at?.slice(0, 5) ?? null, peakAt: b.peak_at?.slice(0, 5) ?? null, peakCovers: b.peak_covers, parties: asArr(b.parties) }]));
+  const w = toWeather(weather);
+  const ev: EventSignal[] = (events ?? []).map(toEvent);
+  const bk = new Map<string, BookingSignal>((bookings ?? []).map((b) => [b.outlet_id, toBooking(b)]));
   const bq = new Map<string, BanquetSignal[]>();
   for (const b of banquets ?? []) {
     const list = bq.get(b.outlet_id) ?? [];
@@ -173,7 +99,7 @@ async function loadHistory(db: AdminClient, propertyId: string, outlet: OutletCf
   // outlet never reaches the engine (the database refuses such rows too; belt and braces)
   const [{ data: actuals }, { data: forecasts }, { data: waste }, { data: pms }] = await Promise.all([
     db.from("service_actuals").select("service_date, actual_covers").eq("property_id", propertyId).eq("outlet_id", outlet.id).gte("service_date", from).lt("service_date", before),
-    db.from("v_latest_forecasts").select("service_date, covers_p50").eq("property_id", propertyId).eq("outlet_id", outlet.id).gte("service_date", from).lt("service_date", before),
+    db.from("v_latest_forecasts").select("service_date, covers_p50, inputs").eq("property_id", propertyId).eq("outlet_id", outlet.id).gte("service_date", from).lt("service_date", before),
     db.from("waste_logs").select("service_date, station_id, kg").eq("property_id", propertyId).eq("outlet_id", outlet.id).gte("service_date", from).lt("service_date", before),
     db.from("pms_daily").select("service_date, rooms_occupied").eq("property_id", propertyId).gte("service_date", from).lt("service_date", before),
   ]);
@@ -187,7 +113,13 @@ async function loadHistory(db: AdminClient, propertyId: string, outlet: OutletCf
     return h;
   };
   for (const a of actuals ?? []) get(a.service_date).actualCovers = a.actual_covers;
-  for (const f of forecasts ?? []) if (f.service_date && f.covers_p50 != null) get(f.service_date).forecastP50 = f.covers_p50;
+  for (const f of forecasts ?? []) {
+    if (!f.service_date || f.covers_p50 == null) continue;
+    const h = get(f.service_date);
+    h.forecastP50 = f.covers_p50;
+    const raw = Number(asObj<{ raw?: number }>(f.inputs).raw);
+    if (Number.isFinite(raw) && raw > 0) h.forecastRaw = raw;
+  }
   for (const p of pms ?? []) get(p.service_date).roomsOccupied = p.rooms_occupied;
   const stById = new Map(outlet.stations.map((s) => [s.id, s]));
   for (const w of waste ?? []) {
@@ -417,7 +349,8 @@ export async function runStaffing(db: AdminClient, propertyId: string, from: str
       const hasRota = planned.some((p) => p.serviceDate >= monday && p.serviceDate < plusDays(monday, 7) && p.plannedHours > 0);
       if (!hasRota) continue;
       const weekDemand = demand.filter((d) => d.serviceDate >= monday && d.serviceDate < plusDays(monday, 7));
-      const suggestions = suggestRoster(ctx.lines, weekDemand, planned);
+      // the past, and today with its shifts running, cannot be re-rostered: moves start tomorrow
+      const suggestions = suggestRoster(ctx.lines, weekDemand, planned, 8, plusDays(formatInTimeZone(new Date(), ctx.property.timezone, "yyyy-MM-dd"), 1));
       await db.from("roster_suggestions").update({ status: "expired" }).eq("property_id", propertyId).eq("week_start", monday).eq("status", "proposed");
       if (suggestions.length) {
         await db.from("roster_suggestions").insert(suggestions.map((s) => ({ property_id: propertyId, week_start: monday, service_line_id: s.serviceLineId, service_date: s.serviceDate, title: s.title, detail: s.detail, delta_hours: s.deltaHours, moves: s.moves as unknown as J })));

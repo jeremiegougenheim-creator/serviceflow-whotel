@@ -110,3 +110,31 @@ test("approving a roster move never marks the next one as done", async ({ page }
   const now = page.locator(".strike .tt");
   if ((await now.innerText()) !== first) await expect(page.locator(".strike").getByText("Move applied")).toHaveCount(0);
 });
+
+test("the backtest replays the history out of sample and hands over the days", async ({ page }) => {
+  await signIn(page, "gm@demo.serviceflow");
+  await page.goto("/backtest");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("average miss");
+  await expect(page.getByText("each with only what was known the evening before", { exact: false })).toBeVisible();
+  await expect(page.getByText("Habit", { exact: true }).first()).toBeVisible();
+  const csv = await page.request.get("/backtest/csv?outlet=breakfast");
+  expect(csv.status()).toBe(200);
+  const lines = (await csv.text()).trim().split("\n");
+  expect(lines[1]).toMatch(/^date,actual_covers,serviceflow_p50/);
+  expect(lines.length).toBeGreaterThan(20);
+});
+
+test("housekeeping is not offered the backtest", async ({ page }) => {
+  await signIn(page, "hk@demo.serviceflow");
+  const csv = await page.request.get("/backtest/csv");
+  expect(csv.status()).toBe(403);
+  await page.goto("/backtest");
+  await page.waitForURL(/\/rooms/);
+});
+
+test("the owner looks through the Rooms lens", async ({ page }) => {
+  await signIn(page, "owner@demo.serviceflow");
+  await page.goto("/portfolio?lens=rooms");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Next seven nights");
+  await expect(page.getByText("On the books", { exact: true }).first()).toBeVisible();
+});

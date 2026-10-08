@@ -31,7 +31,9 @@ The repository name `serviceflow-whotel` is historical. Never rename the repo or
    Status moves from proposed to approved only through an action taken by a signed-in user.
 
 5. Nothing ships without a backtest.
-   prediction_log keeps every forecast and its outcome. Change the model, run the history, compare.
+   prediction_log keeps every forecast and its outcome. Change the model, run the history, compare:
+   `npm run engine -- backtest <hotel>` and the Backtest screen replay every past evening with only what
+   was known before it, against habit and the simple capture rate. Bump MODEL_VERSION with the change.
 
 6. The data stays in the hotel.
    Row level security on every table, keyed by property_id, and a trigger that keeps every parent
@@ -47,7 +49,7 @@ The repository name `serviceflow-whotel` is historical. Never rename the repo or
 app/        Next.js 16 (App Router, React 19, TypeScript, Tailwind 4), PWA, deployed on Vercel
             @supabase/ssr in the browser and in server components (RLS applies);
             the service role only inside src/lib/engine/run.ts, route handlers and scripts
-supabase/   migrations (schema v2, 8 files), seed.sql (illustrative hotels), cron.sql (pg_cron → /api/jobs/daily hourly, /api/jobs/live every 15 min)
+supabase/   migrations (schema v2, 10 files), seed.sql (illustrative hotels), demo_history.sql (re-draws their past covers), cron.sql (pg_cron → /api/jobs/daily hourly, /api/jobs/live every 15 min)
 legacy/     the 2025 prototype app, the Python connectors and the federated-learning notes (not built)
 index.html  the static demo at the repository root (unchanged by the app)
 ```
@@ -64,6 +66,8 @@ Tests: `npm test` (Vitest: product rules + tenant isolation when a Supabase URL 
 | Debrief, savings split, CO2e | `app/src/lib/engine/debrief.ts` |
 | Live service proposals | `app/src/lib/engine/live.ts` |
 | Nightly grades and tomorrow's actions | `app/src/lib/engine/nightly.ts` |
+| Backtest (walk-forward replay, baselines) | `app/src/lib/engine/backtest.ts`, `app/src/lib/data/backtest.ts` |
+| Rows → engine shapes (shared by the engine and the screens) | `app/src/lib/engine/rows.ts` |
 | Voice and text logs, English and Chinese | `app/src/lib/engine/voice.ts` |
 | Orchestration and persistence | `app/src/lib/engine/run.ts` |
 | Server actions (every write from the UI) | `app/src/lib/actions/*.ts` |
@@ -78,6 +82,7 @@ npm run dev          # local app (needs .env with a Supabase URL and keys)
 npm run seed         # demo accounts + the engine over the illustrative data
 npm run engine -- brief all        # the evening brief for tomorrow, every hotel
 npm run engine -- debrief harbour-hotel 2026-10-06
+npm run engine -- backtest all     # replay the forecast over the past, out of sample
 npm test             # unit + integration
 npm run test:e2e     # Playwright smoke, E2E_BASE_URL=http://localhost:3000
 npm run build

@@ -6,7 +6,7 @@ Three pieces: a Supabase project (Postgres, Auth, RLS), the Next.js app on Verce
 
 1. Create the project `serviceflow` in **Singapore (ap-southeast-1)**. Note the project ref.
 2. Apply the schema, in order, from `supabase/migrations/` (SQL editor, or `supabase db push` with the CLI linked to the project).
-3. Load the illustrative hotels: run `supabase/seed.sql` (safe to re-run; it replaces the "Illustrative Group" only).
+3. Load the illustrative hotels: run `supabase/seed.sql` (safe to re-run; it replaces the "Illustrative Group" only). A database seeded before October 2026 can instead run `supabase/demo_history.sql`, which only re-draws the illustrative hotels' past covers.
 4. Auth → URL configuration: Site URL = the app's URL; add `https://<app>/auth/confirm` and `https://<app>/auth/callback` to the redirect allow list.
 5. Auth → Email: keep "Confirm email" on. The app signs people in with a one-time link; a password is optional (demo accounts use one).
 6. Copy from Project Settings → API: the project URL, the publishable key (`sb_publishable_…`) and the secret/service-role key.

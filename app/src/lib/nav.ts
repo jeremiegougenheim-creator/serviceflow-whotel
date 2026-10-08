@@ -95,6 +95,9 @@ export function activeHref(pathname: string, items: NavItem[]): string | null {
   return null;
 }
 
+/** Who reads the backtest: the people who plan on the forecast, and those who judge it. */
+export const BACKTEST_ROLES: Role[] = ["gm", "fnb_mgr", "chef", "sous_chef", "admin", "auditor", "owner", "vp", "ceo"];
+
 export function homeFor(role: Role): string {
   return NAV[role]?.[0]?.href ?? "/home";
 }

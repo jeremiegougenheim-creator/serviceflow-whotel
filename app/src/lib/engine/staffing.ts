@@ -60,12 +60,17 @@ function dayName(iso: string) {
  * One suggestion per line that is short somewhere in the week: move hours from the day of the same
  * line that has the most to spare, then from the pool.
  */
-export function suggestRoster(lines: StaffingLineCfg[], demand: StaffingDemandLine[], planned: PlannedHours[], poolHours = 8): RosterSuggestion[] {
+/**
+ * One move per short line: hours from the line's day with the most to spare, else from the pool.
+ * `earliest` is the first day that can still be re-rostered (tomorrow): a past day, or today with
+ * its shifts already running, is never short to fix nor a day to take hours from.
+ */
+export function suggestRoster(lines: StaffingLineCfg[], demand: StaffingDemandLine[], planned: PlannedHours[], poolHours = 8, earliest?: string): RosterSuggestion[] {
   const out: RosterSuggestion[] = [];
   const plannedKey = new Map(planned.map((p) => [`${p.serviceLineId}|${p.serviceDate}`, p.plannedHours]));
   for (const l of lines) {
     const rows = demand
-      .filter((d) => d.serviceLineId === l.id)
+      .filter((d) => d.serviceLineId === l.id && (!earliest || d.serviceDate >= earliest))
       .map((d) => ({ date: d.serviceDate, demand: d.demandHours, planned: plannedKey.get(`${l.id}|${d.serviceDate}`) ?? 0 }))
       .map((r) => ({ ...r, delta: r1(r.planned - r.demand) }));
     const short = rows.filter((r) => r.delta <= -1).sort((a, b) => a.delta - b.delta)[0];
@@ -78,7 +83,8 @@ export function suggestRoster(lines: StaffingLineCfg[], demand: StaffingDemandLi
     const [base, qualifier] = l.name.split(/,\s*/);
     const label = `${base.replace("Breakfast service", "breakfast").replace("Dinner service", "dinner").toLowerCase()}${qualifier ? ` (${qualifier.toLowerCase()})` : ""}`;
     const dept = l.department === "kitchen" ? "kitchen" : l.department;
-    if (spare && spare.delta >= need) {
+    // within half an hour counts as covered: "add 0 hours from the pool" helps nobody
+    if (spare && spare.delta >= need - 0.5) {
       const h = Math.min(spare.delta, need);
       moves.push({ from_date: spare.date, to_date: short.date, hours: r1(h), service_line_id: l.id, source: "line" });
       detail = h >= 7.5 ? `Move one ${dept === "kitchen" ? "cook" : dept === "stewarding" ? "steward" : "attendant"} from ${dayName(spare.date)} to ${dayName(short.date)} morning.` : `Move ${Math.round(h)} hours from ${dayName(spare.date)} to ${dayName(short.date)}.`;
@@ -90,7 +96,9 @@ export function suggestRoster(lines: StaffingLineCfg[], demand: StaffingDemandLi
       }
       const fromPool = r1(Math.min(poolHours, need - covered));
       if (fromPool > 0) moves.push({ from_date: null, to_date: short.date, hours: fromPool, service_line_id: l.id, source: "pool" });
-      detail = spare ? `Move the ${Math.round(spare.delta)} spare ${label} hours and add ${Math.round(fromPool)} from the pool.` : `Add ${Math.round(fromPool)} hours from the pool on ${dayName(short.date)}.`;
+      detail = spare
+        ? `Move the ${Math.round(spare.delta)} spare hours from ${dayName(spare.date)}${Math.round(fromPool) >= 1 ? ` and add ${Math.round(fromPool)} from the pool` : ""}.`
+        : `Add ${Math.round(fromPool)} hours from the pool on ${dayName(short.date)}.`;
     }
     out.push({ serviceLineId: l.id, serviceDate: short.date, title: `${dayName(short.date)} ${label} is short by ${Math.round(need)} hours.`, detail, deltaHours: -need, moves });
   }

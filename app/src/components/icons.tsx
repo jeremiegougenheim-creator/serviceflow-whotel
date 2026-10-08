@@ -35,6 +35,7 @@ const PATHS = {
   check: <path d="M5 13l4 4L19 7" />,
   back: <path d="M15 5l-7 7 7 7" />,
   plus: <path d="M12 5v14M5 12h14" />,
+  chart: <path d="M4 4v16h16M7 15l4-4 3 3 5-6" />,
   swap: <path d="M7 4v16m0 0l-3-3m3 3l3-3M17 20V4m0 0l3 3m-3-3l-3 3" />,
 };
 
